@@ -200,11 +200,19 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
           return;
         }
 
-        // Create tooltip element
-        this.tooltip = view.dom.createDiv({
-          cls: "mobile-selection-toolbar",
-          attr: { "data-toolbar-id": activeToolbar.id },
-        });
+        // Find the workspace-leaf-content container to anchor the toolbar
+        // This ensures the toolbar appears at the bottom of the editor container,
+        // not inside table cells or other nested elements
+        const leafContainer = view.dom.closest('.workspace-leaf-content');
+        if (!leafContainer) {
+          return;
+        }
+
+        // Create tooltip element and append to leaf container instead of view.dom
+        this.tooltip = document.createElement('div');
+        this.tooltip.className = 'mobile-selection-toolbar';
+        this.tooltip.setAttribute('data-toolbar-id', activeToolbar.id);
+        leafContainer.appendChild(this.tooltip);
 
         // Get all available commands
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

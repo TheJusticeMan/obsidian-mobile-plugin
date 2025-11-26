@@ -21,7 +21,7 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], cont
 				this.decorations = Decoration.none;
 				this.app = app;
 				this.toolbars = toolbars;
-				this.contextBindings = contextBindings.slice().sort((a, b) => a.priority - b.priority);
+				this.contextBindings = contextBindings;
 				
 				// Find the editor container to anchor the toolbar
 				this.editorContainer = this.findEditorContainer(view.dom);
@@ -76,16 +76,41 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], cont
 			}
 
 			getActiveToolbar(view: EditorView, pos: number): ToolbarConfig | null {
-				// Check each binding in priority order
+				// Collect all matching toolbars and concatenate their commands
+				const matchingToolbars: ToolbarConfig[] = [];
+				const seenCommands = new Set<string>();
+				
 				for (const binding of this.contextBindings) {
 					if (this.matchesContextType(binding.contextType, view, pos)) {
 						const toolbar = this.toolbars.find(t => t.id === binding.toolbarId);
 						if (toolbar) {
-							return toolbar;
+							matchingToolbars.push(toolbar);
 						}
 					}
 				}
-				return null;
+				
+				// If no matches, return null
+				if (matchingToolbars.length === 0) {
+					return null;
+				}
+				
+				// Concatenate commands from all matching toolbars, removing duplicates
+				const combinedCommands: string[] = [];
+				for (const toolbar of matchingToolbars) {
+					for (const command of toolbar.commands) {
+						if (!seenCommands.has(command)) {
+							seenCommands.add(command);
+							combinedCommands.push(command);
+						}
+					}
+				}
+				
+				// Return a virtual toolbar with combined commands
+				return {
+					id: 'combined',
+					name: 'Combined Toolbar',
+					commands: combinedCommands,
+				};
 			}
 
 			matchesContextType(contextType: ContextType, view: EditorView, pos: number): boolean {

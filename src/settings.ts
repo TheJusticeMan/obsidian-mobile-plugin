@@ -29,7 +29,6 @@ export interface ContextBinding {
 	id: string;
 	contextType: ContextType;
 	toolbarId: string;
-	priority: number; // Lower number = higher priority
 }
 
 export interface MobilePluginSettings {
@@ -71,19 +70,16 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
 			id: 'binding-selection',
 			contextType: 'selection',
 			toolbarId: 'formatting',
-			priority: 1,
 		},
 		{
 			id: 'binding-list',
 			contextType: 'list',
 			toolbarId: 'list-actions',
-			priority: 2,
 		},
 		{
 			id: 'binding-default',
 			contextType: 'default',
 			toolbarId: 'formatting',
-			priority: 10,
 		},
 	],
 };
@@ -242,7 +238,7 @@ export class MobileSettingTab extends PluginSettingTab {
 			.setHeading()
 			.setName("Context Bindings")
 			.setDesc(
-				"Bind toolbars to different editing contexts. Lower priority numbers take precedence."
+				"Bind toolbars to different editing contexts. Multiple toolbars bound to the same context will be automatically concatenated."
 			);
 
 		// Render all context bindings
@@ -260,7 +256,6 @@ export class MobileSettingTab extends PluginSettingTab {
 						id: `binding-${Date.now()}`,
 						contextType: 'default',
 						toolbarId: this.plugin.settings.toolbars[0]?.id || '',
-						priority: 10,
 					};
 					this.plugin.settings.contextBindings.push(newBinding);
 					await this.plugin.saveSettings();
@@ -329,7 +324,6 @@ export class MobileSettingTab extends PluginSettingTab {
 
 		const setting = new Setting(container)
 			.setName(`${this.getContextDisplayName(binding.contextType)} → ${toolbarName}`)
-			.setDesc(`Priority: ${binding.priority}`)
 			.addDropdown((dropdown) => {
 				dropdown
 					.addOption('selection', 'Selection')
@@ -360,18 +354,6 @@ export class MobileSettingTab extends PluginSettingTab {
 						this.display();
 					});
 			})
-			.addText((text) =>
-				text
-					.setPlaceholder("Priority")
-					.setValue(binding.priority.toString())
-					.onChange(async (value) => {
-						const priority = parseInt(value);
-						if (!isNaN(priority)) {
-							binding.priority = priority;
-							await this.plugin.saveSettings();
-						}
-					})
-			)
 			.addExtraButton((btn) =>
 				btn
 					.setIcon("trash")

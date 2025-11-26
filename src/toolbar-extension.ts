@@ -7,7 +7,7 @@ import { ToolbarConfig, ContextBinding, ContextType } from './settings';
  * Creates a CodeMirror 6 ViewPlugin that displays a context-aware toolbar at the bottom
  * when text is selected or cursor is in a specific context.
  */
-export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], contextBindings: ContextBinding[]) {
+export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], contextBindings: ContextBinding[], useIcons: boolean, commandIcons: Record<string, string>) {
 	return ViewPlugin.fromClass(
 		class {
 			decorations: DecorationSet;
@@ -15,6 +15,8 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], cont
 			app: App;
 			toolbars: ToolbarConfig[];
 			contextBindings: ContextBinding[];
+			useIcons: boolean;
+			commandIcons: Record<string, string>;
 			editorContainer: HTMLElement | null = null;
 
 			constructor(view: EditorView) {
@@ -22,6 +24,8 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], cont
 				this.app = app;
 				this.toolbars = toolbars;
 				this.contextBindings = contextBindings;
+				this.useIcons = useIcons;
+				this.commandIcons = commandIcons;
 				
 				// Find the editor container to anchor the toolbar
 				this.editorContainer = this.findEditorContainer(view.dom);
@@ -156,7 +160,7 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], cont
 				syntaxTree(view.state).iterate({
 					from: pos,
 					to: pos,
-					enter: (node) => {
+					enter: (node: any) => {
 						const nodeName = node.type.name;
 						
 						// Check if in a list item using exact node names
@@ -180,7 +184,7 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], cont
 				syntaxTree(view.state).iterate({
 					from: pos,
 					to: pos,
-					enter: (node) => {
+					enter: (node: any) => {
 						const nodeName = node.type.name;
 						
 						if (nodeName === 'Task') {
@@ -203,7 +207,7 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], cont
 				syntaxTree(view.state).iterate({
 					from: pos,
 					to: pos,
-					enter: (node) => {
+					enter: (node: any) => {
 						const nodeName = node.type.name;
 						
 						if (nodeName.startsWith('ATXHeading') || nodeName === 'SetextHeading') {
@@ -226,7 +230,7 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], cont
 				syntaxTree(view.state).iterate({
 					from: pos,
 					to: pos,
-					enter: (node) => {
+					enter: (node: any) => {
 						const nodeName = node.type.name;
 						
 						if (nodeName === 'FencedCode' || nodeName === 'CodeBlock') {
@@ -249,7 +253,7 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], cont
 				syntaxTree(view.state).iterate({
 					from: pos,
 					to: pos,
-					enter: (node) => {
+					enter: (node: any) => {
 						const nodeName = node.type.name;
 						
 						if (nodeName === 'Table' || nodeName.startsWith('Table')) {
@@ -272,7 +276,7 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], cont
 				syntaxTree(view.state).iterate({
 					from: pos,
 					to: pos,
-					enter: (node) => {
+					enter: (node: any) => {
 						const nodeName = node.type.name;
 						
 						if (nodeName === 'Blockquote' || nodeName === 'QuoteMark') {
@@ -295,7 +299,7 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], cont
 				syntaxTree(view.state).iterate({
 					from: pos,
 					to: pos,
-					enter: (node) => {
+					enter: (node: any) => {
 						const nodeName = node.type.name;
 						
 						if (nodeName === 'Link' || nodeName.includes('link') || nodeName.includes('URL')) {
@@ -336,8 +340,27 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], cont
 					const command = commands[commandId];
 					if (command) {
 						const button = document.createElement('button');
-						button.textContent = command.name || commandId;
 						button.className = 'mobile-toolbar-button';
+						
+						// Determine which icon to use
+						const customIcon = this.commandIcons[commandId];
+						const defaultIcon = command.icon;
+						const iconToUse = customIcon || defaultIcon;
+						
+						if (this.useIcons && iconToUse) {
+							// Use icon
+							const iconEl = document.createElement('span');
+							iconEl.className = 'mobile-toolbar-icon';
+							// Use Obsidian's setIcon function to render the icon
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							(this.app as any).setIcon?.(iconEl, iconToUse);
+							button.appendChild(iconEl);
+							button.setAttribute('aria-label', command.name || commandId);
+						} else {
+							// Use text
+							button.textContent = command.name || commandId;
+						}
+						
 						button.addEventListener('click', (e) => {
 							e.preventDefault();
 							// Execute the command

@@ -36,6 +36,8 @@ export interface MobilePluginSettings {
 	toolbarCommands: string[]; // Deprecated - kept for backward compatibility
 	toolbars: ToolbarConfig[];
 	contextBindings: ContextBinding[];
+	useIcons: boolean;
+	commandIcons: Record<string, string>; // Map of command ID to icon name
 }
 
 export const DEFAULT_SETTINGS: MobilePluginSettings = {
@@ -82,6 +84,8 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
 			toolbarId: 'formatting',
 		},
 	],
+	useIcons: false,
+	commandIcons: {},
 };
 
 /**
@@ -200,6 +204,23 @@ export class MobileSettingTab extends PluginSettingTab {
 						this.plugin.settings.homeFolder = "";
 						await this.plugin.saveSettings();
 						this.display();
+					})
+			);
+
+		// Use icons setting
+		new Setting(containerEl)
+			.setName("Use icons in toolbar")
+			.setDesc(
+				"Display icons instead of text labels for toolbar commands. You can customize icons for each command below."
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.useIcons)
+					.onChange(async (value) => {
+						this.plugin.settings.useIcons = value;
+						await this.plugin.saveSettings();
+						// Trigger toolbar refresh
+						this.plugin.refreshToolbar();
 					})
 			);
 
@@ -390,10 +411,26 @@ export class MobileSettingTab extends PluginSettingTab {
 			// @ts-ignore
 			const command = this.app.commands.findCommand(cmdId);
 			const commandName = command ? command.name : cmdId;
+			const defaultIcon = command?.icon || '';
+			const customIcon = this.plugin.settings.commandIcons[cmdId] || defaultIcon;
 
 			const setting = new Setting(container)
 				.setName(commandName)
-				.setDesc(cmdId)
+				.setDesc(`${cmdId}${customIcon ? ` • Icon: ${customIcon}` : ''}`)
+				.addText((text) =>
+					text
+						.setPlaceholder(defaultIcon || "Icon name (e.g., lucide-bold)")
+						.setValue(customIcon)
+						.onChange(async (value) => {
+							if (value.trim()) {
+								this.plugin.settings.commandIcons[cmdId] = value.trim();
+							} else {
+								delete this.plugin.settings.commandIcons[cmdId];
+							}
+							await this.plugin.saveSettings();
+							this.plugin.refreshToolbar();
+						})
+				)
 				.addExtraButton((btn) =>
 					btn
 						.setIcon("pencil")

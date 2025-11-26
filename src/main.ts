@@ -35,10 +35,16 @@ export default class MobilePlugin extends Plugin {
 		});
 
 		// Register the CodeMirror 6 toolbar extension with multiple context-aware toolbars
-		this.registerEditorExtension(createToolbarExtension(this.app, this.settings.toolbars, this.settings.contextBindings));
+		this.registerEditorExtension(createToolbarExtension(this.app, this.settings.toolbars, this.settings.contextBindings, this.settings.useIcons, this.settings.commandIcons));
 
 		// Add settings tab
 		this.addSettingTab(new MobileSettingTab(this.app, this));
+	}
+
+	refreshToolbar() {
+		// Trigger a workspace update to refresh the toolbar
+		// The toolbar will re-render with updated settings on the next selection change
+		this.app.workspace.trigger('active-leaf-change');
 	}
 
 	async createNewNote() {

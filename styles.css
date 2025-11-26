@@ -74,6 +74,30 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 	color: var(--text-on-accent);
 }
 
+/* Settings Page Styles */
+.mobile-toolbar-section {
+	margin: 1.5em 0;
+	padding: 1em;
+	background-color: var(--background-secondary);
+	border-radius: 8px;
+	border: 1px solid var(--background-modifier-border);
+}
+
+.mobile-toolbar-header {
+	font-weight: 600;
+	border-bottom: 1px solid var(--background-modifier-border);
+	padding-bottom: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.mobile-command-list {
+	margin: 0.5em 0;
+}
+
+.mobile-add-command-btn {
+	margin-top: 0.5em;
+}
+
 /* Settings Drag and Drop */
 .mobile-plugin-draggable-item {
 	cursor: grab;

@@ -8,9 +8,20 @@ import {
 } from "obsidian";
 import MobilePlugin from "./main";
 
+export type { ToolbarConfig };
+
+export interface ToolbarConfig {
+	id: string;
+	name: string;
+	context: 'selection' | 'list' | 'default' | 'custom';
+	commands: string[];
+	customContextCheck?: string; // Optional custom context detection logic
+}
+
 export interface MobilePluginSettings {
 	homeFolder: string;
-	toolbarCommands: string[];
+	toolbarCommands: string[]; // Deprecated - kept for backward compatibility
+	toolbars: ToolbarConfig[];
 }
 
 export const DEFAULT_SETTINGS: MobilePluginSettings = {
@@ -19,6 +30,38 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
 		"editor:toggle-bold",
 		"editor:toggle-italics",
 		"editor:insert-link",
+	],
+	toolbars: [
+		{
+			id: 'selection',
+			name: 'Selection Toolbar',
+			context: 'selection',
+			commands: [
+				"editor:toggle-bold",
+				"editor:toggle-italics",
+				"editor:insert-link",
+			],
+		},
+		{
+			id: 'list',
+			name: 'List Toolbar',
+			context: 'list',
+			commands: [
+				"editor:toggle-checklist-status",
+				"editor:indent-list",
+				"editor:unindent-list",
+			],
+		},
+		{
+			id: 'default',
+			name: 'Default Toolbar',
+			context: 'default',
+			commands: [
+				"editor:toggle-bold",
+				"editor:toggle-italics",
+				"editor:insert-link",
+			],
+		},
 	],
 };
 
@@ -142,31 +185,100 @@ export class MobileSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setHeading()
-			.setName("Toolbar commands")
+			.setName("Toolbars")
 			.setDesc(
-				"Manage commands that appear in the mobile toolbar. Drag to reorder."
+				"Configure multiple context-aware toolbars. Each toolbar shows different commands based on the editing context."
 			);
 
-		const commandListContainer = containerEl.createDiv();
-		this.renderCommandList(commandListContainer);
+		// Render all toolbars
+		this.plugin.settings.toolbars.forEach((toolbar, toolbarIndex) => {
+			this.renderToolbar(containerEl, toolbar, toolbarIndex);
+		});
 
+		// Add new toolbar button
 		new Setting(containerEl).addButton((button) =>
 			button
-				.setButtonText("Add command")
+				.setButtonText("Add new toolbar")
 				.setCta()
-				.onClick(() => {
-					new CommandSuggestModal(this.app, async (command) => {
-						this.plugin.settings.toolbarCommands.push(command.id);
-						await this.plugin.saveSettings();
-						this.renderCommandList(commandListContainer);
-					}).open();
+				.onClick(async () => {
+					const newToolbar: ToolbarConfig = {
+						id: `toolbar-${Date.now()}`,
+						name: `New Toolbar`,
+						context: 'default',
+						commands: [],
+					};
+					this.plugin.settings.toolbars.push(newToolbar);
+					await this.plugin.saveSettings();
+					this.display();
 				})
 		);
 	}
 
-	renderCommandList(container: HTMLElement) {
+	renderToolbar(container: HTMLElement, toolbar: ToolbarConfig, toolbarIndex: number) {
+		const toolbarSection = container.createDiv('mobile-toolbar-section');
+		
+		// Toolbar header with name and context
+		const headerSetting = new Setting(toolbarSection)
+			.setName(toolbar.name)
+			.setDesc(`Context: ${toolbar.context}`)
+			.addText((text) =>
+				text
+					.setPlaceholder("Toolbar name")
+					.setValue(toolbar.name)
+					.onChange(async (value) => {
+						toolbar.name = value;
+						await this.plugin.saveSettings();
+					})
+			)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption('selection', 'Selection')
+					.addOption('list', 'List')
+					.addOption('default', 'Default')
+					.addOption('custom', 'Custom')
+					.setValue(toolbar.context)
+					.onChange(async (value) => {
+						toolbar.context = value as ToolbarConfig['context'];
+						await this.plugin.saveSettings();
+						this.display();
+					})
+			)
+			.addExtraButton((btn) =>
+				btn
+					.setIcon("trash")
+					.setTooltip("Delete toolbar")
+					.onClick(async () => {
+						this.plugin.settings.toolbars.splice(toolbarIndex, 1);
+						await this.plugin.saveSettings();
+						this.display();
+					})
+			);
+
+		headerSetting.settingEl.addClass('mobile-toolbar-header');
+
+		// Command list for this toolbar
+		const commandListContainer = toolbarSection.createDiv('mobile-command-list');
+		this.renderCommandListForToolbar(commandListContainer, toolbar, toolbarIndex);
+
+		// Add command button for this toolbar
+		new Setting(toolbarSection)
+			.addButton((button) =>
+				button
+					.setButtonText("Add command")
+					.setClass('mobile-add-command-btn')
+					.onClick(() => {
+						new CommandSuggestModal(this.app, async (command) => {
+							toolbar.commands.push(command.id);
+							await this.plugin.saveSettings();
+							this.renderCommandListForToolbar(commandListContainer, toolbar, toolbarIndex);
+						}).open();
+					})
+			);
+	}
+
+	renderCommandListForToolbar(container: HTMLElement, toolbar: ToolbarConfig, toolbarIndex: number) {
 		container.empty();
-		const commands = this.plugin.settings.toolbarCommands;
+		const commands = toolbar.commands;
 
 		commands.forEach((cmdId, index) => {
 			// @ts-ignore
@@ -184,11 +296,9 @@ export class MobileSettingTab extends PluginSettingTab {
 							new CommandSuggestModal(
 								this.app,
 								async (command) => {
-									this.plugin.settings.toolbarCommands[
-										index
-									] = command.id;
+									toolbar.commands[index] = command.id;
 									await this.plugin.saveSettings();
-									this.renderCommandList(container);
+									this.renderCommandListForToolbar(container, toolbar, toolbarIndex);
 								}
 							).open();
 						})
@@ -198,12 +308,9 @@ export class MobileSettingTab extends PluginSettingTab {
 						.setIcon("trash")
 						.setTooltip("Remove command")
 						.onClick(async () => {
-							this.plugin.settings.toolbarCommands.splice(
-								index,
-								1
-							);
+							toolbar.commands.splice(index, 1);
 							await this.plugin.saveSettings();
-							this.renderCommandList(container);
+							this.renderCommandListForToolbar(container, toolbar, toolbarIndex);
 						})
 				);
 
@@ -256,24 +363,18 @@ export class MobileSettingTab extends PluginSettingTab {
 					let targetIndex = index;
 					if (insertAfter) targetIndex++;
 
-					const item = this.plugin.settings.toolbarCommands.splice(
-						oldIndex,
-						1
-					)[0];
+					const item = toolbar.commands.splice(oldIndex, 1)[0];
 
 					if (oldIndex < targetIndex) {
 						targetIndex--;
 					}
 
-					this.plugin.settings.toolbarCommands.splice(
-						targetIndex,
-						0,
-						item
-					);
+					toolbar.commands.splice(targetIndex, 0, item);
 					await this.plugin.saveSettings();
-					this.renderCommandList(container);
+					this.renderCommandListForToolbar(container, toolbar, toolbarIndex);
 				}
 			};
 		});
 	}
+
 }

@@ -34,8 +34,8 @@ export default class MobilePlugin extends Plugin {
 			this.fabManager?.updateActiveLeaf();
 		});
 
-		// Register the CodeMirror 6 toolbar extension with customizable commands
-		this.registerEditorExtension(createToolbarExtension(this.app, this.settings.toolbarCommands));
+		// Register the CodeMirror 6 toolbar extension with multiple context-aware toolbars
+		this.registerEditorExtension(createToolbarExtension(this.app, this.settings.toolbars));
 
 		// Add settings tab
 		this.addSettingTab(new MobileSettingTab(this.app, this));

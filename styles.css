@@ -98,6 +98,18 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 	margin-top: 0.5em;
 }
 
+.mobile-binding-section {
+	margin: 1em 0;
+	padding: 0.75em;
+	background-color: var(--background-secondary-alt);
+	border-radius: 6px;
+	border: 1px solid var(--background-modifier-border);
+}
+
+.mobile-binding-item {
+	background-color: var(--background-primary);
+}
+
 /* Settings Drag and Drop */
 .mobile-plugin-draggable-item {
 	cursor: grab;

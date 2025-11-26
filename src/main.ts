@@ -35,7 +35,7 @@ export default class MobilePlugin extends Plugin {
 		});
 
 		// Register the CodeMirror 6 toolbar extension with multiple context-aware toolbars
-		this.registerEditorExtension(createToolbarExtension(this.app, this.settings.toolbars));
+		this.registerEditorExtension(createToolbarExtension(this.app, this.settings.toolbars, this.settings.contextBindings));
 
 		// Add settings tab
 		this.addSettingTab(new MobileSettingTab(this.app, this));

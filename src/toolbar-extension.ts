@@ -1,25 +1,27 @@
 import { ViewPlugin, EditorView, ViewUpdate, Decoration, DecorationSet } from '@codemirror/view';
 import { syntaxTree } from '@codemirror/language';
 import { App } from 'obsidian';
-import { ToolbarConfig } from './settings';
+import { ToolbarConfig, ContextBinding, ContextType } from './settings';
 
 /**
  * Creates a CodeMirror 6 ViewPlugin that displays a context-aware toolbar at the bottom
  * when text is selected or cursor is in a specific context.
  */
-export function createToolbarExtension(app: App, toolbars: ToolbarConfig[]) {
+export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], contextBindings: ContextBinding[]) {
 	return ViewPlugin.fromClass(
 		class {
 			decorations: DecorationSet;
 			tooltip: HTMLElement | null = null;
 			app: App;
 			toolbars: ToolbarConfig[];
+			contextBindings: ContextBinding[];
 			editorContainer: HTMLElement | null = null;
 
 			constructor(view: EditorView) {
 				this.decorations = Decoration.none;
 				this.app = app;
 				this.toolbars = toolbars;
+				this.contextBindings = contextBindings.slice().sort((a, b) => a.priority - b.priority);
 				
 				// Find the editor container to anchor the toolbar
 				this.editorContainer = this.findEditorContainer(view.dom);
@@ -64,48 +66,59 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[]) {
 			}
 
 			hasContext(view: EditorView, pos: number): boolean {
-				const selection = view.state.selection.main;
-				
-				// Check if any toolbar matches the current context
-				for (const toolbar of this.toolbars) {
-					if (this.matchesToolbarContext(toolbar, view, pos, selection)) {
+				// Check if any binding matches the current context
+				for (const binding of this.contextBindings) {
+					if (this.matchesContextType(binding.contextType, view, pos)) {
 						return true;
 					}
 				}
-				
-				// Always show default toolbar if configured
-				return this.toolbars.some(t => t.context === 'default');
+				return false;
 			}
 
 			getActiveToolbar(view: EditorView, pos: number): ToolbarConfig | null {
-				const selection = view.state.selection.main;
-				
-				// Check each toolbar to find the first matching context
-				for (const toolbar of this.toolbars) {
-					if (this.matchesToolbarContext(toolbar, view, pos, selection)) {
-						return toolbar;
+				// Check each binding in priority order
+				for (const binding of this.contextBindings) {
+					if (this.matchesContextType(binding.contextType, view, pos)) {
+						const toolbar = this.toolbars.find(t => t.id === binding.toolbarId);
+						if (toolbar) {
+							return toolbar;
+						}
 					}
 				}
-				
-				// Fallback to default toolbar
-				return this.toolbars.find(t => t.context === 'default') || null;
+				return null;
 			}
 
-			matchesToolbarContext(toolbar: ToolbarConfig, view: EditorView, pos: number, selection: { empty: boolean }): boolean {
-				switch (toolbar.context) {
+			matchesContextType(contextType: ContextType, view: EditorView, pos: number): boolean {
+				const selection = view.state.selection.main;
+				
+				switch (contextType) {
 					case 'selection':
 						return !selection.empty;
 					
 					case 'list':
 						return this.isInListContext(view, pos);
 					
-					case 'default':
-						// Default toolbar is the fallback
-						return false;
+					case 'task':
+						return this.isInTaskContext(view, pos);
 					
-					case 'custom':
-						// Custom context logic could be implemented here
-						return false;
+					case 'heading':
+						return this.isInHeadingContext(view, pos);
+					
+					case 'code-block':
+						return this.isInCodeBlockContext(view, pos);
+					
+					case 'table':
+						return this.isInTableContext(view, pos);
+					
+					case 'blockquote':
+						return this.isInBlockquoteContext(view, pos);
+					
+					case 'link':
+						return this.isInLinkContext(view, pos);
+					
+					case 'default':
+						// Default context always matches as fallback
+						return true;
 					
 					default:
 						return false;
@@ -113,7 +126,7 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[]) {
 			}
 
 			isInListContext(view: EditorView, pos: number): boolean {
-				let hasListContext = false;
+				let hasContext = false;
 				
 				syntaxTree(view.state).iterate({
 					from: pos,
@@ -122,18 +135,156 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[]) {
 						const nodeName = node.type.name;
 						
 						// Check if in a list item using exact node names
-						if (nodeName === 'BulletList' || nodeName === 'OrderedList' || nodeName === 'Task') {
-							hasListContext = true;
+						if (nodeName === 'BulletList' || nodeName === 'OrderedList') {
+							hasContext = true;
 						}
 						
 						// Check for HyperMD list line classes (Obsidian's styling) - matches any nesting level
 						if (nodeName.startsWith('HyperMD-list-line_HyperMD-list-line-')) {
-							hasListContext = true;
+							hasContext = true;
 						}
 					}
 				});
 				
-				return hasListContext;
+				return hasContext;
+			}
+
+			isInTaskContext(view: EditorView, pos: number): boolean {
+				let hasContext = false;
+				
+				syntaxTree(view.state).iterate({
+					from: pos,
+					to: pos,
+					enter: (node) => {
+						const nodeName = node.type.name;
+						
+						if (nodeName === 'Task') {
+							hasContext = true;
+						}
+						
+						// Check for HyperMD task line
+						if (nodeName.includes('HyperMD-task-line')) {
+							hasContext = true;
+						}
+					}
+				});
+				
+				return hasContext;
+			}
+
+			isInHeadingContext(view: EditorView, pos: number): boolean {
+				let hasContext = false;
+				
+				syntaxTree(view.state).iterate({
+					from: pos,
+					to: pos,
+					enter: (node) => {
+						const nodeName = node.type.name;
+						
+						if (nodeName.startsWith('ATXHeading') || nodeName === 'SetextHeading') {
+							hasContext = true;
+						}
+						
+						// Check for HyperMD heading
+						if (nodeName.startsWith('HyperMD-header')) {
+							hasContext = true;
+						}
+					}
+				});
+				
+				return hasContext;
+			}
+
+			isInCodeBlockContext(view: EditorView, pos: number): boolean {
+				let hasContext = false;
+				
+				syntaxTree(view.state).iterate({
+					from: pos,
+					to: pos,
+					enter: (node) => {
+						const nodeName = node.type.name;
+						
+						if (nodeName === 'FencedCode' || nodeName === 'CodeBlock') {
+							hasContext = true;
+						}
+						
+						// Check for HyperMD code block
+						if (nodeName.includes('HyperMD-codeblock')) {
+							hasContext = true;
+						}
+					}
+				});
+				
+				return hasContext;
+			}
+
+			isInTableContext(view: EditorView, pos: number): boolean {
+				let hasContext = false;
+				
+				syntaxTree(view.state).iterate({
+					from: pos,
+					to: pos,
+					enter: (node) => {
+						const nodeName = node.type.name;
+						
+						if (nodeName === 'Table' || nodeName.startsWith('Table')) {
+							hasContext = true;
+						}
+						
+						// Check for HyperMD table
+						if (nodeName.includes('HyperMD-table')) {
+							hasContext = true;
+						}
+					}
+				});
+				
+				return hasContext;
+			}
+
+			isInBlockquoteContext(view: EditorView, pos: number): boolean {
+				let hasContext = false;
+				
+				syntaxTree(view.state).iterate({
+					from: pos,
+					to: pos,
+					enter: (node) => {
+						const nodeName = node.type.name;
+						
+						if (nodeName === 'Blockquote' || nodeName === 'QuoteMark') {
+							hasContext = true;
+						}
+						
+						// Check for HyperMD quote
+						if (nodeName.includes('HyperMD-quote')) {
+							hasContext = true;
+						}
+					}
+				});
+				
+				return hasContext;
+			}
+
+			isInLinkContext(view: EditorView, pos: number): boolean {
+				let hasContext = false;
+				
+				syntaxTree(view.state).iterate({
+					from: pos,
+					to: pos,
+					enter: (node) => {
+						const nodeName = node.type.name;
+						
+						if (nodeName === 'Link' || nodeName.includes('link') || nodeName.includes('URL')) {
+							hasContext = true;
+						}
+						
+						// Check for HyperMD link
+						if (nodeName.includes('HyperMD-link')) {
+							hasContext = true;
+						}
+					}
+				});
+				
+				return hasContext;
 			}
 
 			showTooltip(view: EditorView) {
@@ -149,7 +300,7 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[]) {
 				// Create tooltip element
 				const tooltip = document.createElement('div');
 				tooltip.className = 'mobile-selection-toolbar';
-				tooltip.setAttribute('data-toolbar-context', activeToolbar.context);
+				tooltip.setAttribute('data-toolbar-id', activeToolbar.id);
 				
 				// Get all available commands
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any

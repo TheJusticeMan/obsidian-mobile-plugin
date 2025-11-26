@@ -1,13 +1,12 @@
 import {
   App,
+  Command,
+  FuzzySuggestModal,
+  getIconIds,
   PluginSettingTab,
   Setting,
-  FuzzySuggestModal,
-  TFolder,
-  Command,
   SuggestModal,
-  ExtraButtonComponent,
-  getIconIds,
+  TFolder,
 } from "obsidian";
 import MobilePlugin from "./main";
 

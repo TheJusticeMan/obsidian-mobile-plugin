@@ -1,162 +1,140 @@
-import { Plugin, TFile, normalizePath } from 'obsidian';
-import { FABManager } from './fab';
-import { createToolbarExtension } from './toolbar-extension';
-import { MobilePluginSettings, DEFAULT_SETTINGS, MobileSettingTab } from './settings';
+import { Notice, Plugin, TFile, normalizePath } from "obsidian";
+import { FABManager } from "./fab";
+import {
+  DEFAULT_SETTINGS,
+  MobilePluginSettings,
+  MobileSettingTab,
+} from "./settings";
+import { createToolbarExtension } from "./toolbar-extension";
 
 export default class MobilePlugin extends Plugin {
-	settings: MobilePluginSettings;
-	fabManager: FABManager | null = null;
-	wakeLock: any = null;
-	wakeLockStatusBar: HTMLElement | null = null;
+  settings: MobilePluginSettings;
+  fabManager: FABManager | null = null;
+  wakeLock: any = null;
 
-	async onload() {
-		await this.loadSettings();
+  async onload() {
+    await this.loadSettings();
 
-		// Register command for creating new notes
-		this.addCommand({
-			id: 'create-new-note',
-			name: 'Create new note',
-			callback: async () => {
-				await this.createNewNote();
-			}
-		});
+    // Register command for creating new notes
+    this.addCommand({
+      id: "create-new-note",
+      name: "Create new note",
+      callback: async () => {
+        await this.createNewNote();
+      },
+    });
 
-		// Register wake lock toggle command
-		this.addCommand({
-			id: 'toggle-wake-lock',
-			name: 'Toggle Wake Lock',
-			callback: async () => {
-				await this.toggleWakeLock();
-			}
-		});
+    // Register wake lock toggle command
+    this.addCommand({
+      id: "toggle-wake-lock",
+      name: "Toggle Wake Lock",
+      callback: async () => {
+        await this.toggleWakeLock();
+      },
+    });
 
-		// Initialize FAB Manager
-		this.fabManager = new FABManager(this.app, this.settings);
+    // Initialize FAB Manager
+    this.fabManager = new FABManager(this.app,  this);
 
-		// Update FAB when workspace layout changes
-		this.registerEvent(
-			this.app.workspace.on('active-leaf-change', () => {
-				this.fabManager?.updateActiveLeaf();
-			})
-		);
+    // Register the CodeMirror 6 toolbar extension with multiple context-aware toolbars
+    this.registerEditorExtension(
+      createToolbarExtension(this.app, this.settings)
+    );
 
-		// Initial FAB setup
-		this.app.workspace.onLayoutReady(() => {
-			this.fabManager?.updateActiveLeaf();
-		});
+    // Add settings tab
+    this.addSettingTab(new MobileSettingTab(this.app, this));
+  }
 
-		// Register the CodeMirror 6 toolbar extension with multiple context-aware toolbars
-		this.registerEditorExtension(createToolbarExtension(this.app, this.settings));
+  refreshToolbar() {
+    // Trigger a workspace update to refresh the toolbar
+    // The toolbar will re-render with updated settings on the next selection change
+    this.app.workspace.trigger("active-leaf-change");
+  }
 
-		// Add status bar item for wake lock
-		this.wakeLockStatusBar = this.addStatusBarItem();
-		this.updateWakeLockStatus();
+  async createNewNote() {
+    try {
+      // Determine the folder path
+      const folderPath = this.settings.homeFolder
+        ? normalizePath(this.settings.homeFolder)
+        : "";
 
-		// Add settings tab
-		this.addSettingTab(new MobileSettingTab(this.app, this));
-	}
+      // Ensure the folder exists
+      if (folderPath && !(await this.app.vault.adapter.exists(folderPath))) {
+        await this.app.vault.createFolder(folderPath);
+      }
 
-	refreshToolbar() {
-		// Trigger a workspace update to refresh the toolbar
-		// The toolbar will re-render with updated settings on the next selection change
-		this.app.workspace.trigger('active-leaf-change');
-	}
+      // Find an available filename
+      let filename = "Untitled.md";
+      let counter = 1;
+      let fullPath = folderPath ? `${folderPath}/Untitled.md` : "Untitled.md";
 
-	async createNewNote() {
-		try {
-			// Determine the folder path
-			const folderPath = this.settings.homeFolder ? normalizePath(this.settings.homeFolder) : '';
-			
-			// Ensure the folder exists
-			if (folderPath && !(await this.app.vault.adapter.exists(folderPath))) {
-				await this.app.vault.createFolder(folderPath);
-			}
+      while (await this.app.vault.adapter.exists(fullPath)) {
+        filename = `Untitled ${counter}.md`;
+        fullPath = folderPath ? `${folderPath}/${filename}` : filename;
+        counter++;
+      }
 
-			// Find an available filename
-			let filename = 'Untitled.md';
-			let counter = 1;
-			let fullPath = folderPath ? `${folderPath}/Untitled.md` : 'Untitled.md';
-			
-			while (await this.app.vault.adapter.exists(fullPath)) {
-				filename = `Untitled ${counter}.md`;
-				fullPath = folderPath ? `${folderPath}/${filename}` : filename;
-				counter++;
-			}
+      // Create the file
+      const file = await this.app.vault.create(fullPath, "");
 
-			// Create the file
-			const file = await this.app.vault.create(fullPath, '');
+      // Open the newly created file
+      const leaf = this.app.workspace.getLeaf(false);
+      await leaf.openFile(file as TFile);
 
-			// Open the newly created file
-			const leaf = this.app.workspace.getLeaf(false);
-			await leaf.openFile(file as TFile);
+      // Auto-focus into the editor
+      setTimeout(() => {
+        this.app.workspace.activeEditor?.editor?.focus();
+      }, 100);
+    } catch (error) {
+      console.error("Error creating note:", error);
+    }
+  }
 
-			// Auto-focus into the editor
-			setTimeout(() => {
-				this.app.workspace.activeEditor?.editor?.focus();
-			}, 100);
-		} catch (error) {
-			console.error('Error creating note:', error);
-		}
-	}
+  async toggleWakeLock() {
+    if (!("wakeLock" in navigator)) {
+      // Wake Lock API not supported
+      return;
+    }
 
-	async toggleWakeLock() {
-		if (!('wakeLock' in navigator)) {
-			// Wake Lock API not supported
-			return;
-		}
+    try {
+      if (this.wakeLock) {
+        // Release wake lock
+        await this.wakeLock.release();
+        this.wakeLock = null;
+      } else {
+        // Request wake lock
+        this.wakeLock = await (navigator as any).wakeLock.request("screen");
 
-		try {
-			if (this.wakeLock) {
-				// Release wake lock
-				await this.wakeLock.release();
-				this.wakeLock = null;
-			} else {
-				// Request wake lock
-				this.wakeLock = await (navigator as any).wakeLock.request('screen');
-				
-				// Listen for wake lock release
-				this.wakeLock.addEventListener('release', () => {
-					this.wakeLock = null;
-					this.updateWakeLockStatus();
-				});
-			}
-			
-			this.updateWakeLockStatus();
-		} catch (error) {
-			console.error('Wake lock error:', error);
-		}
-	}
+        // Listen for wake lock release
+        this.wakeLock.addEventListener("release", () => {
+          this.wakeLock = null;
+        });
+      }
+      new Notice(this.wakeLock ? "Wake Lock Enabled" : "Wake Lock Disabled");
+    } catch (error) {
+      console.error("Wake lock error:", error);
+    }
+  }
 
-	updateWakeLockStatus() {
-		if (this.wakeLockStatusBar) {
-			if (this.wakeLock) {
-				this.wakeLockStatusBar.setText('🔒 Wake Lock Active');
-				this.wakeLockStatusBar.style.display = '';
-			} else {
-				this.wakeLockStatusBar.style.display = 'none';
-			}
-		}
-	}
+  async onunload() {
+    // Release wake lock if active
+    if (this.wakeLock) {
+      await this.wakeLock.release();
+      this.wakeLock = null;
+    }
 
-	async onunload() {
-		// Release wake lock if active
-		if (this.wakeLock) {
-			await this.wakeLock.release();
-			this.wakeLock = null;
-		}
+    // Clean up FAB manager
+    if (this.fabManager) {
+      this.fabManager.destroy();
+      this.fabManager = null;
+    }
+  }
 
-		// Clean up FAB manager
-		if (this.fabManager) {
-			this.fabManager.destroy();
-			this.fabManager = null;
-		}
-	}
+  async loadSettings() {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
 
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-	}
-
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
+  async saveSettings() {
+    await this.saveData(this.settings);
+  }
 }

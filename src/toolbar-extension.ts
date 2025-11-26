@@ -1,13 +1,13 @@
+import { syntaxTree } from "@codemirror/language";
 import {
-  ViewPlugin,
-  EditorView,
-  ViewUpdate,
   Decoration,
   DecorationSet,
+  EditorView,
+  ViewPlugin,
+  ViewUpdate,
 } from "@codemirror/view";
-import { syntaxTree } from "@codemirror/language";
 import { App, ButtonComponent } from "obsidian";
-import { ToolbarConfig, ContextBinding, ContextType } from "./settings";
+import { ContextBinding, ContextType, ToolbarConfig } from "./settings";
 
 /**
  * Creates a CodeMirror 6 ViewPlugin that displays a context-aware toolbar at the bottom
@@ -249,9 +249,7 @@ export function createToolbarExtension(app: App, settings: any) {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   (this.app as any).commands?.executeCommandById(commandId);
                   // Refocus editor to prevent focus loss
-                  setTimeout(() => {
-                    view.focus();
-                  }, 10);
+                  view.focus();
                 });
             } else {
               new ButtonComponent(this.tooltip)
@@ -266,9 +264,7 @@ export function createToolbarExtension(app: App, settings: any) {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   (this.app as any).commands?.executeCommandById(commandId);
                   // Refocus editor to prevent focus loss
-                  setTimeout(() => {
-                    view.focus();
-                  }, 10);
+                  view.focus();
                 });
             }
           }

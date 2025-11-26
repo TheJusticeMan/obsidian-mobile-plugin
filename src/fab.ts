@@ -1,174 +1,204 @@
-import { App, TFile, normalizePath, WorkspaceLeaf } from 'obsidian';
-import { MobilePluginSettings } from './settings';
+import {
+  App,
+  ButtonComponent,
+  MarkdownView,
+  normalizePath,
+  TFile,
+  WorkspaceLeaf,
+} from "obsidian";
+import MobilePlugin from "./main";
+import { MobilePluginSettings } from "./settings";
 
 /**
  * Manages FAB placement and lifecycle across editor leaves.
  */
 export class FABManager {
-	private app: App;
-	private settings: MobilePluginSettings;
-	private fabElements: Map<WorkspaceLeaf, HTMLElement> = new Map();
+  private fabElements: Map<MarkdownView, HTMLElement> = new Map();
 
-	constructor(app: App, settings: MobilePluginSettings) {
-		this.app = app;
-		this.settings = settings;
-	}
+  constructor(private app: App, private plugin: MobilePlugin) {
+    // Initial setup can be done here if needed
+    // Update FAB when workspace layout changes
+    this.plugin.registerEvent(
+      this.app.workspace.on("active-leaf-change", () => this.updateActiveLeaf())
+    );
 
-	/**
-	 * Updates FAB for the active leaf
-	 */
-	updateActiveLeaf() {
-		const activeLeaf = this.app.workspace.activeLeaf;
-		if (activeLeaf) {
-			this.ensureFABForLeaf(activeLeaf);
-		}
-	}
+    // Initial FAB setup
+    this.app.workspace.onLayoutReady(() => this.updateActiveLeaf());
+  }
 
-	/**
-	 * Ensures a FAB exists for the given leaf
-	 */
-	private ensureFABForLeaf(leaf: WorkspaceLeaf) {
-		// Check if this leaf is a markdown editor
-		const view = leaf.view;
-		if (view.getViewType() !== 'markdown') {
-			return;
-		}
+  /**
+   * Updates FAB for the active leaf
+   */
+  updateActiveLeaf() {
+    const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+    if (activeView) {
+      this.ensureFABForLeaf(activeView);
+    }
+  }
 
-		// Don't create duplicate FABs
-		if (this.fabElements.has(leaf)) {
-			return;
-		}
+  /**
+   * Ensures a FAB exists for the given leaf
+   */
+  private ensureFABForLeaf(view: MarkdownView) {
+    // Check if this leaf is a markdown editor
 
-		// The containerEl is already the workspace-leaf-content
-		const leafContent = leaf.view.containerEl;
-		if (!leafContent) {
-			return;
-		}
+    // Don't create duplicate FABs
+    if (this.fabElements.has(view)) {
+      return;
+    }
 
-		// Create and mount FAB
-		const fab = this.createFAB();
-		leafContent.appendChild(fab);
-		this.fabElements.set(leaf, fab);
-	}
+    // Create and mount FAB
+    const fab = this.createFAB(view.containerEl);
+    view.containerEl.appendChild(fab);
+    this.fabElements.set(view, fab);
+  }
 
-	/**
-	 * Creates a FAB element
-	 */
-	private createFAB(): HTMLElement {
-		const fab = document.createElement('button');
-		fab.className = 'mobile-fab';
-		fab.setAttribute('aria-label', 'Create new note (long press for command palette)');
+  /**
+   * Creates a FAB element
+   */
+  private createFAB(containerEl: HTMLElement): HTMLElement {
+    // Change to new ButtonComponent style
 
-		// Add plus icon
-		fab.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
+    return new ButtonComponent(containerEl)
+      .setTooltip("Create new note (long press for command palette)")
+      .setIcon("plus")
+      .setClass("mobile-fab")
+      .onClick(async () => {
+        this.hapticFeedback(10);
+        await this.createNewNote();
+      })
+      .then((btn) =>
+        btn.buttonEl.addEventListener("contextmenu", (e) => {
+          e.preventDefault();
+          this.hapticFeedback(20);
+          // Open command palette
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (this.app as any).commands?.executeCommandById(
+            "command-palette:open"
+          );
+        })
+      ).buttonEl;
 
-		// Variables for long press detection
-		let pressTimer: NodeJS.Timeout | null = null;
-		let isLongPress = false;
+    // Alternatively, create FAB manually
+    const fab = document.createElement("button");
+    fab.className = "mobile-fab";
+    fab.setAttribute(
+      "aria-label",
+      "Create new note (long press for command palette)"
+    );
 
-		// Touch/Mouse start
-		const startPress = () => {
-			isLongPress = false;
-			pressTimer = setTimeout(() => {
-				isLongPress = true;
-				// Haptic feedback for long press
-				this.hapticFeedback(20);
-				// Open command palette
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				(this.app as any).commands?.executeCommandById('command-palette:open');
-			}, 500);
-		};
+    // Add plus icon
+    fab.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
 
-		// Touch/Mouse end
-		const endPress = async () => {
-			if (pressTimer) {
-				clearTimeout(pressTimer);
-				pressTimer = null;
-			}
+    // Variables for long press detection
+    let pressTimer: NodeJS.Timeout | null = null;
+    let isLongPress = false;
 
-			// Only create note if it wasn't a long press
-			if (!isLongPress) {
-				this.hapticFeedback(10);
-				await this.createNewNote();
-			}
-		};
+    // Touch/Mouse start
+    const startPress = () => {
+      isLongPress = false;
+      pressTimer = setTimeout(() => {
+        isLongPress = true;
+        // Haptic feedback for long press
+        this.hapticFeedback(20);
+        // Open command palette
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (this.app as any).commands?.executeCommandById("command-palette:open");
+      }, 500);
+    };
 
-		// Cancel on mouse/touch leave
-		const cancelPress = () => {
-			if (pressTimer) {
-				clearTimeout(pressTimer);
-				pressTimer = null;
-			}
-			isLongPress = false;
-		};
+    // Touch/Mouse end
+    const endPress = async () => {
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
 
-		// Add event listeners for both touch and mouse
-		fab.addEventListener('touchstart', startPress);
-		fab.addEventListener('mousedown', startPress);
-		
-		fab.addEventListener('touchend', endPress);
-		fab.addEventListener('mouseup', endPress);
-		
-		fab.addEventListener('touchcancel', cancelPress);
-		fab.addEventListener('mouseleave', cancelPress);
+      // Only create note if it wasn't a long press
+      if (!isLongPress) {
+        this.hapticFeedback(10);
+        await this.createNewNote();
+      }
+    };
 
-		return fab;
-	}
+    // Cancel on mouse/touch leave
+    const cancelPress = () => {
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+      isLongPress = false;
+    };
 
-	/**
-	 * Triggers haptic feedback if enabled and supported
-	 */
-	private hapticFeedback(duration: number = 10) {
-		if (this.settings.enableHapticFeedback && navigator.vibrate) {
-			navigator.vibrate(duration);
-		}
-	}
+    // Add event listeners for both touch and mouse
+    fab.addEventListener("touchstart", startPress);
+    fab.addEventListener("mousedown", startPress);
 
-	/**
-	 * Creates a new note
-	 */
-	private async createNewNote() {
-		try {
-			// Determine the folder path
-			const folderPath = this.settings.homeFolder ? normalizePath(this.settings.homeFolder) : '';
-			
-			// Ensure the folder exists
-			if (folderPath && !(await this.app.vault.adapter.exists(folderPath))) {
-				await this.app.vault.createFolder(folderPath);
-			}
+    fab.addEventListener("touchend", endPress);
+    fab.addEventListener("mouseup", endPress);
 
-			// Find an available filename
-			let filename = 'Untitled.md';
-			let counter = 1;
-			let fullPath = folderPath ? `${folderPath}/Untitled.md` : 'Untitled.md';
-			
-			while (await this.app.vault.adapter.exists(fullPath)) {
-				filename = `Untitled ${counter}.md`;
-				fullPath = folderPath ? `${folderPath}/${filename}` : filename;
-				counter++;
-			}
+    fab.addEventListener("touchcancel", cancelPress);
+    fab.addEventListener("mouseleave", cancelPress);
 
-			// Create the file
-			const file = await this.app.vault.create(fullPath, '');
+    return fab;
+  }
 
-			// Open the newly created file
-			const leaf = this.app.workspace.getLeaf(false);
-			await leaf.openFile(file as TFile);
+  /**
+   * Triggers haptic feedback if enabled and supported
+   */
+  private hapticFeedback(duration: number = 10) {
+    if (this.plugin.settings.enableHapticFeedback && navigator.vibrate) {
+      navigator.vibrate(duration);
+    }
+  }
 
-			// Auto-focus into the editor
-			setTimeout(() => {
-				this.app.workspace.activeEditor?.editor?.focus();
-			}, 100);
-		} catch (error) {
-			console.error('Error creating note:', error);
-		}
-	}
+  /**
+   * Creates a new note
+   */
+  private async createNewNote() {
+    try {
+      // Determine the folder path
+      const folderPath = this.plugin.settings.homeFolder
+        ? normalizePath(this.plugin.settings.homeFolder)
+        : "";
 
-	/**
-	 * Cleans up all FABs
-	 */
-	destroy() {
-		this.fabElements.forEach(fab => fab.remove());
-		this.fabElements.clear();
-	}
+      // Ensure the folder exists
+      if (folderPath && !(await this.app.vault.adapter.exists(folderPath))) {
+        await this.app.vault.createFolder(folderPath);
+      }
+
+      // Find an available filename
+      let filename = "Untitled.md";
+      let counter = 1;
+      let fullPath = folderPath ? `${folderPath}/Untitled.md` : "Untitled.md";
+
+      while (await this.app.vault.adapter.exists(fullPath)) {
+        filename = `Untitled ${counter}.md`;
+        fullPath = folderPath ? `${folderPath}/${filename}` : filename;
+        counter++;
+      }
+
+      // Create the file
+      const file = await this.app.vault.create(fullPath, "");
+
+      // Open the newly created file
+      const leaf = this.app.workspace.getLeaf(false);
+      await leaf.openFile(file as TFile);
+
+      // Auto-focus into the editor
+      setTimeout(() => {
+        this.app.workspace.activeEditor?.editor?.focus();
+      }, 100);
+    } catch (error) {
+      console.error("Error creating note:", error);
+    }
+  }
+
+  /**
+   * Cleans up all FABs
+   */
+  destroy() {
+    this.fabElements.forEach((fab) => fab.remove());
+    this.fabElements.clear();
+  }
 }

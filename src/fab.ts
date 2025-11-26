@@ -1,14 +1,14 @@
 import { App, TFile } from 'obsidian';
 
 /**
- * Mounts a Floating Action Button (FAB) that creates timestamped notes.
+ * Mounts a Floating Action Button (FAB) that creates new notes.
  * The FAB is positioned at the bottom-right with safe area insets for mobile devices.
  */
 export function mountFAB(app: App, containerEl: HTMLElement): HTMLElement {
 	const fab = containerEl.createEl('button', {
 		cls: 'mobile-fab',
 		attr: {
-			'aria-label': 'Create new timestamped note'
+			'aria-label': 'Create new note'
 		}
 	});
 
@@ -17,26 +17,23 @@ export function mountFAB(app: App, containerEl: HTMLElement): HTMLElement {
 
 	fab.addEventListener('click', async () => {
 		try {
-			// Create timestamp in format: YYYY-MM-DD-HHmmss-SSS (includes milliseconds to avoid conflicts)
-			const now = new Date();
-			const timestamp = now.getFullYear() +
-				'-' + String(now.getMonth() + 1).padStart(2, '0') +
-				'-' + String(now.getDate()).padStart(2, '0') +
-				'-' + String(now.getHours()).padStart(2, '0') +
-				String(now.getMinutes()).padStart(2, '0') +
-				String(now.getSeconds()).padStart(2, '0') +
-				'-' + String(now.getMilliseconds()).padStart(3, '0');
-
-			const filename = `${timestamp}.md`;
+			// Find an available filename
+			let filename = 'Untitled.md';
+			let counter = 1;
+			
+			while (await app.vault.adapter.exists(filename)) {
+				filename = `Untitled ${counter}.md`;
+				counter++;
+			}
 
 			// Create the file
-			const file = await app.vault.create(filename, `# Note created at ${now.toLocaleString()}\n\n`);
+			const file = await app.vault.create(filename, '');
 
 			// Open the newly created file
 			const leaf = app.workspace.getLeaf(false);
 			await leaf.openFile(file as TFile);
 		} catch (error) {
-			console.error('Error creating timestamped note:', error);
+			console.error('Error creating note:', error);
 		}
 	});
 

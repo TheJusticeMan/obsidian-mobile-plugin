@@ -1,8 +1,70 @@
 /*
-
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
-
-If your plugin does not need CSS, delete this file.
-
+Mobile Plugin Styles
+Includes FAB and selection toolbar styles with mobile-friendly design
 */
+
+/* Floating Action Button (FAB) */
+.mobile-fab {
+	position: fixed;
+	bottom: calc(20px + env(safe-area-inset-bottom));
+	right: 20px;
+	width: 56px;
+	height: 56px;
+	border-radius: 50%;
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1000;
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mobile-fab:hover {
+	transform: scale(1.05);
+	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.mobile-fab:active {
+	transform: scale(0.95);
+}
+
+.mobile-fab svg {
+	width: 24px;
+	height: 24px;
+}
+
+/* Selection Toolbar */
+.mobile-selection-toolbar {
+	display: flex;
+	gap: 8px;
+	padding: 8px;
+	background-color: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-toolbar-button {
+	padding: 6px 12px;
+	background-color: var(--interactive-normal);
+	color: var(--text-normal);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 500;
+	transition: background-color 0.2s ease;
+}
+
+.mobile-toolbar-button:hover {
+	background-color: var(--interactive-hover);
+}
+
+.mobile-toolbar-button:active {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}

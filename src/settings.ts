@@ -5,6 +5,8 @@ import {
 	FuzzySuggestModal,
 	TFolder,
 	Command,
+	SuggestModal,
+	ExtraButtonComponent,
 } from "obsidian";
 import MobilePlugin from "./main";
 
@@ -133,6 +135,64 @@ export class FolderSuggest extends FuzzySuggestModal<TFolder> {
 	}
 	onChooseItem(folder: TFolder, evt: MouseEvent | KeyboardEvent) {
 		this.onSubmit(folder);
+	}
+}
+
+export class IconSuggestModal extends SuggestModal<string> {
+	onSubmit: (result: string) => void;
+	icons: string[];
+	getSuggestions(query: string): string[] | Promise<string[]> {
+		const lowerQuery = query.toLowerCase();
+		return this.icons.filter(icon => 
+			icon.toLowerCase().includes(lowerQuery)
+		);
+	}
+
+	renderSuggestion(value: string, el: HTMLElement): void {
+		const container = el.createDiv({ cls: 'suggestion-content' });
+		const iconContainer = container.createDiv({ cls: 'suggestion-icon' });
+		const textContainer = container.createDiv({ cls: 'suggestion-title' });
+		
+		new ExtraButtonComponent(iconContainer).setIcon(`${value}`);
+		textContainer.setText(value);
+	}
+
+
+	constructor(app: App, onSubmit: (result: string) => void) {
+		super(app);
+		this.onSubmit = onSubmit;
+		
+		// Use a curated list of common Lucide icons available in Obsidian
+		this.icons = [
+			'bold', 'italic', 'underline', 'strikethrough',
+			'link', 'image', 'file', 'folder',
+			'check', 'x', 'plus', 'minus',
+			'chevron-up', 'chevron-down', 'chevron-left', 'chevron-right',
+			'arrow-up', 'arrow-down', 'arrow-left', 'arrow-right',
+			'star', 'heart', 'bookmark', 'tag',
+			'search', 'settings', 'help-circle', 'info',
+			'edit', 'trash', 'copy', 'clipboard',
+			'list', 'align-left', 'align-center', 'align-right',
+			'code', 'quote', 'heading', 'table',
+		];
+		
+		this.setPlaceholder("Search for an icon...");
+	}
+
+	getItems(): string[] {
+		return this.icons;
+	}
+
+	getItemText(item: string): string {
+		return item;
+	}
+
+	onChooseItem(item: string, evt: MouseEvent | KeyboardEvent) {
+		this.onSubmit(item);
+	}
+
+	onChooseSuggestion(item: string, evt: MouseEvent | KeyboardEvent) {
+		this.onSubmit(item);
 	}
 }
 
@@ -416,19 +476,20 @@ export class MobileSettingTab extends PluginSettingTab {
 
 			const setting = new Setting(container)
 				.setName(commandName)
-				.setDesc(`${cmdId}${customIcon ? ` • Icon: ${customIcon}` : ''}`)
-				.addText((text) =>
-					text
-						.setPlaceholder(defaultIcon || "Icon name (e.g., lucide-bold)")
-						.setValue(customIcon)
-						.onChange(async (value) => {
-							if (value.trim()) {
-								this.plugin.settings.commandIcons[cmdId] = value.trim();
-							} else {
-								delete this.plugin.settings.commandIcons[cmdId];
-							}
-							await this.plugin.saveSettings();
-							this.plugin.refreshToolbar();
+				.setDesc(cmdId)
+				.addButton((btn) =>
+					btn
+						.setIcon(customIcon || 'question')
+						.setTooltip("Change icon")
+						.onClick(() => {
+							new IconSuggestModal(
+								this.app,
+								async (icon) => {
+									this.plugin.settings.commandIcons[cmdId] = icon;
+									await this.plugin.saveSettings();
+									this.renderCommandListForToolbar(container, toolbar, toolbarIndex);
+								}
+							).open();
 						})
 				)
 				.addExtraButton((btn) =>

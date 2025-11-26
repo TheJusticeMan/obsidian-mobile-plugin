@@ -77,9 +77,8 @@ export function createToolbarExtension(app: App, commandIds: string[]) {
 							hasListContext = true;
 						}
 						
-						// Check for HyperMD list line classes (Obsidian's styling)
-						if (nodeName === 'HyperMD-list-line_HyperMD-list-line-1' || 
-							nodeName === 'HyperMD-list-line_HyperMD-list-line-1_HyperMD-task-line') {
+						// Check for HyperMD list line classes (Obsidian's styling) - matches any nesting level
+						if (nodeName.startsWith('HyperMD-list-line_HyperMD-list-line-')) {
 							hasListContext = true;
 						}
 					}
@@ -115,9 +114,8 @@ export function createToolbarExtension(app: App, commandIds: string[]) {
 							}
 						}
 						
-						// Check for HyperMD list line classes (Obsidian's styling)
-						if (nodeName === 'HyperMD-list-line_HyperMD-list-line-1' || 
-							nodeName === 'HyperMD-list-line_HyperMD-list-line-1_HyperMD-task-line') {
+						// Check for HyperMD list line classes (Obsidian's styling) - matches any nesting level
+						if (nodeName.startsWith('HyperMD-list-line_HyperMD-list-line-')) {
 							if (contextCommands.length === 0) {
 								contextCommands.push('editor:toggle-checklist-status');
 								contextCommands.push('editor:indent-list');

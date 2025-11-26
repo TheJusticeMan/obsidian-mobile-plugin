@@ -1,11 +1,11 @@
 import { Plugin, TFile, normalizePath } from 'obsidian';
-import { mountFAB } from './fab';
+import { FABManager } from './fab';
 import { createToolbarExtension } from './toolbar-extension';
 import { MobilePluginSettings, DEFAULT_SETTINGS, MobileSettingTab } from './settings';
 
 export default class MobilePlugin extends Plugin {
 	settings: MobilePluginSettings;
-	fabElement: HTMLElement | null = null;
+	fabManager: FABManager | null = null;
 
 	async onload() {
 		await this.loadSettings();
@@ -19,8 +19,20 @@ export default class MobilePlugin extends Plugin {
 			}
 		});
 
-		// Mount the Floating Action Button
-		this.fabElement = mountFAB(this.app, document.body, this.settings);
+		// Initialize FAB Manager
+		this.fabManager = new FABManager(this.app, this.settings);
+
+		// Update FAB when workspace layout changes
+		this.registerEvent(
+			this.app.workspace.on('active-leaf-change', () => {
+				this.fabManager?.updateActiveLeaf();
+			})
+		);
+
+		// Initial FAB setup
+		this.app.workspace.onLayoutReady(() => {
+			this.fabManager?.updateActiveLeaf();
+		});
 
 		// Register the CodeMirror 6 toolbar extension with customizable commands
 		this.registerEditorExtension(createToolbarExtension(this.app, this.settings.toolbarCommands));
@@ -62,10 +74,10 @@ export default class MobilePlugin extends Plugin {
 	}
 
 	onunload() {
-		// Clean up the FAB element
-		if (this.fabElement) {
-			this.fabElement.remove();
-			this.fabElement = null;
+		// Clean up FAB manager
+		if (this.fabManager) {
+			this.fabManager.destroy();
+			this.fabManager = null;
 		}
 	}
 

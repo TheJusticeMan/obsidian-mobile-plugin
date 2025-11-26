@@ -242,11 +242,16 @@ export function createToolbarExtension(app: App, settings: any) {
                 .setIcon(iconToUse)
                 .setTooltip(command.name || commandId)
                 .onClick((e) => {
+                  e.preventDefault();
                   // Haptic feedback on button click
                   this.hapticFeedback(10);
                   // Execute the command
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   (this.app as any).commands?.executeCommandById(commandId);
+                  // Refocus editor to prevent focus loss
+                  setTimeout(() => {
+                    view.focus();
+                  }, 10);
                 });
             } else {
               new ButtonComponent(this.tooltip)
@@ -254,11 +259,16 @@ export function createToolbarExtension(app: App, settings: any) {
                 .setButtonText(command.name || commandId)
                 .setTooltip(command.name || commandId)
                 .onClick((e) => {
+                  e.preventDefault();
                   // Haptic feedback on button click
                   this.hapticFeedback(10);
                   // Execute the command
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   (this.app as any).commands?.executeCommandById(commandId);
+                  // Refocus editor to prevent focus loss
+                  setTimeout(() => {
+                    view.focus();
+                  }, 10);
                 });
             }
           }

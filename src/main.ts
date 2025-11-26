@@ -1,5 +1,5 @@
-import { Notice, Plugin, TFile, normalizePath } from "obsidian";
-import { FABManager } from "./fab";
+import { Notice, Plugin } from "obsidian";
+import { FABManager, offset } from "./fab";
 import {
   DEFAULT_SETTINGS,
   MobilePluginSettings,
@@ -15,15 +15,6 @@ export default class MobilePlugin extends Plugin {
   async onload() {
     await this.loadSettings();
 
-    // Register command for creating new notes
-    this.addCommand({
-      id: "create-new-note",
-      name: "Create new note",
-      callback: async () => {
-        await this.createNewNote();
-      },
-    });
-
     // Register wake lock toggle command
     this.addCommand({
       id: "toggle-wake-lock",
@@ -37,65 +28,21 @@ export default class MobilePlugin extends Plugin {
     this.fabManager = new FABManager(this.app, this);
 
     // Register the CodeMirror 6 toolbar extension with multiple context-aware toolbars
-    this.registerEditorExtension(
-      createToolbarExtension(this.app, this.settings)
-    );
+    this.registerEditorExtension(createToolbarExtension(this.app, this));
 
     // add ribbon icon
-    this.addRibbonIcon("plus", "Create New Note", async () => {
-      await this.createNewNote();
-    });
+    this.addRibbonIcon(
+      "plus",
+      "Create New Note",
+      async () => await this.createNewNote()
+    );
 
     // Add settings tab
     this.addSettingTab(new MobileSettingTab(this.app, this));
   }
 
-  refreshToolbar() {
-    // Trigger a workspace update to refresh the toolbar
-    // The toolbar will re-render with updated settings on the next selection change
-    this.app.workspace.trigger("active-leaf-change");
-  }
-
   async createNewNote() {
-    // "file-explorer:new-file"
     (this.app as any).commands.executeCommandById("file-explorer:new-file");
-    return;
-    try {
-      // Determine the folder path
-      const folderPath = this.settings.homeFolder
-        ? normalizePath(this.settings.homeFolder)
-        : "";
-
-      // Ensure the folder exists
-      if (folderPath && !(await this.app.vault.adapter.exists(folderPath))) {
-        await this.app.vault.createFolder(folderPath);
-      }
-
-      // Find an available filename
-      let filename = "Untitled.md";
-      let counter = 1;
-      let fullPath = folderPath ? `${folderPath}/Untitled.md` : "Untitled.md";
-
-      while (await this.app.vault.adapter.exists(fullPath)) {
-        filename = `Untitled ${counter}.md`;
-        fullPath = folderPath ? `${folderPath}/${filename}` : filename;
-        counter++;
-      }
-
-      // Create the file
-      const file = await this.app.vault.create(fullPath, "");
-
-      // Open the newly created file
-      const leaf = this.app.workspace.getLeaf(false);
-      await leaf.openFile(file as TFile);
-
-      // Auto-focus into the editor
-      setTimeout(() => {
-        this.app.workspace.activeEditor?.editor?.focus();
-      }, 100);
-    } catch (error) {
-      console.error("Error creating note:", error);
-    }
   }
 
   async toggleWakeLock() {

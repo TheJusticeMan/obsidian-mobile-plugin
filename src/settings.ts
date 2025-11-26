@@ -8,6 +8,7 @@ import {
   SuggestModal,
   TFolder,
 } from "obsidian";
+import { GestureCommand } from "./fab";
 import MobilePlugin from "./main";
 
 export interface ToolbarConfig {
@@ -41,6 +42,7 @@ export interface MobilePluginSettings {
   useIcons: boolean;
   commandIcons: Record<string, string>; // Map of command ID to icon name
   enableHapticFeedback: boolean;
+  gestureCommands: GestureCommand[];
 }
 
 export const DEFAULT_SETTINGS: MobilePluginSettings = {
@@ -50,6 +52,7 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
     "editor:toggle-italics",
     "editor:insert-link",
   ],
+  gestureCommands: [],
   toolbars: [
     {
       id: "formatting",
@@ -214,7 +217,7 @@ export class MobileSettingTab extends PluginSettingTab {
 
     containerEl.empty();
 
-    // Home folder setting
+    /*     // Home folder setting
     new Setting(containerEl)
       .setName("Home folder")
       .setDesc(
@@ -244,7 +247,7 @@ export class MobileSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
             this.display();
           })
-      );
+      ); */
 
     // Use icons setting
     new Setting(containerEl)
@@ -258,8 +261,6 @@ export class MobileSettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.useIcons = value;
             await this.plugin.saveSettings();
-            // Trigger toolbar refresh
-            this.plugin.refreshToolbar();
           })
       );
 
@@ -337,6 +338,21 @@ export class MobileSettingTab extends PluginSettingTab {
           this.display();
         })
     );
+    this.plugin.settings.gestureCommands.forEach((gc, gcIndex) => {
+      new Setting(containerEl)
+        .setName(`Gesture Command: ${gc.name}`)
+        .setDesc(`ID: ${gc.commandId}`)
+        .addExtraButton((btn) =>
+          btn
+            .setIcon("trash")
+            .setTooltip("Delete gesture command")
+            .onClick(async () => {
+              this.plugin.settings.gestureCommands.splice(gcIndex, 1);
+              await this.plugin.saveSettings();
+              this.display();
+            })
+        );
+    });
   }
 
   renderToolbar(
@@ -347,9 +363,10 @@ export class MobileSettingTab extends PluginSettingTab {
     const toolbarSection = container.createDiv("mobile-toolbar-section");
 
     // Toolbar header with name
-    const headerSetting = new Setting(toolbarSection)
+    new Setting(toolbarSection)
       .setName(toolbar.name)
       .setDesc(`ID: ${toolbar.id}`)
+      .setClass("mobile-toolbar-header-setting")
       .addText((text) =>
         text
           .setPlaceholder("Toolbar name")
@@ -374,8 +391,6 @@ export class MobileSettingTab extends PluginSettingTab {
             this.display();
           })
       );
-
-    headerSetting.settingEl.addClass("mobile-toolbar-header");
 
     // Command list for this toolbar
     const commandListContainer = toolbarSection.createDiv(

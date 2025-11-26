@@ -7,56 +7,35 @@ import {
   ViewUpdate,
 } from "@codemirror/view";
 import { App, ButtonComponent } from "obsidian";
-import { ContextBinding, ContextType, ToolbarConfig } from "./settings";
+import MobilePlugin from "./main";
+import { ContextType, ToolbarConfig } from "./settings";
 
 /**
  * Creates a CodeMirror 6 ViewPlugin that displays a context-aware toolbar at the bottom
  * when text is selected or cursor is in a specific context.
  */
-export function createToolbarExtension(app: App, settings: any) {
+export function createToolbarExtension(app: App, plugin: MobilePlugin) {
   return ViewPlugin.fromClass(
     class {
       decorations: DecorationSet;
       tooltip: HTMLElement | null = null;
       app: App;
-      toolbars: ToolbarConfig[];
-      contextBindings: ContextBinding[];
-      useIcons: boolean;
-      commandIcons: Record<string, string>;
-      enableHapticFeedback: boolean;
-      editorContainer: HTMLElement | null = null;
+      plugin: MobilePlugin;
 
       constructor(view: EditorView) {
         this.decorations = Decoration.none;
         this.app = app;
-        this.toolbars = settings.toolbars;
-        this.contextBindings = settings.contextBindings;
-        this.useIcons = settings.useIcons;
-        this.commandIcons = settings.commandIcons;
-        this.enableHapticFeedback = settings.enableHapticFeedback;
+        this.plugin = plugin;
 
         // Find the editor container to anchor the toolbar
-        this.editorContainer = this.findEditorContainer(view.dom);
 
         this.updateTooltip(view);
       }
 
       hapticFeedback(duration: number = 10) {
-        if (this.enableHapticFeedback && navigator.vibrate) {
+        if (this.plugin.settings.enableHapticFeedback && navigator.vibrate) {
           navigator.vibrate(duration);
         }
-      }
-
-      findEditorContainer(element: HTMLElement): HTMLElement | null {
-        // Find the workspace-leaf-content container
-        let current = element.parentElement;
-        while (current) {
-          if (current.classList.contains("workspace-leaf-content")) {
-            return current;
-          }
-          current = current.parentElement;
-        }
-        return null;
       }
 
       update(update: ViewUpdate) {
@@ -90,7 +69,7 @@ export function createToolbarExtension(app: App, settings: any) {
       hasContext(view: EditorView, pos: number): boolean {
         const activeContexts = this.getMatchingContexts(view, pos);
         // Check if any binding matches the current context
-        for (const binding of this.contextBindings) {
+        for (const binding of this.plugin.settings.contextBindings) {
           if (activeContexts.has(binding.contextType)) {
             return true;
           }
@@ -104,9 +83,9 @@ export function createToolbarExtension(app: App, settings: any) {
         const matchingToolbars: ToolbarConfig[] = [];
         const seenCommands = new Set<string>();
 
-        for (const binding of this.contextBindings) {
+        for (const binding of this.plugin.settings.contextBindings) {
           if (activeContexts.has(binding.contextType)) {
-            const toolbar = this.toolbars.find(
+            const toolbar = this.plugin.settings.toolbars.find(
               (t) => t.id === binding.toolbarId
             );
             if (toolbar) {
@@ -222,7 +201,7 @@ export function createToolbarExtension(app: App, settings: any) {
         }
 
         // Create tooltip element
-        this.tooltip = (this.editorContainer || view.dom).createDiv({
+        this.tooltip = view.dom.createDiv({
           cls: "mobile-selection-toolbar",
           attr: { "data-toolbar-id": activeToolbar.id },
         });
@@ -234,9 +213,10 @@ export function createToolbarExtension(app: App, settings: any) {
         // Add command buttons
         activeToolbar.commands.forEach((commandId) => {
           const command = commands[commandId];
-          const iconToUse = this.commandIcons[commandId] || command.icon;
+          const iconToUse =
+            this.plugin.settings.commandIcons[commandId] || command.icon;
           if (command && this.tooltip) {
-            if (this.useIcons && iconToUse) {
+            if (this.plugin.settings.useIcons && iconToUse) {
               new ButtonComponent(this.tooltip)
                 /* .setClass("mobile-toolbar-button") */
                 .setIcon(iconToUse)

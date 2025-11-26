@@ -3,11 +3,6 @@ Mobile Plugin Styles
 Includes FAB and selection toolbar styles with mobile-friendly design
 */
 
-/* Ensure workspace-leaf-content is positioned for absolute children */
-.workspace-leaf-content {
-  position: relative;
-}
-
 /* Floating Action Button (FAB) */
 .mobile-fab {
   position: absolute;
@@ -55,7 +50,7 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   bottom: calc(10px + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
-  z-index: 1000;
+  /* z-index: 1000; */
 }
 
 .mobile-toolbar-button {
@@ -135,4 +130,16 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 
 .mobile-plugin-draggable-item.drag-over-bottom {
   border-bottom: 2px solid var(--interactive-accent);
+}
+
+.mobile-fab-dragline {
+  position: fixed;
+  height: 4px;
+  background-color: var(--interactive-accent);
+  top: 0;
+  left: 0;
+  transform-origin: 0 50%;
+  z-index: 101;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
 }

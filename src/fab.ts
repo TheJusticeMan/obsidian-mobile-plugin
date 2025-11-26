@@ -1,10 +1,11 @@
-import { App, TFile } from 'obsidian';
+import { App, TFile, normalizePath } from 'obsidian';
+import { MobilePluginSettings } from './settings';
 
 /**
  * Mounts a Floating Action Button (FAB) that creates new notes.
  * The FAB is positioned at the bottom-right with safe area insets for mobile devices.
  */
-export function mountFAB(app: App, containerEl: HTMLElement): HTMLElement {
+export function mountFAB(app: App, containerEl: HTMLElement, settings: MobilePluginSettings): HTMLElement {
 	const fab = containerEl.createEl('button', {
 		cls: 'mobile-fab',
 		attr: {
@@ -17,17 +18,27 @@ export function mountFAB(app: App, containerEl: HTMLElement): HTMLElement {
 
 	fab.addEventListener('click', async () => {
 		try {
+			// Determine the folder path
+			const folderPath = settings.homeFolder ? normalizePath(settings.homeFolder) : '';
+			
+			// Ensure the folder exists
+			if (folderPath && !(await app.vault.adapter.exists(folderPath))) {
+				await app.vault.createFolder(folderPath);
+			}
+
 			// Find an available filename
 			let filename = 'Untitled.md';
 			let counter = 1;
+			let fullPath = folderPath ? `${folderPath}/Untitled.md` : 'Untitled.md';
 			
-			while (await app.vault.adapter.exists(filename)) {
+			while (await app.vault.adapter.exists(fullPath)) {
 				filename = `Untitled ${counter}.md`;
+				fullPath = folderPath ? `${folderPath}/${filename}` : filename;
 				counter++;
 			}
 
 			// Create the file
-			const file = await app.vault.create(filename, '');
+			const file = await app.vault.create(fullPath, '');
 
 			// Open the newly created file
 			const leaf = app.workspace.getLeaf(false);

@@ -3,10 +3,12 @@ import MobilePlugin from './main';
 
 export interface MobilePluginSettings {
 	homeFolder: string;
+	toolbarCommands: string[];
 }
 
 export const DEFAULT_SETTINGS: MobilePluginSettings = {
-	homeFolder: ''
+	homeFolder: '',
+	toolbarCommands: ['editor:toggle-bold', 'editor:toggle-italics', 'editor:insert-link']
 }
 
 /**
@@ -83,6 +85,20 @@ export class MobileSettingTab extends PluginSettingTab {
 					this.plugin.settings.homeFolder = '';
 					await this.plugin.saveSettings();
 					this.display();
+				}));
+
+		new Setting(containerEl)
+			.setName('Toolbar commands')
+			.setDesc('Comma-separated list of command IDs to show in the selection toolbar. Examples: editor:toggle-bold, editor:toggle-italics')
+			.addTextArea(text => text
+				.setPlaceholder('editor:toggle-bold, editor:toggle-italics')
+				.setValue(this.plugin.settings.toolbarCommands.join(', '))
+				.onChange(async (value) => {
+					this.plugin.settings.toolbarCommands = value
+						.split(',')
+						.map(cmd => cmd.trim())
+						.filter(cmd => cmd.length > 0);
+					await this.plugin.saveSettings();
 				}));
 	}
 }

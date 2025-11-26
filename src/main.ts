@@ -1,6 +1,6 @@
 import { Plugin } from 'obsidian';
-import { mountFAB } from './src/fab';
-import { toolbarExtension } from './src/toolbar-extension';
+import { mountFAB } from './fab';
+import { toolbarExtension } from './toolbar-extension';
 
 export default class MobilePlugin extends Plugin {
 	fabElement: HTMLElement | null = null;

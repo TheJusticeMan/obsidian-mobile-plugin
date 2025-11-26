@@ -140,11 +140,12 @@ export class MobileSettingTab extends PluginSettingTab {
 					})
 			);
 
-		containerEl.createEl("h3", { text: "Toolbar commands" });
-		containerEl.createEl("p", {
-			text: "Manage commands that appear in the mobile toolbar. Drag to reorder.",
-			cls: "setting-item-description",
-		});
+		new Setting(containerEl)
+			.setHeading()
+			.setName("Toolbar commands")
+			.setDesc(
+				"Manage commands that appear in the mobile toolbar. Drag to reorder."
+			);
 
 		const commandListContainer = containerEl.createDiv();
 		this.renderCommandList(commandListContainer);

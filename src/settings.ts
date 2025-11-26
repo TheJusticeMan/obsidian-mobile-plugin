@@ -7,6 +7,7 @@ import {
 	Command,
 	SuggestModal,
 	ExtraButtonComponent,
+	getIconIds,
 } from "obsidian";
 import MobilePlugin from "./main";
 
@@ -16,16 +17,16 @@ export interface ToolbarConfig {
 	commands: string[];
 }
 
-export type ContextType = 
-	| 'selection' 
-	| 'list' 
-	| 'task'
-	| 'heading'
-	| 'code-block'
-	| 'table'
-	| 'blockquote'
-	| 'link'
-	| 'default';
+export type ContextType =
+	| "selection"
+	| "list"
+	| "task"
+	| "heading"
+	| "code-block"
+	| "table"
+	| "blockquote"
+	| "link"
+	| "default";
 
 export interface ContextBinding {
 	id: string;
@@ -51,8 +52,8 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
 	],
 	toolbars: [
 		{
-			id: 'formatting',
-			name: 'Formatting',
+			id: "formatting",
+			name: "Formatting",
 			commands: [
 				"editor:toggle-bold",
 				"editor:toggle-italics",
@@ -60,8 +61,8 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
 			],
 		},
 		{
-			id: 'list-actions',
-			name: 'List Actions',
+			id: "list-actions",
+			name: "List Actions",
 			commands: [
 				"editor:toggle-checklist-status",
 				"editor:indent-list",
@@ -71,19 +72,19 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
 	],
 	contextBindings: [
 		{
-			id: 'binding-selection',
-			contextType: 'selection',
-			toolbarId: 'formatting',
+			id: "binding-selection",
+			contextType: "selection",
+			toolbarId: "formatting",
 		},
 		{
-			id: 'binding-list',
-			contextType: 'list',
-			toolbarId: 'list-actions',
+			id: "binding-list",
+			contextType: "list",
+			toolbarId: "list-actions",
 		},
 		{
-			id: 'binding-default',
-			contextType: 'default',
-			toolbarId: 'formatting',
+			id: "binding-default",
+			contextType: "default",
+			toolbarId: "formatting",
 		},
 	],
 	useIcons: false,
@@ -143,39 +144,24 @@ export class IconSuggestModal extends SuggestModal<string> {
 	icons: string[];
 	getSuggestions(query: string): string[] | Promise<string[]> {
 		const lowerQuery = query.toLowerCase();
-		return this.icons.filter(icon => 
+		return this.icons.filter((icon) =>
 			icon.toLowerCase().includes(lowerQuery)
 		);
 	}
 
 	renderSuggestion(value: string, el: HTMLElement): void {
-		const container = el.createDiv({ cls: 'suggestion-content' });
-		const iconContainer = container.createDiv({ cls: 'suggestion-icon' });
-		const textContainer = container.createDiv({ cls: 'suggestion-title' });
-		
-		new ExtraButtonComponent(iconContainer).setIcon(`${value}`);
-		textContainer.setText(value);
+		new Setting(el)
+			.setName(value)
+			.addExtraButton((btn) => btn.setIcon(`${value}`));
 	}
-
 
 	constructor(app: App, onSubmit: (result: string) => void) {
 		super(app);
 		this.onSubmit = onSubmit;
-		
+		getIconIds();
 		// Use a curated list of common Lucide icons available in Obsidian
-		this.icons = [
-			'bold', 'italic', 'underline', 'strikethrough',
-			'link', 'image', 'file', 'folder',
-			'check', 'x', 'plus', 'minus',
-			'chevron-up', 'chevron-down', 'chevron-left', 'chevron-right',
-			'arrow-up', 'arrow-down', 'arrow-left', 'arrow-right',
-			'star', 'heart', 'bookmark', 'tag',
-			'search', 'settings', 'help-circle', 'info',
-			'edit', 'trash', 'copy', 'clipboard',
-			'list', 'align-left', 'align-center', 'align-right',
-			'code', 'quote', 'heading', 'table',
-		];
-		
+		this.icons = getIconIds();
+
 		this.setPlaceholder("Search for an icon...");
 	}
 
@@ -323,9 +309,11 @@ export class MobileSettingTab extends PluginSettingTab {
 			);
 
 		// Render all context bindings
-		this.plugin.settings.contextBindings.forEach((binding, bindingIndex) => {
-			this.renderContextBinding(containerEl, binding, bindingIndex);
-		});
+		this.plugin.settings.contextBindings.forEach(
+			(binding, bindingIndex) => {
+				this.renderContextBinding(containerEl, binding, bindingIndex);
+			}
+		);
 
 		// Add new binding button
 		new Setting(containerEl).addButton((button) =>
@@ -335,8 +323,8 @@ export class MobileSettingTab extends PluginSettingTab {
 				.onClick(async () => {
 					const newBinding: ContextBinding = {
 						id: `binding-${Date.now()}`,
-						contextType: 'default',
-						toolbarId: this.plugin.settings.toolbars[0]?.id || '',
+						contextType: "default",
+						toolbarId: this.plugin.settings.toolbars[0]?.id || "",
 					};
 					this.plugin.settings.contextBindings.push(newBinding);
 					await this.plugin.saveSettings();
@@ -345,9 +333,13 @@ export class MobileSettingTab extends PluginSettingTab {
 		);
 	}
 
-	renderToolbar(container: HTMLElement, toolbar: ToolbarConfig, toolbarIndex: number) {
-		const toolbarSection = container.createDiv('mobile-toolbar-section');
-		
+	renderToolbar(
+		container: HTMLElement,
+		toolbar: ToolbarConfig,
+		toolbarIndex: number
+	) {
+		const toolbarSection = container.createDiv("mobile-toolbar-section");
+
 		// Toolbar header with name
 		const headerSetting = new Setting(toolbarSection)
 			.setName(toolbar.name)
@@ -368,54 +360,73 @@ export class MobileSettingTab extends PluginSettingTab {
 					.onClick(async () => {
 						// Remove toolbar and any bindings using it
 						this.plugin.settings.toolbars.splice(toolbarIndex, 1);
-						this.plugin.settings.contextBindings = this.plugin.settings.contextBindings.filter(
-							b => b.toolbarId !== toolbar.id
-						);
+						this.plugin.settings.contextBindings =
+							this.plugin.settings.contextBindings.filter(
+								(b) => b.toolbarId !== toolbar.id
+							);
 						await this.plugin.saveSettings();
 						this.display();
 					})
 			);
 
-		headerSetting.settingEl.addClass('mobile-toolbar-header');
+		headerSetting.settingEl.addClass("mobile-toolbar-header");
 
 		// Command list for this toolbar
-		const commandListContainer = toolbarSection.createDiv('mobile-command-list');
-		this.renderCommandListForToolbar(commandListContainer, toolbar, toolbarIndex);
+		const commandListContainer = toolbarSection.createDiv(
+			"mobile-command-list"
+		);
+		this.renderCommandListForToolbar(
+			commandListContainer,
+			toolbar,
+			toolbarIndex
+		);
 
 		// Add command button for this toolbar
-		new Setting(toolbarSection)
-			.addButton((button) =>
-				button
-					.setButtonText("Add command")
-					.setClass('mobile-add-command-btn')
-					.onClick(() => {
-						new CommandSuggestModal(this.app, async (command) => {
-							toolbar.commands.push(command.id);
-							await this.plugin.saveSettings();
-							this.renderCommandListForToolbar(commandListContainer, toolbar, toolbarIndex);
-						}).open();
-					})
-			);
+		new Setting(toolbarSection).addButton((button) =>
+			button
+				.setButtonText("Add command")
+				.setClass("mobile-add-command-btn")
+				.onClick(() => {
+					new CommandSuggestModal(this.app, async (command) => {
+						toolbar.commands.push(command.id);
+						await this.plugin.saveSettings();
+						this.renderCommandListForToolbar(
+							commandListContainer,
+							toolbar,
+							toolbarIndex
+						);
+					}).open();
+				})
+		);
 	}
 
-	renderContextBinding(container: HTMLElement, binding: ContextBinding, bindingIndex: number) {
-		
-		const toolbar = this.plugin.settings.toolbars.find(t => t.id === binding.toolbarId);
-		const toolbarName = toolbar ? toolbar.name : '(Not found)';
+	renderContextBinding(
+		container: HTMLElement,
+		binding: ContextBinding,
+		bindingIndex: number
+	) {
+		const toolbar = this.plugin.settings.toolbars.find(
+			(t) => t.id === binding.toolbarId
+		);
+		const toolbarName = toolbar ? toolbar.name : "(Not found)";
 
 		const setting = new Setting(container)
-			.setName(`${this.getContextDisplayName(binding.contextType)} → ${toolbarName}`)
+			.setName(
+				`${this.getContextDisplayName(
+					binding.contextType
+				)} → ${toolbarName}`
+			)
 			.addDropdown((dropdown) => {
 				dropdown
-					.addOption('selection', 'Selection')
-					.addOption('list', 'List')
-					.addOption('task', 'Task')
-					.addOption('heading', 'Heading')
-					.addOption('code-block', 'Code Block')
-					.addOption('table', 'Table')
-					.addOption('blockquote', 'Blockquote')
-					.addOption('link', 'Link')
-					.addOption('default', 'Default')
+					.addOption("selection", "Selection")
+					.addOption("list", "List")
+					.addOption("task", "Task")
+					.addOption("heading", "Heading")
+					.addOption("code-block", "Code Block")
+					.addOption("table", "Table")
+					.addOption("blockquote", "Blockquote")
+					.addOption("link", "Link")
+					.addOption("default", "Default")
 					.setValue(binding.contextType)
 					.onChange(async (value) => {
 						binding.contextType = value as ContextType;
@@ -424,46 +435,50 @@ export class MobileSettingTab extends PluginSettingTab {
 					});
 			})
 			.addDropdown((dropdown) => {
-				this.plugin.settings.toolbars.forEach(toolbar => {
+				this.plugin.settings.toolbars.forEach((toolbar) => {
 					dropdown.addOption(toolbar.id, toolbar.name);
 				});
-				dropdown
-					.setValue(binding.toolbarId)
-					.onChange(async (value) => {
-						binding.toolbarId = value;
-						await this.plugin.saveSettings();
-						this.display();
-					});
+				dropdown.setValue(binding.toolbarId).onChange(async (value) => {
+					binding.toolbarId = value;
+					await this.plugin.saveSettings();
+					this.display();
+				});
 			})
 			.addExtraButton((btn) =>
 				btn
 					.setIcon("trash")
 					.setTooltip("Delete binding")
 					.onClick(async () => {
-						this.plugin.settings.contextBindings.splice(bindingIndex, 1);
+						this.plugin.settings.contextBindings.splice(
+							bindingIndex,
+							1
+						);
 						await this.plugin.saveSettings();
 						this.display();
 					})
 			);
-
 	}
 
 	getContextDisplayName(contextType: ContextType): string {
 		const names: Record<ContextType, string> = {
-			'selection': 'Selection',
-			'list': 'List',
-			'task': 'Task',
-			'heading': 'Heading',
-			'code-block': 'Code Block',
-			'table': 'Table',
-			'blockquote': 'Blockquote',
-			'link': 'Link',
-			'default': 'Default',
+			selection: "Selection",
+			list: "List",
+			task: "Task",
+			heading: "Heading",
+			"code-block": "Code Block",
+			table: "Table",
+			blockquote: "Blockquote",
+			link: "Link",
+			default: "Default",
 		};
 		return names[contextType] || contextType;
 	}
 
-	renderCommandListForToolbar(container: HTMLElement, toolbar: ToolbarConfig, toolbarIndex: number) {
+	renderCommandListForToolbar(
+		container: HTMLElement,
+		toolbar: ToolbarConfig,
+		toolbarIndex: number
+	) {
 		container.empty();
 		const commands = toolbar.commands;
 
@@ -471,25 +486,27 @@ export class MobileSettingTab extends PluginSettingTab {
 			// @ts-ignore
 			const command = this.app.commands.findCommand(cmdId);
 			const commandName = command ? command.name : cmdId;
-			const defaultIcon = command?.icon || '';
-			const customIcon = this.plugin.settings.commandIcons[cmdId] || defaultIcon;
+			const defaultIcon = command?.icon || "";
+			const customIcon =
+				this.plugin.settings.commandIcons[cmdId] || defaultIcon;
 
 			const setting = new Setting(container)
 				.setName(commandName)
 				.setDesc(cmdId)
 				.addButton((btn) =>
 					btn
-						.setIcon(customIcon || 'question')
+						.setIcon(customIcon || "question")
 						.setTooltip("Change icon")
 						.onClick(() => {
-							new IconSuggestModal(
-								this.app,
-								async (icon) => {
-									this.plugin.settings.commandIcons[cmdId] = icon;
-									await this.plugin.saveSettings();
-									this.renderCommandListForToolbar(container, toolbar, toolbarIndex);
-								}
-							).open();
+							new IconSuggestModal(this.app, async (icon) => {
+								this.plugin.settings.commandIcons[cmdId] = icon;
+								await this.plugin.saveSettings();
+								this.renderCommandListForToolbar(
+									container,
+									toolbar,
+									toolbarIndex
+								);
+							}).open();
 						})
 				)
 				.addExtraButton((btn) =>
@@ -502,7 +519,11 @@ export class MobileSettingTab extends PluginSettingTab {
 								async (command) => {
 									toolbar.commands[index] = command.id;
 									await this.plugin.saveSettings();
-									this.renderCommandListForToolbar(container, toolbar, toolbarIndex);
+									this.renderCommandListForToolbar(
+										container,
+										toolbar,
+										toolbarIndex
+									);
 								}
 							).open();
 						})
@@ -514,7 +535,11 @@ export class MobileSettingTab extends PluginSettingTab {
 						.onClick(async () => {
 							toolbar.commands.splice(index, 1);
 							await this.plugin.saveSettings();
-							this.renderCommandListForToolbar(container, toolbar, toolbarIndex);
+							this.renderCommandListForToolbar(
+								container,
+								toolbar,
+								toolbarIndex
+							);
 						})
 				);
 
@@ -575,10 +600,13 @@ export class MobileSettingTab extends PluginSettingTab {
 
 					toolbar.commands.splice(targetIndex, 0, item);
 					await this.plugin.saveSettings();
-					this.renderCommandListForToolbar(container, toolbar, toolbarIndex);
+					this.renderCommandListForToolbar(
+						container,
+						toolbar,
+						toolbarIndex
+					);
 				}
 			};
 		});
 	}
-
 }

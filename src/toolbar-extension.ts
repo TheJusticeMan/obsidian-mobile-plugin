@@ -1,13 +1,25 @@
-import { ViewPlugin, EditorView, ViewUpdate, Decoration, DecorationSet } from '@codemirror/view';
-import { syntaxTree } from '@codemirror/language';
-import { App } from 'obsidian';
-import { ToolbarConfig, ContextBinding, ContextType } from './settings';
+import {
+	ViewPlugin,
+	EditorView,
+	ViewUpdate,
+	Decoration,
+	DecorationSet,
+} from "@codemirror/view";
+import { syntaxTree } from "@codemirror/language";
+import { App, ButtonComponent } from "obsidian";
+import { ToolbarConfig, ContextBinding, ContextType } from "./settings";
 
 /**
  * Creates a CodeMirror 6 ViewPlugin that displays a context-aware toolbar at the bottom
  * when text is selected or cursor is in a specific context.
  */
-export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], contextBindings: ContextBinding[], useIcons: boolean, commandIcons: Record<string, string>) {
+export function createToolbarExtension(
+	app: App,
+	toolbars: ToolbarConfig[],
+	contextBindings: ContextBinding[],
+	useIcons: boolean,
+	commandIcons: Record<string, string>
+) {
 	return ViewPlugin.fromClass(
 		class {
 			decorations: DecorationSet;
@@ -26,10 +38,10 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], cont
 				this.contextBindings = contextBindings;
 				this.useIcons = useIcons;
 				this.commandIcons = commandIcons;
-				
+
 				// Find the editor container to anchor the toolbar
 				this.editorContainer = this.findEditorContainer(view.dom);
-				
+
 				this.updateTooltip(view);
 			}
 
@@ -37,7 +49,7 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], cont
 				// Find the workspace-leaf-content container
 				let current = element.parentElement;
 				while (current) {
-					if (current.classList.contains('workspace-leaf-content')) {
+					if (current.classList.contains("workspace-leaf-content")) {
 						return current;
 					}
 					current = current.parentElement;
@@ -46,7 +58,11 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], cont
 			}
 
 			update(update: ViewUpdate) {
-				if (update.selectionSet || update.viewportChanged || update.docChanged) {
+				if (
+					update.selectionSet ||
+					update.viewportChanged ||
+					update.docChanged
+				) {
 					// Defer tooltip update to avoid reading layout during update
 					requestAnimationFrame(() => {
 						this.updateTooltip(update.view);
@@ -56,7 +72,7 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], cont
 
 			updateTooltip(view: EditorView) {
 				const selection = view.state.selection.main;
-				
+
 				// Remove existing tooltip if present
 				if (this.tooltip) {
 					this.tooltip.remove();
@@ -70,34 +86,41 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], cont
 			}
 
 			hasContext(view: EditorView, pos: number): boolean {
+				const activeContexts = this.getMatchingContexts(view, pos);
 				// Check if any binding matches the current context
 				for (const binding of this.contextBindings) {
-					if (this.matchesContextType(binding.contextType, view, pos)) {
+					if (activeContexts.has(binding.contextType)) {
 						return true;
 					}
 				}
 				return false;
 			}
 
-			getActiveToolbar(view: EditorView, pos: number): ToolbarConfig | null {
+			getActiveToolbar(
+				view: EditorView,
+				pos: number
+			): ToolbarConfig | null {
+				const activeContexts = this.getMatchingContexts(view, pos);
 				// Collect all matching toolbars and concatenate their commands
 				const matchingToolbars: ToolbarConfig[] = [];
 				const seenCommands = new Set<string>();
-				
+
 				for (const binding of this.contextBindings) {
-					if (this.matchesContextType(binding.contextType, view, pos)) {
-						const toolbar = this.toolbars.find(t => t.id === binding.toolbarId);
+					if (activeContexts.has(binding.contextType)) {
+						const toolbar = this.toolbars.find(
+							(t) => t.id === binding.toolbarId
+						);
 						if (toolbar) {
 							matchingToolbars.push(toolbar);
 						}
 					}
 				}
-				
+
 				// If no matches, return null
 				if (matchingToolbars.length === 0) {
 					return null;
 				}
-				
+
 				// Concatenate commands from all matching toolbars, removing duplicates
 				const combinedCommands: string[] = [];
 				for (const toolbar of matchingToolbars) {
@@ -108,283 +131,151 @@ export function createToolbarExtension(app: App, toolbars: ToolbarConfig[], cont
 						}
 					}
 				}
-				
+
 				// Return a virtual toolbar with combined commands
 				return {
-					id: 'combined',
-					name: 'Combined Toolbar',
+					id: "combined",
+					name: "Combined Toolbar",
 					commands: combinedCommands,
 				};
 			}
 
-			matchesContextType(contextType: ContextType, view: EditorView, pos: number): boolean {
-				const selection = view.state.selection.main;
-				
-				switch (contextType) {
-					case 'selection':
-						return !selection.empty;
-					
-					case 'list':
-						return this.isInListContext(view, pos);
-					
-					case 'task':
-						return this.isInTaskContext(view, pos);
-					
-					case 'heading':
-						return this.isInHeadingContext(view, pos);
-					
-					case 'code-block':
-						return this.isInCodeBlockContext(view, pos);
-					
-					case 'table':
-						return this.isInTableContext(view, pos);
-					
-					case 'blockquote':
-						return this.isInBlockquoteContext(view, pos);
-					
-					case 'link':
-						return this.isInLinkContext(view, pos);
-					
-					case 'default':
-						// Default context always matches as fallback
-						return true;
-					
-					default:
-						return false;
+			getMatchingContexts(
+				view: EditorView,
+				pos: number
+			): Set<ContextType> {
+				const contexts = new Set<ContextType>();
+				contexts.add("default");
+
+				if (!view.state.selection.main.empty) {
+					contexts.add("selection");
 				}
-			}
 
-			isInListContext(view: EditorView, pos: number): boolean {
-				let hasContext = false;
-				
 				syntaxTree(view.state).iterate({
 					from: pos,
 					to: pos,
 					enter: (node: any) => {
 						const nodeName = node.type.name;
-						
-						// Check if in a list item using exact node names
-						if (nodeName === 'BulletList' || nodeName === 'OrderedList') {
-							hasContext = true;
-						}
-						
-						// Check for HyperMD list line classes (Obsidian's styling) - matches any nesting level
-						if (nodeName.startsWith('HyperMD-list-line_HyperMD-list-line-')) {
-							hasContext = true;
-						}
-					}
-				});
-				
-				return hasContext;
-			}
 
-			isInTaskContext(view: EditorView, pos: number): boolean {
-				let hasContext = false;
-				
-				syntaxTree(view.state).iterate({
-					from: pos,
-					to: pos,
-					enter: (node: any) => {
-						const nodeName = node.type.name;
-						
-						if (nodeName === 'Task') {
-							hasContext = true;
+						if (
+							nodeName === "BulletList" ||
+							nodeName === "OrderedList" ||
+							nodeName.startsWith(
+								"HyperMD-list-line_HyperMD-list-line-"
+							)
+						) {
+							contexts.add("list");
 						}
-						
-						// Check for HyperMD task line
-						if (nodeName.includes('HyperMD-task-line')) {
-							hasContext = true;
-						}
-					}
-				});
-				
-				return hasContext;
-			}
 
-			isInHeadingContext(view: EditorView, pos: number): boolean {
-				let hasContext = false;
-				
-				syntaxTree(view.state).iterate({
-					from: pos,
-					to: pos,
-					enter: (node: any) => {
-						const nodeName = node.type.name;
-						
-						if (nodeName.startsWith('ATXHeading') || nodeName === 'SetextHeading') {
-							hasContext = true;
+						if (
+							nodeName === "Task" ||
+							nodeName.includes("HyperMD-task-line")
+						) {
+							contexts.add("task");
 						}
-						
-						// Check for HyperMD heading
-						if (nodeName.startsWith('HyperMD-header')) {
-							hasContext = true;
-						}
-					}
-				});
-				
-				return hasContext;
-			}
 
-			isInCodeBlockContext(view: EditorView, pos: number): boolean {
-				let hasContext = false;
-				
-				syntaxTree(view.state).iterate({
-					from: pos,
-					to: pos,
-					enter: (node: any) => {
-						const nodeName = node.type.name;
-						
-						if (nodeName === 'FencedCode' || nodeName === 'CodeBlock') {
-							hasContext = true;
+						if (
+							nodeName.startsWith("ATXHeading") ||
+							nodeName === "SetextHeading" ||
+							nodeName.startsWith("HyperMD-header")
+						) {
+							contexts.add("heading");
 						}
-						
-						// Check for HyperMD code block
-						if (nodeName.includes('HyperMD-codeblock')) {
-							hasContext = true;
-						}
-					}
-				});
-				
-				return hasContext;
-			}
 
-			isInTableContext(view: EditorView, pos: number): boolean {
-				let hasContext = false;
-				
-				syntaxTree(view.state).iterate({
-					from: pos,
-					to: pos,
-					enter: (node: any) => {
-						const nodeName = node.type.name;
-						
-						if (nodeName === 'Table' || nodeName.startsWith('Table')) {
-							hasContext = true;
+						if (
+							nodeName === "FencedCode" ||
+							nodeName === "CodeBlock" ||
+							nodeName.includes("HyperMD-codeblock")
+						) {
+							contexts.add("code-block");
 						}
-						
-						// Check for HyperMD table
-						if (nodeName.includes('HyperMD-table')) {
-							hasContext = true;
-						}
-					}
-				});
-				
-				return hasContext;
-			}
 
-			isInBlockquoteContext(view: EditorView, pos: number): boolean {
-				let hasContext = false;
-				
-				syntaxTree(view.state).iterate({
-					from: pos,
-					to: pos,
-					enter: (node: any) => {
-						const nodeName = node.type.name;
-						
-						if (nodeName === 'Blockquote' || nodeName === 'QuoteMark') {
-							hasContext = true;
+						if (
+							nodeName === "Table" ||
+							nodeName.startsWith("Table") ||
+							nodeName.includes("HyperMD-table")
+						) {
+							contexts.add("table");
 						}
-						
-						// Check for HyperMD quote
-						if (nodeName.includes('HyperMD-quote')) {
-							hasContext = true;
-						}
-					}
-				});
-				
-				return hasContext;
-			}
 
-			isInLinkContext(view: EditorView, pos: number): boolean {
-				let hasContext = false;
-				
-				syntaxTree(view.state).iterate({
-					from: pos,
-					to: pos,
-					enter: (node: any) => {
-						const nodeName = node.type.name;
-						
-						if (nodeName === 'Link' || nodeName.includes('link') || nodeName.includes('URL')) {
-							hasContext = true;
+						if (
+							nodeName === "Blockquote" ||
+							nodeName === "QuoteMark" ||
+							nodeName.includes("HyperMD-quote")
+						) {
+							contexts.add("blockquote");
 						}
-						
-						// Check for HyperMD link
-						if (nodeName.includes('HyperMD-link')) {
-							hasContext = true;
+
+						if (
+							nodeName === "Link" ||
+							nodeName.includes("link") ||
+							nodeName.includes("URL") ||
+							nodeName.includes("HyperMD-link")
+						) {
+							contexts.add("link");
 						}
-					}
+					},
 				});
-				
-				return hasContext;
+
+				return contexts;
 			}
 
 			showTooltip(view: EditorView) {
 				const selection = view.state.selection.main;
-				
+
 				// Get the active toolbar based on context
-				const activeToolbar = this.getActiveToolbar(view, selection.from);
-				
+				const activeToolbar = this.getActiveToolbar(
+					view,
+					selection.from
+				);
+
 				if (!activeToolbar || activeToolbar.commands.length === 0) {
 					return;
 				}
-				
+
 				// Create tooltip element
-				const tooltip = document.createElement('div');
-				tooltip.className = 'mobile-selection-toolbar';
-				tooltip.setAttribute('data-toolbar-id', activeToolbar.id);
-				
+				const tooltip = (this.editorContainer || view.dom).createDiv({
+					cls: "mobile-selection-toolbar",
+					attr: { "data-toolbar-id": activeToolbar.id },
+				});
+
 				// Get all available commands
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				const commands = (this.app as any).commands?.commands || {};
 
 				// Add command buttons
-				activeToolbar.commands.forEach(commandId => {
+				activeToolbar.commands.forEach((commandId) => {
 					const command = commands[commandId];
+					const iconToUse =
+						this.commandIcons[commandId] || command.icon;
 					if (command) {
-						const button = document.createElement('button');
-						button.className = 'mobile-toolbar-button';
-						
-						// Determine which icon to use
-						const customIcon = this.commandIcons[commandId];
-						const defaultIcon = command.icon;
-						const iconToUse = customIcon || defaultIcon;
-						
 						if (this.useIcons && iconToUse) {
-							// Use icon
-							const iconEl = document.createElement('span');
-							iconEl.className = 'mobile-toolbar-icon';
-							// Use Obsidian's setIcon function to render the icon
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							(this.app as any).setIcon?.(iconEl, iconToUse);
-							button.appendChild(iconEl);
-							button.setAttribute('aria-label', command.name || commandId);
+							new ButtonComponent(tooltip)
+								/* .setClass("mobile-toolbar-button") */
+								.setIcon(iconToUse)
+								.setTooltip(command.name || commandId)
+								.onClick((e) => {
+									// Execute the command
+									// eslint-disable-next-line @typescript-eslint/no-explicit-any
+									(
+										this.app as any
+									).commands?.executeCommandById(commandId);
+								});
 						} else {
-							// Use text
-							button.textContent = command.name || commandId;
+							new ButtonComponent(tooltip)
+								/* .setClass("mobile-toolbar-button") */
+								.setButtonText(command.name || commandId)
+								.setTooltip(command.name || commandId)
+								.onClick((e) => {
+									// Execute the command
+									// eslint-disable-next-line @typescript-eslint/no-explicit-any
+									(
+										this.app as any
+									).commands?.executeCommandById(commandId);
+								});
 						}
-						
-						button.addEventListener('click', (e) => {
-							e.preventDefault();
-							// Execute the command
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							(this.app as any).commands?.executeCommandById(commandId);
-						});
-						tooltip.appendChild(button);
 					}
 				});
-
-				// Position toolbar at bottom of editor container
-				tooltip.style.position = 'absolute';
-				tooltip.style.bottom = 'calc(10px + env(safe-area-inset-bottom))';
-				tooltip.style.left = '50%';
-				tooltip.style.transform = 'translateX(-50%)';
-				tooltip.style.zIndex = '1000';
-
-				// Store reference and append to editor container
-				this.tooltip = tooltip;
-				if (this.editorContainer) {
-					this.editorContainer.appendChild(tooltip);
-				} else {
-					view.dom.appendChild(tooltip);
-				}
 			}
 
 			destroy() {

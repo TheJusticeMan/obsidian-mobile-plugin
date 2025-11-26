@@ -51,6 +51,11 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 8px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+	position: absolute;
+	bottom: calc(10px + env(safe-area-inset-bottom));
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 1000;
 }
 
 .mobile-toolbar-button {

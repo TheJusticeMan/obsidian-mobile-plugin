@@ -64,33 +64,26 @@ export function createToolbarExtension(app: App, commandIds: string[]) {
 
 			hasContext(view: EditorView, pos: number): boolean {
 				// Check if cursor is in a markdown list or other special context using syntax tree
-				const tree = syntaxTree(view.state);
-				let node = tree.resolveInner(pos, 0);
+				let hasListContext = false;
 				
-				// Traverse up the tree to find list or task contexts (handles nested nodes like bold within lists)
-				while (node) {
-					const nodeName = node.type.name;
-					
-					// Check for list context using exact names
-					if (nodeName === 'BulletList' || nodeName === 'OrderedList') {
-						return true;
+				syntaxTree(view.state).iterate({
+					from: pos,
+					to: pos,
+					enter: (node) => {
+						const nodeName = node.type.name;
+						
+						// Check for list context using exact names
+						if (nodeName === 'BulletList' || nodeName === 'OrderedList' || nodeName === 'Task') {
+							hasListContext = true;
+						}
 					}
-					
-					// Check for task list context
-					if (nodeName === 'Task') {
-						return true;
-					}
-					
-					node = node.parent;
-				}
+				});
 				
-				return false;
+				return hasListContext;
 			}
 
 			getContextCommands(view: EditorView, pos: number): string[] {
 				const selection = view.state.selection.main;
-				const tree = syntaxTree(view.state);
-				let node = tree.resolveInner(pos, 0);
 				
 				// If there's a selection, show formatting commands
 				if (!selection.empty) {
@@ -100,20 +93,23 @@ export function createToolbarExtension(app: App, commandIds: string[]) {
 				// Context-based commands for cursor position
 				const contextCommands: string[] = [];
 				
-				// Traverse up the tree to find list context (handles nested nodes)
-				while (node) {
-					const nodeName = node.type.name;
-					
-					// Check if in a list item using exact node names
-					if (nodeName === 'BulletList' || nodeName === 'OrderedList' || nodeName === 'Task') {
-						contextCommands.push('editor:toggle-checklist-status');
-						contextCommands.push('editor:indent-list');
-						contextCommands.push('editor:unindent-list');
-						break;
+				// Use iterate to find list context
+				syntaxTree(view.state).iterate({
+					from: pos,
+					to: pos,
+					enter: (node) => {
+						const nodeName = node.type.name;
+						
+						// Check if in a list item using exact node names
+						if (nodeName === 'BulletList' || nodeName === 'OrderedList' || nodeName === 'Task') {
+							if (contextCommands.length === 0) {
+								contextCommands.push('editor:toggle-checklist-status');
+								contextCommands.push('editor:indent-list');
+								contextCommands.push('editor:unindent-list');
+							}
+						}
 					}
-					
-					node = node.parent;
-				}
+				});
 				
 				// If no specific context, show default commands
 				return contextCommands.length > 0 ? contextCommands : this.commandIds;

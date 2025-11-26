@@ -5,134 +5,134 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 
 /* Ensure workspace-leaf-content is positioned for absolute children */
 .workspace-leaf-content {
-	position: relative;
+  position: relative;
 }
 
 /* Floating Action Button (FAB) */
 .mobile-fab {
-	position: absolute;
-	bottom: calc(20px + env(safe-area-inset-bottom));
-	right: 20px;
-	width: 56px;
-	height: 56px;
-	border-radius: 50%;
-	background-color: var(--interactive-accent);
-	color: var(--text-on-accent);
-	border: none;
-	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-	cursor: pointer;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	z-index: 100;
-	transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: absolute;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .mobile-fab:hover {
-	transform: scale(1.05);
-	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
 .mobile-fab:active {
-	transform: scale(0.95);
+  transform: scale(0.95);
 }
 
 .mobile-fab svg {
-	width: 24px;
-	height: 24px;
+  width: 24px;
+  height: 24px;
 }
 
 /* Selection Toolbar */
 .mobile-selection-toolbar {
-	display: flex;
-	gap: 8px;
-	padding: 8px;
-	background-color: var(--background-primary);
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 8px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-	position: absolute;
-	bottom: calc(10px + env(safe-area-inset-bottom));
-	left: 50%;
-	transform: translateX(-50%);
-	z-index: 1000;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  position: absolute;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
 }
 
 .mobile-toolbar-button {
-	padding: 6px 12px;
-	background-color: var(--interactive-normal);
-	color: var(--text-normal);
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 4px;
-	cursor: pointer;
-	font-size: 14px;
-	font-weight: 500;
-	transition: background-color 0.2s ease;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	min-width: 36px;
-	min-height: 36px;
+  padding: 6px 12px;
+  background-color: var(--interactive-normal);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
 }
 
 .mobile-toolbar-button:hover {
-	background-color: var(--interactive-hover);
+  background-color: var(--interactive-hover);
 }
 
 .mobile-toolbar-button:active {
-	background-color: var(--interactive-accent);
-	color: var(--text-on-accent);
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
 }
 
 .mobile-toolbar-icon {
-	display: flex;
-	align-items: center;
-	justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mobile-toolbar-icon svg {
-	width: 18px;
-	height: 18px;
+  width: 18px;
+  height: 18px;
 }
 
 /* Settings Page Styles */
 .mobile-toolbar-section {
-	margin: 1.5em 0;
-	padding: 1em;
-	background-color: var(--background-secondary);
-	border-radius: 8px;
-	border: 1px solid var(--background-modifier-border);
+  margin: 1.5em 0;
+  padding: 1em;
+  background-color: var(--background-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
 }
 
 .mobile-toolbar-header {
-	font-weight: 600;
-	border-bottom: 1px solid var(--background-modifier-border);
-	padding-bottom: 0.5em;
-	margin-bottom: 0.5em;
+  font-weight: 600;
+  border-bottom: 1px solid var(--background-modifier-border);
+  padding-bottom: 0.5em;
+  margin-bottom: 0.5em;
 }
 
 .mobile-command-list {
-	margin: 0.5em 0;
+  margin: 0.5em 0;
 }
 
 .mobile-add-command-btn {
-	margin-top: 0.5em;
+  margin-top: 0.5em;
 }
 
 /* Settings Drag and Drop */
 .mobile-plugin-draggable-item {
-	cursor: grab;
+  cursor: grab;
 }
 
 .mobile-plugin-draggable-item.is-dragging {
-	opacity: 0.5;
-	cursor: grabbing;
+  opacity: 0.5;
+  cursor: grabbing;
 }
 
 .mobile-plugin-draggable-item.drag-over-top {
-	border-top: 2px solid var(--interactive-accent);
+  border-top: 2px solid var(--interactive-accent);
 }
 
 .mobile-plugin-draggable-item.drag-over-bottom {
-	border-bottom: 2px solid var(--interactive-accent);
+  border-bottom: 2px solid var(--interactive-accent);
 }

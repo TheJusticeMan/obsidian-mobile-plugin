@@ -16,7 +16,10 @@ export const toolbarExtension = ViewPlugin.fromClass(
 
 		update(update: ViewUpdate) {
 			if (update.selectionSet || update.viewportChanged) {
-				this.updateTooltip(update.view);
+				// Defer tooltip update to avoid reading layout during update
+				requestAnimationFrame(() => {
+					this.updateTooltip(update.view);
+				});
 			}
 		}
 

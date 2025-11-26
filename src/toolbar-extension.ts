@@ -45,8 +45,8 @@ export const toolbarExtension = ViewPlugin.fromClass(
 			if (!startCoords || !endCoords) return;
 
 			// Create tooltip element
-			this.tooltip = document.createElement('div');
-			this.tooltip.className = 'mobile-selection-toolbar';
+			const tooltip = document.createElement('div');
+			tooltip.className = 'mobile-selection-toolbar';
 			
 			// Add action buttons
 			const actions = [
@@ -63,22 +63,21 @@ export const toolbarExtension = ViewPlugin.fromClass(
 					e.preventDefault();
 					action();
 				});
-				if (this.tooltip) {
-					this.tooltip.appendChild(button);
-				}
+				tooltip.appendChild(button);
 			});
 
 			// Position tooltip above the selection
 			const left = startCoords.left;
 			const top = startCoords.top - 40; // Position above selection
 
-			this.tooltip.style.position = 'absolute';
-			this.tooltip.style.left = `${left}px`;
-			this.tooltip.style.top = `${top}px`;
-			this.tooltip.style.zIndex = '1000';
+			tooltip.style.position = 'absolute';
+			tooltip.style.left = `${left}px`;
+			tooltip.style.top = `${top}px`;
+			tooltip.style.zIndex = '1000';
 
-			// Append to document
-			document.body.appendChild(this.tooltip);
+			// Store reference and append to document
+			this.tooltip = tooltip;
+			document.body.appendChild(tooltip);
 		}
 
 		wrapSelection(view: EditorView, before: string, after: string) {

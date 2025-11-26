@@ -17,20 +17,20 @@ export function mountFAB(app: App, containerEl: HTMLElement): HTMLElement {
 
 	fab.addEventListener('click', async () => {
 		try {
-			// Create timestamp in format: YYYY-MM-DD-HHmmss
+			// Create timestamp in format: YYYY-MM-DD-HHmmss-SSS (includes milliseconds to avoid conflicts)
 			const now = new Date();
 			const timestamp = now.getFullYear() +
 				'-' + String(now.getMonth() + 1).padStart(2, '0') +
 				'-' + String(now.getDate()).padStart(2, '0') +
 				'-' + String(now.getHours()).padStart(2, '0') +
 				String(now.getMinutes()).padStart(2, '0') +
-				String(now.getSeconds()).padStart(2, '0');
+				String(now.getSeconds()).padStart(2, '0') +
+				'-' + String(now.getMilliseconds()).padStart(3, '0');
 
 			const filename = `${timestamp}.md`;
-			const filepath = filename;
 
 			// Create the file
-			const file = await app.vault.create(filepath, `# Note created at ${now.toLocaleString()}\n\n`);
+			const file = await app.vault.create(filename, `# Note created at ${now.toLocaleString()}\n\n`);
 
 			// Open the newly created file
 			const leaf = app.workspace.getLeaf(false);

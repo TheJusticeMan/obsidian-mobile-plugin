@@ -39,8 +39,8 @@ export class FABManager {
 			return;
 		}
 
-		// Find the leaf content container
-		const leafContent = leaf.view.containerEl.querySelector('.workspace-leaf-content');
+		// The containerEl is already the workspace-leaf-content
+		const leafContent = leaf.view.containerEl;
 		if (!leafContent) {
 			return;
 		}

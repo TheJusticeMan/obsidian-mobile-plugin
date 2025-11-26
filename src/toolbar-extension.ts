@@ -15,10 +15,7 @@ import { ToolbarConfig, ContextBinding, ContextType } from "./settings";
  */
 export function createToolbarExtension(
 	app: App,
-	toolbars: ToolbarConfig[],
-	contextBindings: ContextBinding[],
-	useIcons: boolean,
-	commandIcons: Record<string, string>
+	settings: any
 ) {
 	return ViewPlugin.fromClass(
 		class {
@@ -29,20 +26,28 @@ export function createToolbarExtension(
 			contextBindings: ContextBinding[];
 			useIcons: boolean;
 			commandIcons: Record<string, string>;
+			enableHapticFeedback: boolean;
 			editorContainer: HTMLElement | null = null;
 
 			constructor(view: EditorView) {
 				this.decorations = Decoration.none;
 				this.app = app;
-				this.toolbars = toolbars;
-				this.contextBindings = contextBindings;
-				this.useIcons = useIcons;
-				this.commandIcons = commandIcons;
+				this.toolbars = settings.toolbars;
+				this.contextBindings = settings.contextBindings;
+				this.useIcons = settings.useIcons;
+				this.commandIcons = settings.commandIcons;
+				this.enableHapticFeedback = settings.enableHapticFeedback;
 
 				// Find the editor container to anchor the toolbar
 				this.editorContainer = this.findEditorContainer(view.dom);
 
 				this.updateTooltip(view);
+			}
+
+			hapticFeedback(duration: number = 10) {
+				if (this.enableHapticFeedback && navigator.vibrate) {
+					navigator.vibrate(duration);
+				}
 			}
 
 			findEditorContainer(element: HTMLElement): HTMLElement | null {
@@ -248,13 +253,15 @@ export function createToolbarExtension(
 					const command = commands[commandId];
 					const iconToUse =
 						this.commandIcons[commandId] || command.icon;
-					if (command) {
+					if (command && this.tooltip) {
 						if (this.useIcons && iconToUse) {
 							new ButtonComponent(this.tooltip)
 								/* .setClass("mobile-toolbar-button") */
 								.setIcon(iconToUse)
 								.setTooltip(command.name || commandId)
 								.onClick((e) => {
+									// Haptic feedback on button click
+									this.hapticFeedback(10);
 									// Execute the command
 									// eslint-disable-next-line @typescript-eslint/no-explicit-any
 									(
@@ -267,6 +274,8 @@ export function createToolbarExtension(
 								.setButtonText(command.name || commandId)
 								.setTooltip(command.name || commandId)
 								.onClick((e) => {
+									// Haptic feedback on button click
+									this.hapticFeedback(10);
 									// Execute the command
 									// eslint-disable-next-line @typescript-eslint/no-explicit-any
 									(

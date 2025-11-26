@@ -6,6 +6,8 @@ import { MobilePluginSettings, DEFAULT_SETTINGS, MobileSettingTab } from './sett
 export default class MobilePlugin extends Plugin {
 	settings: MobilePluginSettings;
 	fabManager: FABManager | null = null;
+	wakeLock: any = null;
+	wakeLockStatusBar: HTMLElement | null = null;
 
 	async onload() {
 		await this.loadSettings();
@@ -16,6 +18,15 @@ export default class MobilePlugin extends Plugin {
 			name: 'Create new note',
 			callback: async () => {
 				await this.createNewNote();
+			}
+		});
+
+		// Register wake lock toggle command
+		this.addCommand({
+			id: 'toggle-wake-lock',
+			name: 'Toggle Wake Lock',
+			callback: async () => {
+				await this.toggleWakeLock();
 			}
 		});
 
@@ -35,7 +46,11 @@ export default class MobilePlugin extends Plugin {
 		});
 
 		// Register the CodeMirror 6 toolbar extension with multiple context-aware toolbars
-		this.registerEditorExtension(createToolbarExtension(this.app, this.settings.toolbars, this.settings.contextBindings, this.settings.useIcons, this.settings.commandIcons));
+		this.registerEditorExtension(createToolbarExtension(this.app, this.settings));
+
+		// Add status bar item for wake lock
+		this.wakeLockStatusBar = this.addStatusBarItem();
+		this.updateWakeLockStatus();
 
 		// Add settings tab
 		this.addSettingTab(new MobileSettingTab(this.app, this));
@@ -74,12 +89,62 @@ export default class MobilePlugin extends Plugin {
 			// Open the newly created file
 			const leaf = this.app.workspace.getLeaf(false);
 			await leaf.openFile(file as TFile);
+
+			// Auto-focus into the editor
+			setTimeout(() => {
+				this.app.workspace.activeEditor?.editor?.focus();
+			}, 100);
 		} catch (error) {
 			console.error('Error creating note:', error);
 		}
 	}
 
-	onunload() {
+	async toggleWakeLock() {
+		if (!('wakeLock' in navigator)) {
+			// Wake Lock API not supported
+			return;
+		}
+
+		try {
+			if (this.wakeLock) {
+				// Release wake lock
+				await this.wakeLock.release();
+				this.wakeLock = null;
+			} else {
+				// Request wake lock
+				this.wakeLock = await (navigator as any).wakeLock.request('screen');
+				
+				// Listen for wake lock release
+				this.wakeLock.addEventListener('release', () => {
+					this.wakeLock = null;
+					this.updateWakeLockStatus();
+				});
+			}
+			
+			this.updateWakeLockStatus();
+		} catch (error) {
+			console.error('Wake lock error:', error);
+		}
+	}
+
+	updateWakeLockStatus() {
+		if (this.wakeLockStatusBar) {
+			if (this.wakeLock) {
+				this.wakeLockStatusBar.setText('🔒 Wake Lock Active');
+				this.wakeLockStatusBar.style.display = '';
+			} else {
+				this.wakeLockStatusBar.style.display = 'none';
+			}
+		}
+	}
+
+	async onunload() {
+		// Release wake lock if active
+		if (this.wakeLock) {
+			await this.wakeLock.release();
+			this.wakeLock = null;
+		}
+
 		// Clean up FAB manager
 		if (this.fabManager) {
 			this.fabManager.destroy();

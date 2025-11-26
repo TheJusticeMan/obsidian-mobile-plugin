@@ -41,6 +41,7 @@ export interface MobilePluginSettings {
 	contextBindings: ContextBinding[];
 	useIcons: boolean;
 	commandIcons: Record<string, string>; // Map of command ID to icon name
+	enableHapticFeedback: boolean;
 }
 
 export const DEFAULT_SETTINGS: MobilePluginSettings = {
@@ -89,6 +90,7 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
 	],
 	useIcons: false,
 	commandIcons: {},
+	enableHapticFeedback: true,
 };
 
 /**
@@ -267,6 +269,21 @@ export class MobileSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 						// Trigger toolbar refresh
 						this.plugin.refreshToolbar();
+					})
+			);
+
+		// Haptic feedback setting
+		new Setting(containerEl)
+			.setName("Enable haptic feedback")
+			.setDesc(
+				"Vibrate on FAB and toolbar button interactions (mobile devices only)"
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.enableHapticFeedback)
+					.onChange(async (value) => {
+						this.plugin.settings.enableHapticFeedback = value;
+						await this.plugin.saveSettings();
 					})
 			);
 

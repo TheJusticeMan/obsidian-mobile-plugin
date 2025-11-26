@@ -57,16 +57,71 @@ export class FABManager {
 	private createFAB(): HTMLElement {
 		const fab = document.createElement('button');
 		fab.className = 'mobile-fab';
-		fab.setAttribute('aria-label', 'Create new note');
+		fab.setAttribute('aria-label', 'Create new note (long press for command palette)');
 
 		// Add plus icon
 		fab.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
 
-		fab.addEventListener('click', async () => {
-			await this.createNewNote();
-		});
+		// Variables for long press detection
+		let pressTimer: NodeJS.Timeout | null = null;
+		let isLongPress = false;
+
+		// Touch/Mouse start
+		const startPress = () => {
+			isLongPress = false;
+			pressTimer = setTimeout(() => {
+				isLongPress = true;
+				// Haptic feedback for long press
+				this.hapticFeedback(20);
+				// Open command palette
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				(this.app as any).commands?.executeCommandById('command-palette:open');
+			}, 500);
+		};
+
+		// Touch/Mouse end
+		const endPress = async () => {
+			if (pressTimer) {
+				clearTimeout(pressTimer);
+				pressTimer = null;
+			}
+
+			// Only create note if it wasn't a long press
+			if (!isLongPress) {
+				this.hapticFeedback(10);
+				await this.createNewNote();
+			}
+		};
+
+		// Cancel on mouse/touch leave
+		const cancelPress = () => {
+			if (pressTimer) {
+				clearTimeout(pressTimer);
+				pressTimer = null;
+			}
+			isLongPress = false;
+		};
+
+		// Add event listeners for both touch and mouse
+		fab.addEventListener('touchstart', startPress);
+		fab.addEventListener('mousedown', startPress);
+		
+		fab.addEventListener('touchend', endPress);
+		fab.addEventListener('mouseup', endPress);
+		
+		fab.addEventListener('touchcancel', cancelPress);
+		fab.addEventListener('mouseleave', cancelPress);
 
 		return fab;
+	}
+
+	/**
+	 * Triggers haptic feedback if enabled and supported
+	 */
+	private hapticFeedback(duration: number = 10) {
+		if (this.settings.enableHapticFeedback && navigator.vibrate) {
+			navigator.vibrate(duration);
+		}
 	}
 
 	/**
@@ -99,6 +154,11 @@ export class FABManager {
 			// Open the newly created file
 			const leaf = this.app.workspace.getLeaf(false);
 			await leaf.openFile(file as TFile);
+
+			// Auto-focus into the editor
+			setTimeout(() => {
+				this.app.workspace.activeEditor?.editor?.focus();
+			}, 100);
 		} catch (error) {
 			console.error('Error creating note:', error);
 		}

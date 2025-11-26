@@ -1,5 +1,12 @@
-import { App, PluginSettingTab, Setting, FuzzySuggestModal, TFolder } from 'obsidian';
-import MobilePlugin from './main';
+import {
+	App,
+	PluginSettingTab,
+	Setting,
+	FuzzySuggestModal,
+	TFolder,
+	Command,
+} from "obsidian";
+import MobilePlugin from "./main";
 
 export interface MobilePluginSettings {
 	homeFolder: string;
@@ -7,9 +14,13 @@ export interface MobilePluginSettings {
 }
 
 export const DEFAULT_SETTINGS: MobilePluginSettings = {
-	homeFolder: '',
-	toolbarCommands: ['editor:toggle-bold', 'editor:toggle-italics', 'editor:insert-link']
-}
+	homeFolder: "",
+	toolbarCommands: [
+		"editor:toggle-bold",
+		"editor:toggle-italics",
+		"editor:insert-link",
+	],
+};
 
 /**
  * A modal dialog that provides fuzzy search and selection of folders within the vault.
@@ -36,10 +47,16 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
 export class FolderSuggest extends FuzzySuggestModal<TFolder> {
 	onSubmit: (result: TFolder) => void;
 	folders: TFolder[];
-	constructor(app: App, onSubmit: (result: TFolder) => void, prompt?: string) {
+	constructor(
+		app: App,
+		onSubmit: (result: TFolder) => void,
+		prompt?: string
+	) {
 		super(app);
 		this.onSubmit = onSubmit;
-		this.folders = app.vault.getAllLoadedFiles().filter(f => f instanceof TFolder) as TFolder[];
+		this.folders = app.vault
+			.getAllLoadedFiles()
+			.filter((f) => f instanceof TFolder) as TFolder[];
 		this.setPlaceholder(prompt || "Search for a folder...");
 	}
 	getItems(): TFolder[] {
@@ -53,6 +70,30 @@ export class FolderSuggest extends FuzzySuggestModal<TFolder> {
 	}
 }
 
+export class CommandSuggestModal extends FuzzySuggestModal<Command> {
+	onSubmit: (result: Command) => void;
+	commands: Command[];
+
+	constructor(app: App, onSubmit: (result: Command) => void) {
+		super(app);
+		this.onSubmit = onSubmit;
+		// @ts-ignore
+		this.commands = Object.values(this.app.commands.commands);
+	}
+
+	getItems(): Command[] {
+		return this.commands;
+	}
+
+	getItemText(item: Command): string {
+		return item.name;
+	}
+
+	onChooseItem(item: Command, evt: MouseEvent | KeyboardEvent) {
+		this.onSubmit(item);
+	}
+}
+
 export class MobileSettingTab extends PluginSettingTab {
 	plugin: MobilePlugin;
 
@@ -62,43 +103,153 @@ export class MobileSettingTab extends PluginSettingTab {
 	}
 
 	display(): void {
-		const {containerEl} = this;
+		const { containerEl } = this;
 
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName('Home folder')
-			.setDesc('Folder where new notes will be created. Leave empty for vault root.')
-			.addButton(button => button
-				.setButtonText(this.plugin.settings.homeFolder || 'Select folder')
-				.onClick(() => {
-					new FolderSuggest(this.app, (folder) => {
-						this.plugin.settings.homeFolder = folder.path;
-						this.plugin.saveSettings();
-						button.setButtonText(folder.path);
-					}, 'Select a home folder').open();
-				}))
-			.addExtraButton(button => button
-				.setIcon('cross')
-				.setTooltip('Clear folder')
-				.onClick(async () => {
-					this.plugin.settings.homeFolder = '';
-					await this.plugin.saveSettings();
-					this.display();
-				}));
+			.setName("Home folder")
+			.setDesc(
+				"Folder where new notes will be created. Leave empty for vault root."
+			)
+			.addButton((button) =>
+				button
+					.setButtonText(
+						this.plugin.settings.homeFolder || "Select folder"
+					)
+					.onClick(() => {
+						new FolderSuggest(
+							this.app,
+							(folder) => {
+								this.plugin.settings.homeFolder = folder.path;
+								this.plugin.saveSettings();
+								button.setButtonText(folder.path);
+							},
+							"Select a home folder"
+						).open();
+					})
+			)
+			.addExtraButton((button) =>
+				button
+					.setIcon("cross")
+					.setTooltip("Clear folder")
+					.onClick(async () => {
+						this.plugin.settings.homeFolder = "";
+						await this.plugin.saveSettings();
+						this.display();
+					})
+			);
 
-		new Setting(containerEl)
-			.setName('Toolbar commands')
-			.setDesc('Comma-separated list of command IDs to show in the selection toolbar. Examples: editor:toggle-bold, editor:toggle-italics')
-			.addTextArea(text => text
-				.setPlaceholder('editor:toggle-bold, editor:toggle-italics')
-				.setValue(this.plugin.settings.toolbarCommands.join(', '))
-				.onChange(async (value) => {
-					this.plugin.settings.toolbarCommands = value
-						.split(',')
-						.map(cmd => cmd.trim())
-						.filter(cmd => cmd.length > 0);
+		containerEl.createEl("h3", { text: "Toolbar commands" });
+		containerEl.createEl("p", {
+			text: "Manage commands that appear in the mobile toolbar. Drag to reorder.",
+			cls: "setting-item-description",
+		});
+
+		const commandListContainer = containerEl.createDiv();
+		this.renderCommandList(commandListContainer);
+
+		new Setting(containerEl).addButton((button) =>
+			button
+				.setButtonText("Add command")
+				.setCta()
+				.onClick(() => {
+					new CommandSuggestModal(this.app, async (command) => {
+						this.plugin.settings.toolbarCommands.push(command.id);
+						await this.plugin.saveSettings();
+						this.renderCommandList(commandListContainer);
+					}).open();
+				})
+		);
+	}
+
+	renderCommandList(container: HTMLElement) {
+		container.empty();
+		const commands = this.plugin.settings.toolbarCommands;
+
+		commands.forEach((cmdId, index) => {
+			// @ts-ignore
+			const command = this.app.commands.findCommand(cmdId);
+			const commandName = command ? command.name : cmdId;
+
+			const setting = new Setting(container)
+				.setName(commandName)
+				.setDesc(cmdId)
+				.addExtraButton((btn) =>
+					btn.setIcon("trash").onClick(async () => {
+						this.plugin.settings.toolbarCommands.splice(index, 1);
+						await this.plugin.saveSettings();
+						this.renderCommandList(container);
+					})
+				);
+
+			const el = setting.settingEl;
+			el.draggable = true;
+			el.addClass("mobile-plugin-draggable-item");
+
+			el.ondragstart = (event) => {
+				event.dataTransfer?.setData("text/plain", index.toString());
+				el.addClass("is-dragging");
+			};
+
+			el.ondragend = () => {
+				el.removeClass("is-dragging");
+			};
+
+			el.ondragover = (event) => {
+				event.preventDefault();
+				const rect = el.getBoundingClientRect();
+				const midY = rect.top + rect.height / 2;
+
+				el.removeClass("drag-over-top");
+				el.removeClass("drag-over-bottom");
+
+				if (event.clientY < midY) {
+					el.addClass("drag-over-top");
+				} else {
+					el.addClass("drag-over-bottom");
+				}
+			};
+
+			el.ondragleave = () => {
+				el.removeClass("drag-over-top");
+				el.removeClass("drag-over-bottom");
+			};
+
+			el.ondrop = async (event) => {
+				event.preventDefault();
+				el.removeClass("drag-over-top");
+				el.removeClass("drag-over-bottom");
+				const oldIndex = parseInt(
+					event.dataTransfer?.getData("text/plain") || "-1"
+				);
+
+				if (oldIndex >= 0) {
+					const rect = el.getBoundingClientRect();
+					const midY = rect.top + rect.height / 2;
+					const insertAfter = event.clientY >= midY;
+
+					let targetIndex = index;
+					if (insertAfter) targetIndex++;
+
+					const item = this.plugin.settings.toolbarCommands.splice(
+						oldIndex,
+						1
+					)[0];
+
+					if (oldIndex < targetIndex) {
+						targetIndex--;
+					}
+
+					this.plugin.settings.toolbarCommands.splice(
+						targetIndex,
+						0,
+						item
+					);
 					await this.plugin.saveSettings();
-				}));
+					this.renderCommandList(container);
+				}
+			};
+		});
 	}
 }

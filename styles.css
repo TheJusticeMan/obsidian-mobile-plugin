@@ -73,3 +73,21 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 	background-color: var(--interactive-accent);
 	color: var(--text-on-accent);
 }
+
+/* Settings Drag and Drop */
+.mobile-plugin-draggable-item {
+	cursor: grab;
+}
+
+.mobile-plugin-draggable-item.is-dragging {
+	opacity: 0.5;
+	cursor: grabbing;
+}
+
+.mobile-plugin-draggable-item.drag-over-top {
+	border-top: 2px solid var(--interactive-accent);
+}
+
+.mobile-plugin-draggable-item.drag-over-bottom {
+	border-bottom: 2px solid var(--interactive-accent);
+}

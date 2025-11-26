@@ -156,6 +156,9 @@ export class FABManager {
    * Creates a new note
    */
   private async createNewNote() {
+    (this.app as any).commands.executeCommandById("file-explorer:new-file");
+    return;
+
     try {
       // Determine the folder path
       const folderPath = this.plugin.settings.homeFolder

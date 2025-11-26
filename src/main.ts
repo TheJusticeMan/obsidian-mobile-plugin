@@ -34,12 +34,17 @@ export default class MobilePlugin extends Plugin {
     });
 
     // Initialize FAB Manager
-    this.fabManager = new FABManager(this.app,  this);
+    this.fabManager = new FABManager(this.app, this);
 
     // Register the CodeMirror 6 toolbar extension with multiple context-aware toolbars
     this.registerEditorExtension(
       createToolbarExtension(this.app, this.settings)
     );
+
+    // add ribbon icon
+    this.addRibbonIcon("plus", "Create New Note", async () => {
+      await this.createNewNote();
+    });
 
     // Add settings tab
     this.addSettingTab(new MobileSettingTab(this.app, this));
@@ -52,6 +57,9 @@ export default class MobilePlugin extends Plugin {
   }
 
   async createNewNote() {
+    // "file-explorer:new-file"
+    (this.app as any).commands.executeCommandById("file-explorer:new-file");
+    return;
     try {
       // Determine the folder path
       const folderPath = this.settings.homeFolder

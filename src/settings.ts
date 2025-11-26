@@ -177,11 +177,34 @@ export class MobileSettingTab extends PluginSettingTab {
 				.setName(commandName)
 				.setDesc(cmdId)
 				.addExtraButton((btn) =>
-					btn.setIcon("trash").onClick(async () => {
-						this.plugin.settings.toolbarCommands.splice(index, 1);
-						await this.plugin.saveSettings();
-						this.renderCommandList(container);
-					})
+					btn
+						.setIcon("pencil")
+						.setTooltip("Change command")
+						.onClick(async () => {
+							new CommandSuggestModal(
+								this.app,
+								async (command) => {
+									this.plugin.settings.toolbarCommands[
+										index
+									] = command.id;
+									await this.plugin.saveSettings();
+									this.renderCommandList(container);
+								}
+							).open();
+						})
+				)
+				.addExtraButton((btn) =>
+					btn
+						.setIcon("trash")
+						.setTooltip("Remove command")
+						.onClick(async () => {
+							this.plugin.settings.toolbarCommands.splice(
+								index,
+								1
+							);
+							await this.plugin.saveSettings();
+							this.renderCommandList(container);
+						})
 				);
 
 			const el = setting.settingEl;

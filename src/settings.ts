@@ -8,8 +8,6 @@ import {
 } from "obsidian";
 import MobilePlugin from "./main";
 
-export type { ToolbarConfig, ContextBinding };
-
 export interface ToolbarConfig {
 	id: string;
 	name: string;
@@ -325,12 +323,11 @@ export class MobileSettingTab extends PluginSettingTab {
 	}
 
 	renderContextBinding(container: HTMLElement, binding: ContextBinding, bindingIndex: number) {
-		const bindingSection = container.createDiv('mobile-binding-section');
 		
 		const toolbar = this.plugin.settings.toolbars.find(t => t.id === binding.toolbarId);
 		const toolbarName = toolbar ? toolbar.name : '(Not found)';
 
-		const setting = new Setting(bindingSection)
+		const setting = new Setting(container)
 			.setName(`${this.getContextDisplayName(binding.contextType)} → ${toolbarName}`)
 			.setDesc(`Priority: ${binding.priority}`)
 			.addDropdown((dropdown) => {
@@ -386,7 +383,6 @@ export class MobileSettingTab extends PluginSettingTab {
 					})
 			);
 
-		setting.settingEl.addClass('mobile-binding-item');
 	}
 
 	getContextDisplayName(contextType: ContextType): string {

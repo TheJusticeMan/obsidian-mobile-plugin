@@ -234,7 +234,7 @@ export function createToolbarExtension(
 				}
 
 				// Create tooltip element
-				const tooltip = (this.editorContainer || view.dom).createDiv({
+				this.tooltip = (this.editorContainer || view.dom).createDiv({
 					cls: "mobile-selection-toolbar",
 					attr: { "data-toolbar-id": activeToolbar.id },
 				});
@@ -250,7 +250,7 @@ export function createToolbarExtension(
 						this.commandIcons[commandId] || command.icon;
 					if (command) {
 						if (this.useIcons && iconToUse) {
-							new ButtonComponent(tooltip)
+							new ButtonComponent(this.tooltip)
 								/* .setClass("mobile-toolbar-button") */
 								.setIcon(iconToUse)
 								.setTooltip(command.name || commandId)
@@ -262,7 +262,7 @@ export function createToolbarExtension(
 									).commands?.executeCommandById(commandId);
 								});
 						} else {
-							new ButtonComponent(tooltip)
+							new ButtonComponent(this.tooltip)
 								/* .setClass("mobile-toolbar-button") */
 								.setButtonText(command.name || commandId)
 								.setTooltip(command.name || commandId)

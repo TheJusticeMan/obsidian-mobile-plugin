@@ -65,16 +65,23 @@ export function createToolbarExtension(app: App, commandIds: string[]) {
 			hasContext(view: EditorView, pos: number): boolean {
 				// Check if cursor is in a markdown list or other special context using syntax tree
 				const tree = syntaxTree(view.state);
-				const node = tree.resolveInner(pos, 0);
+				let node = tree.resolveInner(pos, 0);
 				
-				// Check for list context
-				if (node.type.name.includes('list')) {
-					return true;
-				}
-				
-				// Check for task list context
-				if (node.type.name.includes('task')) {
-					return true;
+				// Traverse up the tree to find list or task contexts (handles nested nodes like bold within lists)
+				while (node) {
+					const nodeName = node.type.name;
+					
+					// Check for list context using exact names
+					if (nodeName === 'BulletList' || nodeName === 'OrderedList') {
+						return true;
+					}
+					
+					// Check for task list context
+					if (nodeName === 'Task') {
+						return true;
+					}
+					
+					node = node.parent;
 				}
 				
 				return false;
@@ -83,7 +90,7 @@ export function createToolbarExtension(app: App, commandIds: string[]) {
 			getContextCommands(view: EditorView, pos: number): string[] {
 				const selection = view.state.selection.main;
 				const tree = syntaxTree(view.state);
-				const node = tree.resolveInner(pos, 0);
+				let node = tree.resolveInner(pos, 0);
 				
 				// If there's a selection, show formatting commands
 				if (!selection.empty) {
@@ -93,11 +100,19 @@ export function createToolbarExtension(app: App, commandIds: string[]) {
 				// Context-based commands for cursor position
 				const contextCommands: string[] = [];
 				
-				// Check if in a list item using syntax tree
-				if (node.type.name.includes('list')) {
-					contextCommands.push('editor:toggle-checklist-status');
-					contextCommands.push('editor:indent-list');
-					contextCommands.push('editor:unindent-list');
+				// Traverse up the tree to find list context (handles nested nodes)
+				while (node) {
+					const nodeName = node.type.name;
+					
+					// Check if in a list item using exact node names
+					if (nodeName === 'BulletList' || nodeName === 'OrderedList' || nodeName === 'Task') {
+						contextCommands.push('editor:toggle-checklist-status');
+						contextCommands.push('editor:indent-list');
+						contextCommands.push('editor:unindent-list');
+						break;
+					}
+					
+					node = node.parent;
 				}
 				
 				// If no specific context, show default commands

@@ -1,94 +1,147 @@
-# Obsidian Sample Plugin
+# Mobile UX
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+A mobile-optimized UX enhancement plugin for [Obsidian](https://obsidian.md) that provides a floating action button (FAB) and context-aware toolbars.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+[Ask me for mobile friendly features](https://github.com/TheJusticeMan/obsidian-mobile-plugin/issues)
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+## Gestures
 
-## First time developing plugins?
+**Gestures are the heart of this plugin.** You can create completely custom gestures to trigger any command in Obsidian.
 
-Quick starting guide for new plugin devs:
+1.  **Draw a gesture**: Drag the Floating Action Button (FAB) to draw a shape.
+2.  **Assign a command**: When you release the FAB, if the gesture is not recognized, you will be prompted to assign a command to it.
+3.  **Execute**: Next time you draw the same shape, the assigned command will be executed.
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+Gestures are matched based on the shape, so you can draw them at any size or speed.
 
-## Releasing new releases
+## Features
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+### Customizable Floating Action Button (FAB)
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+- **Tap**: Executes a primary command (default: Create new note).
+- **Long-press**: Executes a secondary command (default: Open command palette).
+- **Gestures**: Drag the button to draw shapes and trigger any command.
+- **Smart positioning**: Anchors to the active editor leaf, ensuring it doesn't overlap navigation elements.
 
-## Adding your plugin to the community plugin list
+| ![alt text](gestures.png) | ![alt text](keyboard.png) | ![alt text](ToolbarEditing.png) | ![alt text](Settings.png) |
+| :------------------------ | :------------------------ | :------------------------------ | :------------------------ |
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+### Context-Aware Toolbars
 
-## How to use
+Dynamic toolbars that adapt based on your cursor position and selection:
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+| Context        | Description                            |
+| :------------- | :------------------------------------- |
+| **Selection**  | Text is selected                       |
+| **List**       | Cursor in bullet/ordered list          |
+| **Task**       | Cursor in task list item               |
+| **Heading**    | Cursor in heading                      |
+| **Code Block** | Cursor in code block                   |
+| **Table**      | Cursor in table                        |
+| **Blockquote** | Cursor in blockquote                   |
+| **Link**       | Cursor on a link                       |
+| **Default**    | Fallback when no other context matches |
 
-## Manually installing the plugin
+#### Toolbar Features
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+- **Two-section settings**: Define toolbars in a library, then bind them to contexts.
+- **Auto-concatenation**: Multiple toolbars bound to the same context are automatically merged.
+- **Icon support**: Use Lucide icons with custom override capability.
+- **Horizontal scrolling**: Scrolls when too many buttons to fit.
+- **Editor focus preservation**: Keyboard stays open when using toolbar buttons.
 
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint ./src/`
+## Installation
 
-## Funding URL
+### Brat
 
-You can include funding URLs where people who use your plugin can financially support it.
+1.  Install **BRAT** from the Community Plugins in Obsidian.
+2.  Open the command palette and run `BRAT: Add a beta plugin for testing`.
+3.  Enter the URL of this repository: `https://github.com/TheJusticeMan/obsidian-mobile-plugin`.
+4.  Click **Add Plugin**.
+5.  Enable the plugin in **Settings → Community Plugins**.
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+## Configuration
 
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+### Settings
+
+| Setting                     | Description                                                    |
+| :-------------------------- | :------------------------------------------------------------- |
+| **Command confirmation**    | Show confirmation before selecting a new command for a gesture |
+| **Use Icons**               | Toggle between icon and text display in toolbars               |
+| **Plus long press command** | Commands available for long press on the FAB button.           |
+| **Plus press command**      | Commands available for press on the FAB button.                |
+| **Enable haptic feedback**  | Vibrate on FAB and toolbar button interactions                 |
+| **Gesture Commands**        | Manage your created gestures (rename, reassign, delete)        |
+| **Reset to default**        | Restore all settings to their original defaults                |
+
+### Toolbar Library
+
+Create reusable toolbars with custom command sets:
+
+1.  Click **Add Toolbar**.
+2.  Give it a name (e.g., "Formatting").
+3.  Add commands by their ID (e.g., `editor:toggle-bold`).
+4.  Optionally set custom icons for each command.
+
+### Context Bindings
+
+Bind toolbars to editing contexts:
+
+1.  Click **Add Binding**.
+2.  Select a context type (Selection, List, Table, etc.).
+3.  Select a toolbar from your library.
+4.  Multiple bindings to the same context are auto-concatenated.
+
+## Commands
+
+| Command                       | Description                                        |
+| :---------------------------- | :------------------------------------------------- |
+| `Toggle wake lock`            | Keeps the screen awake while editing               |
+| `Plus press`                  | Executes the command configured for FAB press      |
+| `Plus long press`             | Executes the command configured for FAB long press |
+| `Open mobile plugin settings` | Opens the settings modal for this plugin           |
+
+## Development
+
+### Prerequisites
+
+- Node.js v16 or higher
+- npm
+
+### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/TheJusticeMan/obsidian-mobile-plugin.git
+
+# Install dependencies
+npm install
+
+# Build for development (watch mode)
+npm run dev
+
+# Build for production
+npm run build
 ```
 
-If you have multiple URLs, you can also do:
+### Project Structure
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
+```
+src/
+├── main.ts              # Plugin entry point
+├── fab.ts               # Floating Action Button manager
+├── toolbar-extension.ts # Context-aware toolbar ViewPlugin
+└── settings.ts          # Settings tab and interfaces
 ```
 
-## API Documentation
+## License
 
-See https://github.com/obsidianmd/obsidian-api
+[MIT](LICENSE)
+
+## Author
+
+[Justice Vellacott](https://github.com/TheJusticeMan)
+
+## Support
+
+If you encounter any issues or have feature requests, please [open an issue](https://github.com/TheJusticeMan/obsidian-mobile-plugin/issues) on GitHub.

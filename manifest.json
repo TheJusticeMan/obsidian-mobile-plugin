@@ -1,11 +1,11 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
-	"version": "1.0.0",
-	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
-	"isDesktopOnly": false
+  "id": "mobile-plugin",
+  "name": "Mobile",
+  "version": "1.0.0",
+  "minAppVersion": "0.15.0",
+  "description": "Mobile-optimized UX enhancements with floating action button, context-aware toolbars, haptic feedback, and wake lock support.",
+  "author": "Justice Vellacott",
+  "authorUrl": "https://github.com/TheJusticeMan",
+  "fundingUrl": "",
+  "isDesktopOnly": false
 }

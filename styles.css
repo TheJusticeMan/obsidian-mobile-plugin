@@ -40,6 +40,7 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 /* Selection Toolbar */
 .mobile-selection-toolbar {
   display: flex;
+  flex-wrap: nowrap;
   gap: 8px;
   padding: 8px;
   background-color: var(--background-primary);
@@ -48,9 +49,26 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   position: absolute;
   bottom: calc(10px + env(safe-area-inset-bottom));
-  left: 50%;
-  transform: translateX(-50%);
+  left: 10px;
+  right: 10px;
+  max-width: calc(100% - 20px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* Hide scrollbar for cleaner look while still allowing scroll */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
   /* z-index: 1000; */
+}
+
+.mobile-selection-toolbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Prevent toolbar buttons from shrinking */
+.mobile-selection-toolbar > button,
+.mobile-selection-toolbar > .clickable-icon {
+  flex-shrink: 0;
 }
 
 /* Settings Page Styles */

@@ -116,7 +116,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         // Return a virtual toolbar with combined commands
         return {
           id: "combined",
-          name: "Combined Toolbar",
+          name: "Combined toolbar",
           commands: combinedCommands,
         };
       }

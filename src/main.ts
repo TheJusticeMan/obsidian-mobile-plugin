@@ -31,18 +31,18 @@ export default class MobilePlugin extends Plugin {
 
     this.addCommand({
       id: "plus-press",
-      name: "Plus Press",
+      name: "Plus press",
       callback: () => this.pluspress(),
     });
     this.addCommand({
       id: "plus-longpress",
-      name: "Plus Long Press",
+      name: "Plus long press",
       callback: () => this.plusLongpress(),
     });
 
     this.addCommand({
       id: "mobile-plugin-settings",
-      name: "Open Mobile Plugin Settings",
+      name: "Open mobile plugin settings",
       icon: "settings",
       callback: async () => {
         new mySettingsModel(this.app, this).open();

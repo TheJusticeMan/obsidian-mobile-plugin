@@ -1,11 +1,11 @@
 {
-	"id": "mobile-ux",
-	"name": "Mobile UX",
-	"version": "1.0.0",
-	"minAppVersion": "0.15.0",
-	"description": "Mobile-optimized UX enhancements with floating action button, context-aware toolbars, haptic feedback, and wake lock support.",
-	"author": "TheJusticeMan",
-	"authorUrl": "https://github.com/TheJusticeMan",
-	"fundingUrl": "",
-	"isDesktopOnly": false
+  "id": "mobile-plugin",
+  "name": "Mobile",
+  "version": "1.0.0",
+  "minAppVersion": "0.15.0",
+  "description": "Mobile-optimized UX enhancements with floating action button, context-aware toolbars, haptic feedback, and wake lock support.",
+  "author": "Justice Vellacott",
+  "authorUrl": "https://github.com/TheJusticeMan",
+  "fundingUrl": "",
+  "isDesktopOnly": false
 }

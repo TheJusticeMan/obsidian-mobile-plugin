@@ -614,7 +614,7 @@ export class ToolbarEditor extends Modal {
       )
       .addButton((btn) =>
         btn
-          .setButtonText("add Binding")
+          .setButtonText("Add binding")
           .setIcon("plus")
           .onClick(async () => {
             new ContextSelectionModal(

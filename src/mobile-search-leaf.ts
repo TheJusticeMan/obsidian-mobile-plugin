@@ -210,10 +210,11 @@ export class MobileSearchLeaf extends ItemView {
     const maxResults = 50;
     const limitedFiles = matchingFiles.slice(0, maxResults);
 
-    // Render results
-    for (const file of limitedFiles) {
-      await this.renderResultCard(file);
-    }
+    // Render all result cards in parallel for better performance
+    // Use Promise.allSettled so individual failures don't block other renders
+    await Promise.allSettled(
+      limitedFiles.map((file) => this.renderResultCard(file)),
+    );
 
     // Show message if no results
     if (limitedFiles.length === 0) {

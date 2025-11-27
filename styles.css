@@ -153,14 +153,13 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 .mobile-search-input {
   width: 100%;
   padding: 10px 12px;
+  /* 16px font-size prevents iOS zoom on focus */
   font-size: 16px;
   border: 1px solid var(--background-modifier-border);
   border-radius: 8px;
   background-color: var(--background-secondary);
   color: var(--text-normal);
   outline: none;
-  /* Prevent iOS zoom on focus */
-  font-size: 16px;
 }
 
 .mobile-search-input:focus {

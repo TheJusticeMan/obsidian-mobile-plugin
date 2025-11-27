@@ -1,6 +1,6 @@
 {
   "name": "obsidian-mobile-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Mobile-optimized UX enhancements for Obsidian with floating action button, context-aware toolbars, haptic feedback, and wake lock support.",
   "main": "main.js",
   "scripts": {

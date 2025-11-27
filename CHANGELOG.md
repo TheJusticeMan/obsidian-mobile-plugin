@@ -18,6 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable home folder for new notes
 - FolderSuggest modal for folder selection with fuzzy search
 
+#### Gesture Support
+- **Draw gestures** by dragging from the FAB to execute commands
+- Custom gesture recognition system with pattern matching
+- Visual feedback showing the drawn gesture path
+- Assign any Obsidian command to a custom gesture
+- Gesture patterns are normalized and resampled for accurate matching
+- Modal prompt for assigning commands to new unrecognized gestures
+- Optional confirmation dialog (can be skipped for faster workflow)
+- Gestures persist across sessions
+
 #### Context-Aware Toolbar
 - Dynamic toolbar that adapts based on cursor position and selection
 - 9 context types supported:

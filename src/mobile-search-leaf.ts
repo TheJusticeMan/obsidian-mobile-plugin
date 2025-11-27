@@ -9,11 +9,14 @@ import { throttleWithInterval } from './throttleWithInterval';
 
 export const VIEW_TYPE_MOBILE_SEARCH = 'mobile-search-view';
 
-/** Number of results to render initially and per scroll batch */
-const RESULTS_PER_BATCH = 10;
+/** Number of results to render initially */
+const INITIAL_RESULTS_PER_BATCH = 10;
+
+/** Number of results to render per scroll batch after initial load */
+const SUBSEQUENT_RESULTS_PER_BATCH = 50;
 
 /** Pixels from bottom of results container to trigger loading more results */
-const SCROLL_LOAD_THRESHOLD = 100;
+const SCROLL_LOAD_THRESHOLD = 4096;
 
 /** Maximum characters of file content to show in preview */
 const PREVIEW_LENGTH = 200;
@@ -39,6 +42,9 @@ export class MobileSearchLeaf extends ItemView {
 
   /** Flag to prevent multiple concurrent loadMore operations */
   private isLoadingMore = false;
+
+  /** Timestamp of the last search input focus */
+  private lastFocusTime = 0;
 
   constructor(leaf: WorkspaceLeaf) {
     super(leaf);
@@ -110,9 +116,10 @@ export class MobileSearchLeaf extends ItemView {
    * Sets up all event listeners for the search view.
    */
   private setupEventListeners(): void {
-    // Reset cache when search input is focused
+    // Scroll to top when search input is focused
     this.searchInput.addEventListener('focus', () => {
-      this.resetCache();
+      this.lastFocusTime = Date.now();
+      this.resultsContainer.scrollTop = 0;
     });
 
     // Debounced search on input
@@ -121,7 +128,9 @@ export class MobileSearchLeaf extends ItemView {
     // Keyboard handling: blur input on scroll to dismiss keyboard
     // Also check for infinite scroll loading
     this.resultsContainer.addEventListener('scroll', () => {
-      this.searchInput.blur();
+      if (Date.now() - this.lastFocusTime > 100) {
+        this.searchInput.blur();
+      }
       this.checkLoadMore();
     });
 
@@ -191,6 +200,7 @@ export class MobileSearchLeaf extends ItemView {
     // Use requestAnimationFrame to ensure DOM is ready
     requestAnimationFrame(() => {
       this.searchInput.focus();
+      this.resetCache();
     });
   }
 
@@ -207,6 +217,7 @@ export class MobileSearchLeaf extends ItemView {
    * Performs the search and renders results.
    */
   private async performSearch(): Promise<void> {
+    console.time('MobileSearch: performSearch');
     const query = this.searchInput.value.trim().toLowerCase();
 
     // Clear previous results
@@ -241,6 +252,7 @@ export class MobileSearchLeaf extends ItemView {
         text: 'No files found',
       });
     }
+    console.timeEnd('MobileSearch: performSearch');
   }
 
   /**
@@ -249,9 +261,14 @@ export class MobileSearchLeaf extends ItemView {
   private async renderNextBatch(): Promise<void> {
     if (this.isLoadingMore) return;
 
+    console.time('MobileSearch: renderNextBatch');
     const startIndex = this.renderedResultsCount;
+    const batchSize =
+      startIndex === 0
+        ? INITIAL_RESULTS_PER_BATCH
+        : SUBSEQUENT_RESULTS_PER_BATCH;
     const endIndex = Math.min(
-      startIndex + RESULTS_PER_BATCH,
+      startIndex + batchSize,
       this.currentMatchingFiles.length,
     );
 
@@ -268,12 +285,18 @@ export class MobileSearchLeaf extends ItemView {
 
     this.renderedResultsCount = endIndex;
     this.isLoadingMore = false;
+    console.timeEnd('MobileSearch: renderNextBatch');
   }
 
   /**
    * Checks if user has scrolled near the bottom and loads more results.
    */
   private checkLoadMore(): void {
+    if (this.renderedResultsCount === INITIAL_RESULTS_PER_BATCH) {
+      this.renderNextBatch();
+      return;
+    }
+
     const { scrollTop, scrollHeight, clientHeight } = this.resultsContainer;
 
     if (scrollTop + clientHeight >= scrollHeight - SCROLL_LOAD_THRESHOLD) {

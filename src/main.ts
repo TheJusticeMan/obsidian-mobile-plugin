@@ -177,6 +177,10 @@ export default class MobilePlugin extends Plugin {
     }
   }
 
+  onUserEnable() {
+    this.activateMobileSearchView();
+  }
+
   onunload(): void {
     // Release wake lock if active
     if (this.wakeLock) {

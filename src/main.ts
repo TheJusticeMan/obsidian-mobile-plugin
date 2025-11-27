@@ -1,6 +1,10 @@
 import { Platform, Plugin, Notice, Component, App } from 'obsidian';
 import { FABManager } from './fab';
 import {
+  MobileSearchLeaf,
+  VIEW_TYPE_MOBILE_SEARCH,
+} from './mobile-search-leaf';
+import {
   DEFAULT_SETTINGS,
   MobileCMDEvent,
   MobilePluginSettings,
@@ -74,6 +78,22 @@ export default class MobilePlugin extends Plugin {
     // Initialize FAB Manager
     this.fabManager = new FABManager(this.app, this);
 
+    // Register the Mobile Search view
+    this.registerView(
+      VIEW_TYPE_MOBILE_SEARCH,
+      (leaf) => new MobileSearchLeaf(leaf),
+    );
+
+    // Add command to open Mobile Search
+    this.addCommand({
+      id: 'open-mobile-search',
+      name: 'Open Mobile Search',
+      icon: 'search',
+      callback: () => {
+        void this.activateMobileSearchView();
+      },
+    });
+
     // Register the CodeMirror 6 toolbar extension with multiple context-aware toolbars
     this.registerEditorExtension(createToolbarExtension(this.app, this));
     // add ribbon icon
@@ -81,6 +101,31 @@ export default class MobilePlugin extends Plugin {
 
     // Add settings tab
     this.addSettingTab(new MobileSettingTab(this.app, this));
+  }
+
+  /**
+   * Activates the Mobile Search view in the left sidebar.
+   */
+  async activateMobileSearchView(): Promise<void> {
+    const { workspace } = this.app;
+
+    let leaf = workspace.getLeavesOfType(VIEW_TYPE_MOBILE_SEARCH)[0];
+
+    if (!leaf) {
+      // Create the view in the left sidebar
+      const leftLeaf = workspace.getLeftLeaf(false);
+      if (leftLeaf) {
+        await leftLeaf.setViewState({
+          type: VIEW_TYPE_MOBILE_SEARCH,
+          active: true,
+        });
+        leaf = leftLeaf;
+      }
+    }
+
+    if (leaf) {
+      workspace.revealLeaf(leaf);
+    }
   }
 
   createNewNote(): void {
@@ -145,6 +190,9 @@ export default class MobilePlugin extends Plugin {
       this.fabManager.destroy();
       this.fabManager = null;
     }
+
+    // Detach Mobile Search leaves
+    this.app.workspace.detachLeavesOfType(VIEW_TYPE_MOBILE_SEARCH);
   }
 
   async loadSettings() {

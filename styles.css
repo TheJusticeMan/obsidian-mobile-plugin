@@ -118,6 +118,21 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   transition: opacity 0.5s ease;
 }
 
+/* State classes for dragline animation */
+.mobile-fab-dragline.is-fading {
+  opacity: 0;
+  height: 0;
+}
+
+/* Gesture feedback animation for FAB */
+.mobile-fab.gesture-success {
+  background: var(--interactive-accent);
+}
+
+.mobile-fab.gesture-animating {
+  transition: background 2s;
+}
+
 .mobile-plugin-settings-header > .setting-item-control {
   flex-wrap: wrap;
   flex-direction: row;

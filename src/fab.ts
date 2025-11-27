@@ -4,12 +4,18 @@ import {
   Command,
   MarkdownView,
   Modal,
-  Notice,
   Setting,
-} from "obsidian";
-import MobilePlugin from "./main";
-import { CommandSuggestModal } from "./settings";
-import { json } from "stream/consumers";
+} from 'obsidian';
+import MobilePlugin from './main';
+import { CommandSuggestModal } from './settings';
+
+/**
+ * Helper function to set CSS properties on an element
+ * Uses Object.assign for better performance when setting multiple properties
+ */
+function setCssProps(el: HTMLElement, props: Record<string, string>): void {
+  Object.assign(el.style, props);
+}
 
 /**
  * Manages FAB placement and lifecycle across editor leaves.
@@ -17,11 +23,15 @@ import { json } from "stream/consumers";
 export class FABManager {
   private fabElements: Map<MarkdownView, ButtonComponent> = new Map();
 
-  constructor(private app: App, private plugin: MobilePlugin) {
-    // Initial setup can be done here if needed
+  constructor(
+    private app: App,
+    private plugin: MobilePlugin,
+  ) {
     // Update FAB when workspace layout changes
     this.plugin.registerEvent(
-      this.app.workspace.on("active-leaf-change", () => this.updateActiveLeaf())
+      this.app.workspace.on('active-leaf-change', () =>
+        this.updateActiveLeaf(),
+      ),
     );
 
     // Initial FAB setup
@@ -31,7 +41,7 @@ export class FABManager {
   /**
    * Updates FAB for the active leaf
    */
-  updateActiveLeaf() {
+  updateActiveLeaf(): void {
     const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
     if (activeView) {
       this.ensureFABForLeaf(activeView);
@@ -41,7 +51,7 @@ export class FABManager {
   /**
    * Ensures a FAB exists for the given leaf
    */
-  private ensureFABForLeaf(view: MarkdownView) {
+  private ensureFABForLeaf(view: MarkdownView): void {
     // Don't create duplicate FABs
     if (!this.fabElements.has(view)) {
       // Create and mount FAB
@@ -53,82 +63,75 @@ export class FABManager {
    * Creates a FAB element
    */
   private createFAB(containerEl: HTMLElement): ButtonComponent {
-    // Change to new ButtonComponent style
     return new MobileFAB(this.app, this.plugin, containerEl);
-  }
-
-  /**
-   * Triggers haptic feedback if enabled and supported
-   */
-  private hapticFeedback(duration: number = 10) {
-    if (this.plugin.settings.enableHapticFeedback && navigator.vibrate) {
-      navigator.vibrate(duration);
-    }
   }
 
   /**
    * Cleans up all FABs
    */
-  destroy() {
+  destroy(): void {
     this.fabElements.forEach((fab) => fab.buttonEl.remove());
     this.fabElements.clear();
   }
 }
 
 class MobileFAB extends ButtonComponent {
+  private start: Offset = new Offset(0, 0);
+  private last: Offset = new Offset(0, 0);
+  private line: Offset[] = [];
+
   constructor(
     private app: App,
     public plugin: MobilePlugin,
     containerEl: HTMLElement,
-    private gesture: offset[] = []
   ) {
     super(containerEl);
-    this.setTooltip("Create new note (long press for command palette)")
-      .setIcon("plus")
-      .setClass("mobile-fab")
-      .onClick(async () => {
+    this.setTooltip('Create new note (long press for command palette)')
+      .setIcon('plus')
+      .setClass('mobile-fab')
+      .onClick(() => {
         this.hapticFeedback(10);
         plugin.pluspress();
       })
       .then((btn) =>
-        btn.buttonEl.addEventListener("contextmenu", (e) => {
+        btn.buttonEl.addEventListener('contextmenu', (e) => {
           e.preventDefault();
           this.hapticFeedback(20);
           plugin.plusLongpress();
-        })
+        }),
       )
       .then((btn) => {
-        btn.buttonEl.addEventListener("touchstart", this.startDrag);
-        btn.buttonEl.addEventListener("mousedown", this.startDrag);
+        btn.buttonEl.addEventListener('touchstart', this.startDrag);
+        btn.buttonEl.addEventListener('mousedown', this.startDrag);
       });
   }
-  private hapticFeedback(duration: number = 10) {
+
+  private hapticFeedback(duration = 10): void {
     if (this.plugin.settings.enableHapticFeedback && navigator.vibrate) {
       navigator.vibrate(duration);
     }
   }
-  start: offset = new offset(0, 0);
-  last: offset = new offset(0, 0);
-  line: offset[] = [];
-  startDrag = (e: MouseEvent | TouchEvent) => {
+
+  startDrag = (e: MouseEvent | TouchEvent): void => {
     if (e instanceof MouseEvent) {
-      this.start = new offset(e.clientX, e.clientY);
-      document.addEventListener("mousemove", this.onDrag);
-      document.addEventListener("mouseup", this.endDrag);
+      this.start = new Offset(e.clientX, e.clientY);
+      document.addEventListener('mousemove', this.onDrag);
+      document.addEventListener('mouseup', this.endDrag);
     } else if (e.touches && e.touches.length > 0) {
-      this.start = new offset(e.touches[0].clientX, e.touches[0].clientY);
-      document.addEventListener("touchmove", this.onDrag);
-      document.addEventListener("touchend", this.endDrag);
+      this.start = new Offset(e.touches[0].clientX, e.touches[0].clientY);
+      document.addEventListener('touchmove', this.onDrag);
+      document.addEventListener('touchend', this.endDrag);
     }
     this.last = this.start;
     this.line = [this.start];
   };
-  onDrag = (e: MouseEvent | TouchEvent) => {
-    let client: offset;
+
+  onDrag = (e: MouseEvent | TouchEvent): void => {
+    let client: Offset;
     if (e instanceof MouseEvent) {
-      client = new offset(e.clientX, e.clientY);
+      client = new Offset(e.clientX, e.clientY);
     } else if (e.touches && e.touches.length > 0) {
-      client = new offset(e.touches[0].clientX, e.touches[0].clientY);
+      client = new Offset(e.touches[0].clientX, e.touches[0].clientY);
     } else {
       return;
     }
@@ -136,40 +139,42 @@ class MobileFAB extends ButtonComponent {
     this.drawTempline(this.last, client, 1000);
     this.last = client;
     this.line.push(client);
-    this.buttonEl.style.translate = `${d.x}px ${d.y}px`;
+    setCssProps(this.buttonEl, { translate: `${d.x}px ${d.y}px` });
   };
-  endDrag = (e: MouseEvent | TouchEvent) => {
-    this.buttonEl.style.translate = `0px 0px`;
 
-    document.removeEventListener("mousemove", this.onDrag);
-    document.removeEventListener("mouseup", this.endDrag);
+  endDrag = (): void => {
+    setCssProps(this.buttonEl, { translate: '0px 0px' });
 
-    document.removeEventListener("touchmove", this.onDrag);
-    document.removeEventListener("touchend", this.endDrag);
+    document.removeEventListener('mousemove', this.onDrag);
+    document.removeEventListener('mouseup', this.endDrag);
+    document.removeEventListener('touchmove', this.onDrag);
+    document.removeEventListener('touchend', this.endDrag);
 
     this.detectGesture();
   };
-  drawTempline(start: offset, end: offset, lifeTime: number = 1000) {
-    const line = document.body.createDiv({ cls: "mobile-fab-dragline" });
+
+  drawTempline(start: Offset, end: Offset, lifeTime = 1000): void {
+    const line = document.body.createDiv({ cls: 'mobile-fab-dragline' });
     const delta = end.subtract(start);
     const length = Math.sqrt(delta.x * delta.x + delta.y * delta.y);
     const angle = Math.atan2(delta.y, delta.x) * (180 / Math.PI);
-    line.style.width = `${length}px`;
-    line.style.height = `8px`;
-    line.style.transform = `rotate(${angle}deg)`;
-    line.style.left = `${start.x}px`;
-    line.style.top = `${start.y}px`;
-    line.style.transition = `opacity ${lifeTime}ms, height ${lifeTime}ms`;
+    setCssProps(line, {
+      width: `${length}px`,
+      height: '8px',
+      transform: `rotate(${angle}deg)`,
+      left: `${start.x}px`,
+      top: `${start.y}px`,
+      transition: `opacity ${lifeTime}ms, height ${lifeTime}ms`,
+    });
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        line.style.opacity = "0";
-        line.style.height = "0px";
+        line.addClass('is-fading');
       });
     });
     setTimeout(() => line.remove(), lifeTime);
   }
-  newGestures: { name: string; line: offset[] }[] = [];
-  detectGesture() {
+
+  detectGesture(): void {
     if (this.line.length < 2) return;
     if (this.getLength(this.line) < 100) return;
 
@@ -180,7 +185,7 @@ class MobileFAB extends ButtonComponent {
 
     for (const gesture of this.plugin.settings.gestureCommands) {
       const normalizedPreset = JSON.parse(gesture.gesturePath).map(
-        (p: number[]) => new offset(p[0], p[1])
+        (p: number[]) => new Offset(p[0], p[1]),
       );
       const diff = this.calculateDifference(normalizedInput, normalizedPreset);
 
@@ -192,43 +197,42 @@ class MobileFAB extends ButtonComponent {
 
     if (bestMatch && minDiff < 0.5) {
       // Execute associated command
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
       (this.app as any).commands?.executeCommandById(bestMatch.commandId);
-      this.buttonEl.style.transition = "";
+      this.buttonEl.removeClass('gesture-animating');
       requestAnimationFrame(() => {
-        this.buttonEl.style.background = "var(--interactive-accent)";
+        this.buttonEl.addClass('gesture-success');
         requestAnimationFrame(() => {
-          this.buttonEl.style.transition = "background 2s";
-          this.buttonEl.style.background = "";
+          this.buttonEl.addClass('gesture-animating');
+          this.buttonEl.removeClass('gesture-success');
         });
       });
-      /* new Notice(`Executed gesture command: ${bestMatch.name}`); */
     } else {
       new NewGesture(this.app, this.plugin, normalizedInput).then((g) =>
         this.plugin.settings.showCommandConfirmation
           ? g.open()
-          : g.openCommandSelection()
+          : g.openCommandSelection(),
       );
-      // draw the gesture for user feedback
+      // Draw the gesture for user feedback
       this.start = this.line[0];
       for (let i = 0; i < normalizedInput.length - 1; i++) {
         this.drawTempline(
           normalizedInput[i].add(this.start),
           normalizedInput[i + 1].add(this.start),
-          3000
+          3000,
         );
       }
     }
   }
 
-  normalizeLine(line: offset[]): offset[] {
+  normalizeLine(line: Offset[]): Offset[] {
     if (line.length === 0) return [];
     const start = line[0];
     const translated = line.map((p) => p.subtract(start));
     return this.resample(translated, 40);
   }
 
-  getLength(line: offset[]): number {
+  getLength(line: Offset[]): number {
     let length = 0;
     for (let i = 0; i < line.length - 1; i++) {
       length += line[i].distanceTo(line[i + 1]);
@@ -236,16 +240,20 @@ class MobileFAB extends ButtonComponent {
     return length;
   }
 
-  resample(line: offset[], n: number): offset[] {
+  resample(line: Offset[], n: number): Offset[] {
     if (line.length === 0) return [];
-    if (line.length === 1) return Array(n).fill(line[0]);
+    if (line.length === 1) {
+      return Array.from({ length: n }, () => new Offset(line[0].x, line[0].y));
+    }
 
     const totalLength = this.getLength(line);
 
-    if (totalLength === 0) return Array(n).fill(line[0]);
+    if (totalLength === 0) {
+      return Array.from({ length: n }, () => new Offset(line[0].x, line[0].y));
+    }
 
     const interval = totalLength / (n - 1);
-    const newLine: offset[] = [line[0]];
+    const newLine: Offset[] = [line[0]];
     let currentDist = 0;
     let currentPointIndex = 0;
 
@@ -260,7 +268,7 @@ class MobileFAB extends ButtonComponent {
           const t = (targetDist - currentDist) / dist;
           const x = p1.x + (p2.x - p1.x) * t;
           const y = p1.y + (p2.y - p1.y) * t;
-          newLine.push(new offset(x, y));
+          newLine.push(new Offset(x, y));
           break;
         }
         currentDist += dist;
@@ -273,7 +281,7 @@ class MobileFAB extends ButtonComponent {
     return newLine;
   }
 
-  calculateDifference(line1: offset[], line2: offset[]): number {
+  calculateDifference(line1: Offset[], line2: Offset[]): number {
     let totalDiff = 0;
     const n = Math.min(line1.length, line2.length);
     if (n < 2) return Infinity;
@@ -296,29 +304,29 @@ class MobileFAB extends ButtonComponent {
   }
 }
 
-export class offset {
+export class Offset {
   x: number;
   y: number;
   constructor(x: number, y: number) {
     this.x = x;
     this.y = y;
   }
-  subtract(other: offset): offset {
-    return new offset(this.x - other.x, this.y - other.y);
+  subtract(other: Offset): Offset {
+    return new Offset(this.x - other.x, this.y - other.y);
   }
-  add(other: offset): offset {
-    return new offset(this.x + other.x, this.y + other.y);
+  add(other: Offset): Offset {
+    return new Offset(this.x + other.x, this.y + other.y);
   }
-  distanceTo(other: offset): number {
+  distanceTo(other: Offset): number {
     const dx = this.x - other.x;
     const dy = this.y - other.y;
     return Math.sqrt(dx * dx + dy * dy);
   }
-  applyDampening(dampening: number): offset {
+  applyDampening(dampening: number): Offset {
     // Non-linear dampening: use a power function for smoother effect
-    return new offset(
+    return new Offset(
       (Math.sign(this.x) * Math.pow(Math.abs(this.x), 0.7)) / dampening,
-      (Math.sign(this.y) * Math.pow(Math.abs(this.y), 0.7)) / dampening
+      (Math.sign(this.y) * Math.pow(Math.abs(this.y), 0.7)) / dampening,
     );
   }
 }
@@ -330,56 +338,65 @@ export interface GestureCommand {
 }
 
 class NewGesture extends Modal {
-  constructor(app: App, private plugin: MobilePlugin, private line: offset[]) {
+  constructor(
+    app: App,
+    private plugin: MobilePlugin,
+    private line: Offset[],
+  ) {
     super(app);
   }
-  onOpen() {
+
+  onOpen(): void {
     new Setting(this.contentEl)
-      .setName("Assign action to new gesture")
-      .setDesc("Select a command to assign to the new gesture.")
+      .setName('Assign action to new gesture')
+      .setDesc('Select a command to assign to the new gesture.')
       .addButton((btn) =>
-        btn.setButtonText("Select command").onClick(() => {
+        btn.setButtonText('Select command').onClick(() => {
           this.openCommandSelection();
           this.close();
-        })
+        }),
       )
       .addButton((btn) =>
-        btn.setButtonText("Cancel").onClick(() => this.close())
+        btn.setButtonText('Cancel').onClick(() => this.close()),
       )
       .addButton((btn) =>
         btn
-          .setButtonText("Skip to command selction")
+          .setButtonText('Skip to command selection')
           .setCta()
           .onClick(() => {
             this.plugin.settings.showCommandConfirmation = false;
-            this.plugin.saveSettings();
+            void this.plugin.saveSettings();
             this.openCommandSelection();
             this.close();
-          })
+          }),
       );
   }
-  openCommandSelection() {
-    new CommandSuggestModal(this.app, async (command: Command) => {
+
+  openCommandSelection(): void {
+    new CommandSuggestModal(this.app, (command: Command) => {
       // Assign selected command to the new gesture
       this.plugin.settings.gestureCommands.push({
-        name: command.name || "unnamed",
+        name: command.name || 'unnamed',
         commandId: command.id,
         gesturePath: JSON.stringify(
-          this.line.map((p) => [Number(p.x.toFixed(2)), Number(p.y.toFixed(2))])
+          this.line.map((p) => [
+            Number(p.x.toFixed(2)),
+            Number(p.y.toFixed(2)),
+          ]),
         ),
       });
 
-      await this.plugin.saveSettings();
+      void this.plugin.saveSettings();
       this.close();
     }).open();
   }
 
-  then(cb: (modal: this) => void) {
+  then(cb: (modal: this) => void): this {
     cb(this);
     return this;
   }
 
-  onClose() {
+  onClose(): void {
     const { contentEl } = this;
     contentEl.empty();
   }

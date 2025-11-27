@@ -1,14 +1,14 @@
-import { syntaxTree } from "@codemirror/language";
+import { syntaxTree } from '@codemirror/language';
 import {
   Decoration,
   DecorationSet,
   EditorView,
   ViewPlugin,
   ViewUpdate,
-} from "@codemirror/view";
-import { App, ButtonComponent, ExtraButtonComponent } from "obsidian";
-import MobilePlugin from "./main";
-import { ContextType, ToolbarConfig, ToolbarEditor } from "./settings";
+} from '@codemirror/view';
+import { App, ButtonComponent, ExtraButtonComponent } from 'obsidian';
+import MobilePlugin from './main';
+import { ContextType, ToolbarConfig, ToolbarEditor } from './settings';
 
 /**
  * Creates a CodeMirror 6 ViewPlugin that displays a context-aware toolbar at the bottom
@@ -33,7 +33,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         this.updateTooltip(view);
       }
 
-      hapticFeedback(duration: number = 10) {
+      hapticFeedback(duration = 10): void {
         if (this.plugin.settings.enableHapticFeedback && navigator.vibrate) {
           navigator.vibrate(duration);
         }
@@ -87,7 +87,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         for (const binding of this.plugin.settings.contextBindings) {
           if (activeContexts.has(binding.contextType)) {
             const toolbar = this.plugin.settings.toolbars.find(
-              (t) => t.id === binding.toolbarId
+              (t) => t.id === binding.toolbarId,
             );
             if (toolbar) {
               matchingToolbars.push(toolbar);
@@ -115,77 +115,78 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
 
         // Return a virtual toolbar with combined commands
         return {
-          id: "combined",
-          name: "Combined toolbar",
+          id: 'combined',
+          name: 'Combined toolbar',
           commands: combinedCommands,
         };
       }
 
       getMatchingContexts(view: EditorView, pos: number): Set<ContextType> {
         const contexts = new Set<ContextType>();
-        contexts.add("default");
+        contexts.add('default');
 
         if (!view.state.selection.main.empty) {
-          contexts.add("selection");
+          contexts.add('selection');
         }
 
         syntaxTree(view.state).iterate({
           from: pos,
           to: pos,
-          enter: (node: any) => {
+          // Using SyntaxNodeRef type from CodeMirror but accepting broad type for compatibility
+          enter: (node: { type: { name: string } }) => {
             const nodeName = node.type.name;
 
             if (
-              nodeName === "BulletList" ||
-              nodeName === "OrderedList" ||
-              nodeName.startsWith("HyperMD-list-line_HyperMD-list-line-")
+              nodeName === 'BulletList' ||
+              nodeName === 'OrderedList' ||
+              nodeName.startsWith('HyperMD-list-line_HyperMD-list-line-')
             ) {
-              contexts.add("list");
+              contexts.add('list');
             }
 
-            if (nodeName === "Task" || nodeName.includes("HyperMD-task-line")) {
-              contexts.add("task");
-            }
-
-            if (
-              nodeName.startsWith("ATXHeading") ||
-              nodeName === "SetextHeading" ||
-              nodeName.startsWith("HyperMD-header")
-            ) {
-              contexts.add("heading");
+            if (nodeName === 'Task' || nodeName.includes('HyperMD-task-line')) {
+              contexts.add('task');
             }
 
             if (
-              nodeName === "FencedCode" ||
-              nodeName === "CodeBlock" ||
-              nodeName.includes("HyperMD-codeblock")
+              nodeName.startsWith('ATXHeading') ||
+              nodeName === 'SetextHeading' ||
+              nodeName.startsWith('HyperMD-header')
             ) {
-              contexts.add("code-block");
+              contexts.add('heading');
             }
 
             if (
-              nodeName === "Table" ||
-              nodeName.startsWith("Table") ||
-              nodeName.includes("HyperMD-table")
+              nodeName === 'FencedCode' ||
+              nodeName === 'CodeBlock' ||
+              nodeName.includes('HyperMD-codeblock')
             ) {
-              contexts.add("table");
+              contexts.add('code-block');
             }
 
             if (
-              nodeName === "Blockquote" ||
-              nodeName === "QuoteMark" ||
-              nodeName.includes("HyperMD-quote")
+              nodeName === 'Table' ||
+              nodeName.startsWith('Table') ||
+              nodeName.includes('HyperMD-table')
             ) {
-              contexts.add("blockquote");
+              contexts.add('table');
             }
 
             if (
-              nodeName === "Link" ||
-              nodeName.includes("link") ||
-              nodeName.includes("URL") ||
-              nodeName.includes("HyperMD-link")
+              nodeName === 'Blockquote' ||
+              nodeName === 'QuoteMark' ||
+              nodeName.includes('HyperMD-quote')
             ) {
-              contexts.add("link");
+              contexts.add('blockquote');
+            }
+
+            if (
+              nodeName === 'Link' ||
+              nodeName.includes('link') ||
+              nodeName.includes('URL') ||
+              nodeName.includes('HyperMD-link')
+            ) {
+              contexts.add('link');
             }
           },
         });
@@ -207,11 +208,11 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         // This ensures the toolbar appears at the bottom of the editor container,
         // not inside table cells or other nested elements
         this.tooltip = (
-          view.dom.closest(".workspace-leaf-content") || view.dom
-        ).createDiv({ cls: "mobile-selection-toolbar" });
+          view.dom.closest('.workspace-leaf-content') || view.dom
+        ).createDiv({ cls: 'mobile-selection-toolbar' });
 
         // Get all available commands
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
         const commands = (this.app as any).commands?.commands || {};
 
         // Add command buttons
@@ -225,11 +226,10 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                 .setIcon(iconToUse)
                 .setTooltip(command.name || commandId)
                 .onClick(() => {
-                  /* e.preventDefault(); */
                   // Haptic feedback on button click
                   this.hapticFeedback(10);
                   // Execute the command
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
                   (this.app as any).commands?.executeCommandById(commandId);
                   // Refocus editor to prevent focus loss
                   view.focus();
@@ -243,7 +243,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                   // Haptic feedback on button click
                   this.hapticFeedback(10);
                   // Execute the command
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
                   (this.app as any).commands?.executeCommandById(commandId);
                   // Refocus editor to prevent focus loss
                   view.focus();
@@ -252,8 +252,8 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
           }
         });
         new ExtraButtonComponent(this.tooltip)
-          .setIcon("pencil")
-          .setTooltip("Edit Toolbar")
+          .setIcon('pencil')
+          .setTooltip('Edit toolbar')
           .onClick(() => {
             if (this.mainToolbar)
               new ToolbarEditor(this.app, this.plugin, this.mainToolbar).open();
@@ -269,6 +269,6 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
     },
     {
       // No decorations needed for this plugin
-    }
+    },
   );
 }

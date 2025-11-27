@@ -354,8 +354,13 @@ export class MobileSearchLeaf extends ItemView {
       });
     }
 
+    // Preview wrapper (for positioning the date)
+    const previewWrapper = card.createDiv({
+      cls: 'mobile-search-result-preview-wrapper',
+    });
+
     // Preview container
-    const previewEl = card.createDiv({
+    const previewEl = previewWrapper.createDiv({
       cls: 'mobile-search-result-preview',
     });
 
@@ -380,9 +385,41 @@ export class MobileSearchLeaf extends ItemView {
       previewEl.setText('Unable to load preview');
     }
 
+    // Date at the bottom corner of the preview
+    previewWrapper.createDiv({
+      cls: 'mobile-search-result-date',
+      text: this.formatDate(file.stat.mtime),
+    });
+
     // Click handler to open the file
     card.addEventListener('click', () => {
       void this.app.workspace.openLinkText(file.path, '', false);
+    });
+  }
+
+  /**
+   * Formats a timestamp into a human-readable date string.
+   */
+  private formatDate(timestamp: number): string {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    // For recent dates, show relative time
+    if (diffDays === 0) {
+      return 'Today';
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays < 7) {
+      return `${diffDays} days ago`;
+    }
+
+    // For older dates, show the actual date
+    return date.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
     });
   }
 }

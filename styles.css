@@ -243,3 +243,19 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   color: var(--text-muted);
   font-size: 14px;
 }
+
+/* Preview wrapper for positioning date */
+.mobile-search-result-preview-wrapper {
+  position: relative;
+}
+
+/* Date at bottom corner of preview */
+.mobile-search-result-date {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  font-size: 11px;
+  color: var(--text-faint);
+  background: linear-gradient(to right, transparent, var(--background-secondary) 20%);
+  padding-left: 16px;
+}

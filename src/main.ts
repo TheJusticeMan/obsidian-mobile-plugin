@@ -1,17 +1,17 @@
-import { Platform, Plugin, Notice } from "obsidian";
-import { FABManager } from "./fab";
+import { Platform, Plugin, Notice } from 'obsidian';
+import { FABManager } from './fab';
 import {
   DEFAULT_SETTINGS,
   MobilePluginSettings,
   MobileSettingTab,
   mySettingsModel,
-} from "./settings";
-import { createToolbarExtension } from "./toolbar-extension";
+} from './settings';
+import { createToolbarExtension } from './toolbar-extension';
 
 // WakeLock API types (not in standard TS lib)
 interface WakeLockSentinel {
   release(): Promise<void>;
-  addEventListener(type: "release", listener: () => void): void;
+  addEventListener(type: 'release', listener: () => void): void;
 }
 
 export default class MobilePlugin extends Plugin {
@@ -28,28 +28,28 @@ export default class MobilePlugin extends Plugin {
 
     // Register wake lock toggle command
     this.addCommand({
-      id: "toggle-wake-lock",
-      name: "Toggle wake lock",
+      id: 'toggle-wake-lock',
+      name: 'Toggle wake lock',
       callback: async () => {
         await this.toggleWakeLock();
       },
     });
 
     this.addCommand({
-      id: "plus-press",
-      name: "Plus press",
+      id: 'plus-press',
+      name: 'Plus press',
       callback: () => this.pluspress(),
     });
     this.addCommand({
-      id: "plus-longpress",
-      name: "Plus long press",
+      id: 'plus-longpress',
+      name: 'Plus long press',
       callback: () => this.plusLongpress(),
     });
 
     this.addCommand({
-      id: "mobile-settings",
-      name: "Open settings",
-      icon: "settings",
+      id: 'mobile-settings',
+      name: 'Open settings',
+      icon: 'settings',
       callback: () => {
         new mySettingsModel(this.app, this).open();
       },
@@ -62,11 +62,7 @@ export default class MobilePlugin extends Plugin {
     this.registerEditorExtension(createToolbarExtension(this.app, this));
 
     // add ribbon icon
-    this.addRibbonIcon(
-      "plus",
-      "Create new note",
-      () => this.createNewNote()
-    );
+    this.addRibbonIcon('plus', 'Create new note', () => this.createNewNote());
 
     // Add settings tab
     this.addSettingTab(new MobileSettingTab(this.app, this));
@@ -75,7 +71,7 @@ export default class MobilePlugin extends Plugin {
   createNewNote(): void {
     // Using the internal commands API to execute file creation
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
-    (this.app as any).commands.executeCommandById("file-explorer:new-file");
+    (this.app as any).commands.executeCommandById('file-explorer:new-file');
   }
 
   getBinds(toolbarId: string): string[] {
@@ -91,19 +87,19 @@ export default class MobilePlugin extends Plugin {
   plusLongpress(): void {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
     (this.app as any).commands.executeCommandById(
-      this.settings.plusLongpress || "command-palette:open"
+      this.settings.plusLongpress || 'command-palette:open',
     );
   }
 
   pluspress(): void {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
     (this.app as any).commands.executeCommandById(
-      this.settings.pluspress || "file-explorer:new-file"
+      this.settings.pluspress || 'file-explorer:new-file',
     );
   }
 
   async toggleWakeLock(): Promise<void> {
-    if (!("wakeLock" in navigator)) {
+    if (!('wakeLock' in navigator)) {
       // Wake Lock API not supported
       return;
     }
@@ -116,16 +112,16 @@ export default class MobilePlugin extends Plugin {
       } else {
         // Request wake lock
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- WakeLock API is not in standard TS lib
-        this.wakeLock = await (navigator as any).wakeLock.request("screen");
+        this.wakeLock = await (navigator as any).wakeLock.request('screen');
 
         // Listen for wake lock release
-        this.wakeLock?.addEventListener("release", () => {
+        this.wakeLock?.addEventListener('release', () => {
           this.wakeLock = null;
         });
       }
-      new Notice(this.wakeLock ? "Wake lock enabled" : "Wake lock disabled");
+      new Notice(this.wakeLock ? 'Wake lock enabled' : 'Wake lock disabled');
     } catch (error) {
-      console.error("Wake lock error:", error);
+      console.error('Wake lock error:', error);
     }
   }
 

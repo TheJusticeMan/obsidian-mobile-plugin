@@ -1,15 +1,23 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "obsidian-mobile-ux",
 	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "Mobile-optimized UX enhancements for Obsidian with floating action button, context-aware toolbars, haptic feedback, and wake lock support.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
-	"keywords": [],
-	"author": "",
+	"keywords": [
+		"obsidian",
+		"mobile",
+		"plugin",
+		"fab",
+		"toolbar",
+		"context-aware",
+		"haptic-feedback"
+	],
+	"author": "TheJusticeMan",
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^16.11.6",

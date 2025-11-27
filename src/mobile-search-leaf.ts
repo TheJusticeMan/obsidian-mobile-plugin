@@ -5,6 +5,7 @@ import {
   TFile,
   WorkspaceLeaf,
 } from 'obsidian';
+import { throttleWithInterval } from './throttleWithInterval';
 
 export const VIEW_TYPE_MOBILE_SEARCH = 'mobile-search-view';
 
@@ -15,7 +16,6 @@ export const VIEW_TYPE_MOBILE_SEARCH = 'mobile-search-view';
 export class MobileSearchLeaf extends ItemView {
   private searchInput: HTMLInputElement;
   private resultsContainer: HTMLDivElement;
-  private searchDebounceTimer: number | null = null;
   private intersectionObserver: IntersectionObserver | null = null;
   private resultComponents: Component[] = [];
 
@@ -65,9 +65,7 @@ export class MobileSearchLeaf extends ItemView {
   async onClose(): Promise<void> {
     this.cleanupResultComponents();
     this.cleanupObserver();
-    if (this.searchDebounceTimer !== null) {
-      window.clearTimeout(this.searchDebounceTimer);
-    }
+    this.debouncedSearch.cancel();
   }
 
   /**
@@ -86,9 +84,7 @@ export class MobileSearchLeaf extends ItemView {
    */
   private setupEventListeners(): void {
     // Debounced search on input
-    this.searchInput.addEventListener('input', () => {
-      this.debouncedSearch();
-    });
+    this.searchInput.addEventListener('input', () => this.debouncedSearch());
 
     // Keyboard handling: blur input on scroll to dismiss keyboard
     this.resultsContainer.addEventListener('scroll', () => {
@@ -98,10 +94,7 @@ export class MobileSearchLeaf extends ItemView {
     // Allow pressing Enter to trigger immediate search
     this.searchInput.addEventListener('keydown', (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
-        if (this.searchDebounceTimer !== null) {
-          window.clearTimeout(this.searchDebounceTimer);
-          this.searchDebounceTimer = null;
-        }
+        this.debouncedSearch.cancel();
         void this.performSearch();
       }
     });
@@ -171,16 +164,10 @@ export class MobileSearchLeaf extends ItemView {
    * Debounces the search to avoid re-rendering on every keystroke.
    * Uses a 300ms delay.
    */
-  private debouncedSearch(): void {
-    if (this.searchDebounceTimer !== null) {
-      window.clearTimeout(this.searchDebounceTimer);
-    }
-
-    this.searchDebounceTimer = window.setTimeout(() => {
-      void this.performSearch();
-      this.searchDebounceTimer = null;
-    }, 300);
-  }
+  private debouncedSearch = throttleWithInterval(
+    () => void this.performSearch(),
+    300,
+  );
 
   /**
    * Performs the search and renders results.
@@ -197,7 +184,9 @@ export class MobileSearchLeaf extends ItemView {
     }
 
     // Get all markdown files
-    const files = this.app.vault.getMarkdownFiles();
+    const files = this.app.vault
+      .getMarkdownFiles()
+      .sort((a, b) => b.stat.mtime - a.stat.mtime);
 
     // Filter files by query (match filename or path)
     const matchingFiles = files.filter((file) => {

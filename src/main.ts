@@ -60,14 +60,12 @@ export default class MobilePlugin extends Plugin {
 
     this.addCommand({
       id: 'keep-in-tablet-mode',
-      name: 'Toggle Keep in tablet mode',
+      name: 'Toggle keep in tablet mode',
       callback: () => {
         if (this.kkep.isloaded) {
           this.removeChild(this.kkep);
-          console.log('Keep in tablet mode disabled', this.kkep);
         } else {
           this.addChild(this.kkep);
-          console.log('Keep in tablet mode enabled', this.kkep);
         }
       },
     });
@@ -191,7 +189,6 @@ export class keepInTabletMode extends Component {
   }
 
   private setTabletMode() {
-    console.log('Resized to tablet');
     Platform.isPhone = false;
     Platform.isTablet = true;
     document.body.toggleClass('is-tablet', Platform.isTablet);
@@ -199,7 +196,6 @@ export class keepInTabletMode extends Component {
   }
 
   private resetToPhoneMode() {
-    console.log('Resized to phone');
     Platform.isPhone = true;
     Platform.isTablet = false;
     document.body.toggleClass('is-tablet', Platform.isTablet);

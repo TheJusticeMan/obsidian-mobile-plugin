@@ -29,18 +29,6 @@ export type ContextType =
   | "link"
   | "default";
 
-const enum ContextTypes {
-  Selection = "selection",
-  List = "list",
-  Task = "task",
-  Heading = "heading",
-  CodeBlock = "code-block",
-  Table = "table",
-  Blockquote = "blockquote",
-  Link = "link",
-  Default = "default",
-}
-
 const contextTypeBindings = [
   "selection",
   "list",
@@ -218,8 +206,8 @@ export class CommandSuggestModal extends FuzzySuggestModal<Command> {
   constructor(app: App, onSubmit: (result: Command) => void) {
     super(app);
     this.onSubmit = onSubmit;
-    // @ts-ignore
-    this.commands = Object.values(this.app.commands.commands);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
+    this.commands = Object.values((this.app as any).commands.commands);
   }
 
   getItems(): Command[] {
@@ -271,7 +259,7 @@ export class MobileSettingsView {
                   )
                   .onClick(() => {
                     this.plugin.settings.contextBindings.splice(i, 1);
-                    this.plugin.saveSettings();
+                    void this.plugin.saveSettings();
                     this.renderContextBindings(containerEl);
                   })
               );
@@ -301,7 +289,7 @@ export class MobileSettingsView {
     });
   }
 
-  private renderHeader(containerEl: HTMLElement, index?: number | string) {
+  private renderHeader(containerEl: HTMLElement, index?: number | string): void {
     this.containerEl.empty();
     new Setting(containerEl)
       .setHeading()
@@ -310,13 +298,17 @@ export class MobileSettingsView {
         button.setButtonText("General settings").onClick(() => {
           this.renderGeneralSettings(containerEl);
         });
-        index === "general" ? button.setCta() : null;
+        if (index === "general") {
+          button.setCta();
+        }
       })
       .addButton((button) => {
         button.setButtonText("Context bindings").onClick(() => {
           this.renderContextBindings(containerEl);
         });
-        index === "bindings" ? button.setCta() : null;
+        if (index === "bindings") {
+          button.setCta();
+        }
       })
       .then((setting) =>
         this.plugin.settings.toolbars.forEach((toolbar) => {
@@ -327,7 +319,9 @@ export class MobileSettingsView {
                 this.renderHeader(containerEl, toolbar.id);
                 this.renderToolbar(containerEl, toolbar);
               });
-            index === toolbar.id ? button.setCta() : null;
+            if (index === toolbar.id) {
+              button.setCta();
+            }
           });
         })
       )
@@ -335,7 +329,7 @@ export class MobileSettingsView {
         button.setButtonText("Add new toolbar").onClick(async () => {
           const newToolbar: ToolbarConfig = {
             id: `toolbar-${Date.now()}`,
-            name: `New toolbar`,
+            name: "New toolbar",
             commands: [],
           };
           this.plugin.settings.toolbars.push(newToolbar);
@@ -381,7 +375,7 @@ export class MobileSettingsView {
       ); */
     new Setting(containerEl).addButton((button) =>
       button
-        .setButtonText("reset to default settings")
+        .setButtonText("Reset to default settings")
         .setWarning()
         .onClick(async () => {
           this.plugin.settings = { ...DEFAULT_SETTINGS };
@@ -606,7 +600,7 @@ export class ToolbarEditor extends Modal {
                   (b) =>
                     !(b.contextType === bind && b.toolbarId === this.toolbar.id)
                 );
-              this.plugin.saveSettings();
+              void this.plugin.saveSettings();
               this.render(container);
             })
           );
@@ -663,8 +657,8 @@ export class ToolbarEditor extends Modal {
     const commands = this.toolbar.commands;
 
     commands.forEach((cmdId, index) => {
-      // @ts-ignore
-      const command = this.app.commands.findCommand(cmdId);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
+      const command = (this.app as any).commands.findCommand(cmdId);
       const commandName = command ? command.name : cmdId;
       const defaultIcon = command?.icon || "";
       const customIcon =

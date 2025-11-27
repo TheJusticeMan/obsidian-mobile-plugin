@@ -33,7 +33,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         this.updateTooltip(view);
       }
 
-      hapticFeedback(duration: number = 10) {
+      hapticFeedback(duration = 10): void {
         if (this.plugin.settings.enableHapticFeedback && navigator.vibrate) {
           navigator.vibrate(duration);
         }
@@ -132,7 +132,8 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         syntaxTree(view.state).iterate({
           from: pos,
           to: pos,
-          enter: (node: any) => {
+          // Using SyntaxNodeRef type from CodeMirror but accepting broad type for compatibility
+          enter: (node: { type: { name: string } }) => {
             const nodeName = node.type.name;
 
             if (
@@ -211,7 +212,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         ).createDiv({ cls: "mobile-selection-toolbar" });
 
         // Get all available commands
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
         const commands = (this.app as any).commands?.commands || {};
 
         // Add command buttons
@@ -225,11 +226,10 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                 .setIcon(iconToUse)
                 .setTooltip(command.name || commandId)
                 .onClick(() => {
-                  /* e.preventDefault(); */
                   // Haptic feedback on button click
                   this.hapticFeedback(10);
                   // Execute the command
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
                   (this.app as any).commands?.executeCommandById(commandId);
                   // Refocus editor to prevent focus loss
                   view.focus();
@@ -243,7 +243,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                   // Haptic feedback on button click
                   this.hapticFeedback(10);
                   // Execute the command
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
                   (this.app as any).commands?.executeCommandById(commandId);
                   // Refocus editor to prevent focus loss
                   view.focus();
@@ -253,7 +253,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         });
         new ExtraButtonComponent(this.tooltip)
           .setIcon("pencil")
-          .setTooltip("Edit Toolbar")
+          .setTooltip("Edit toolbar")
           .onClick(() => {
             if (this.mainToolbar)
               new ToolbarEditor(this.app, this.plugin, this.mainToolbar).open();

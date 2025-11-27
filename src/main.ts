@@ -1,5 +1,5 @@
-import { Notice, Platform, Plugin } from "obsidian";
-import { FABManager, offset } from "./fab";
+import { Platform, Plugin, Notice } from "obsidian";
+import { FABManager } from "./fab";
 import {
   DEFAULT_SETTINGS,
   MobilePluginSettings,
@@ -8,10 +8,16 @@ import {
 } from "./settings";
 import { createToolbarExtension } from "./toolbar-extension";
 
+// WakeLock API types (not in standard TS lib)
+interface WakeLockSentinel {
+  release(): Promise<void>;
+  addEventListener(type: "release", listener: () => void): void;
+}
+
 export default class MobilePlugin extends Plugin {
   settings: MobilePluginSettings;
   fabManager: FABManager | null = null;
-  wakeLock: any = null;
+  wakeLock: WakeLockSentinel | null = null;
 
   async onload() {
     if (!Platform.isMobile) {
@@ -42,9 +48,9 @@ export default class MobilePlugin extends Plugin {
 
     this.addCommand({
       id: "mobile-settings",
-      name: "Open mobile plugin settings",
+      name: "Open settings",
       icon: "settings",
-      callback: async () => {
+      callback: () => {
         new mySettingsModel(this.app, this).open();
       },
     });
@@ -59,14 +65,16 @@ export default class MobilePlugin extends Plugin {
     this.addRibbonIcon(
       "plus",
       "Create new note",
-      async () => await this.createNewNote()
+      () => this.createNewNote()
     );
 
     // Add settings tab
     this.addSettingTab(new MobileSettingTab(this.app, this));
   }
 
-  async createNewNote() {
+  createNewNote(): void {
+    // Using the internal commands API to execute file creation
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
     (this.app as any).commands.executeCommandById("file-explorer:new-file");
   }
 
@@ -80,19 +88,21 @@ export default class MobilePlugin extends Plugin {
     return binds;
   }
 
-  plusLongpress() {
+  plusLongpress(): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
     (this.app as any).commands.executeCommandById(
       this.settings.plusLongpress || "command-palette:open"
     );
   }
 
-  pluspress() {
+  pluspress(): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
     (this.app as any).commands.executeCommandById(
       this.settings.pluspress || "file-explorer:new-file"
     );
   }
 
-  async toggleWakeLock() {
+  async toggleWakeLock(): Promise<void> {
     if (!("wakeLock" in navigator)) {
       // Wake Lock API not supported
       return;
@@ -105,10 +115,11 @@ export default class MobilePlugin extends Plugin {
         this.wakeLock = null;
       } else {
         // Request wake lock
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- WakeLock API is not in standard TS lib
         this.wakeLock = await (navigator as any).wakeLock.request("screen");
 
         // Listen for wake lock release
-        this.wakeLock.addEventListener("release", () => {
+        this.wakeLock?.addEventListener("release", () => {
           this.wakeLock = null;
         });
       }
@@ -118,11 +129,12 @@ export default class MobilePlugin extends Plugin {
     }
   }
 
-  async onunload() {
+  onunload(): void {
     // Release wake lock if active
     if (this.wakeLock) {
-      await this.wakeLock.release();
-      this.wakeLock = null;
+      void this.wakeLock.release().then(() => {
+        this.wakeLock = null;
+      });
     }
 
     // Clean up FAB manager

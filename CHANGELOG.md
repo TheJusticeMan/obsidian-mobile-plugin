@@ -5,6 +5,42 @@ All notable changes to the Mobile UX plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Planned
+
+- Simple file search and preview pane for better navigation.
+- Better integration with other plugins.
+- Ask me for a feature to make it easyer to capture on the go
+
+## [1.0.4] - 2025-11-27
+
+### Added
+
+- **Tablet Mode**: New feature to force tablet UI on phones.
+- Command: `Toggle Keep in tablet mode`.
+- Automated code formatting with Prettier during build process.
+
+## [1.0.3] - 2025-11-27
+
+### Fixed
+
+- Addressed all ESLint and code quality issues from automated plugin review.
+- Improved code formatting and configuration.
+- Performance and correctness improvements based on code review.
+
+## [1.0.2] - 2025-11-27
+
+### Fixed
+
+- Resolved description mismatch issues.
+
+## [1.0.1] - 2025-11-27
+
+### Fixed
+
+- Fixed plugin ID and description mismatch in manifest.
+
 ## [1.0.0] - 2024-11-27
 
 ### Added
@@ -88,11 +124,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FAB visibility on editor leaf changes
 
 ---
-
-## [Unreleased]
-
-### Planned
-
-- Simple file search and preview pane for better navigation.
-- Better integration with other plugins.
-- Ask me for a feature to make it easyer to capture on the go

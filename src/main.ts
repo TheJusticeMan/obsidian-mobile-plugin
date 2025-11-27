@@ -1,4 +1,4 @@
-import { Platform, Plugin, Notice } from 'obsidian';
+import { Platform, Plugin, Notice, Component, App } from 'obsidian';
 import { FABManager } from './fab';
 import {
   DEFAULT_SETTINGS,
@@ -18,6 +18,7 @@ export default class MobilePlugin extends Plugin {
   settings: MobilePluginSettings;
   fabManager: FABManager | null = null;
   wakeLock: WakeLockSentinel | null = null;
+  kkep: keepInTabletMode;
 
   async onload() {
     if (!Platform.isMobile) {
@@ -40,6 +41,7 @@ export default class MobilePlugin extends Plugin {
       name: 'Plus press',
       callback: () => this.pluspress(),
     });
+
     this.addCommand({
       id: 'plus-longpress',
       name: 'Plus long press',
@@ -54,13 +56,25 @@ export default class MobilePlugin extends Plugin {
         new mySettingsModel(this.app, this).open();
       },
     });
+    this.kkep = new keepInTabletMode(this.app, this);
+
+    this.addCommand({
+      id: 'keep-in-tablet-mode',
+      name: 'Toggle keep in tablet mode',
+      callback: () => {
+        if (this.kkep.isloaded) {
+          this.removeChild(this.kkep);
+        } else {
+          this.addChild(this.kkep);
+        }
+      },
+    });
 
     // Initialize FAB Manager
     this.fabManager = new FABManager(this.app, this);
 
     // Register the CodeMirror 6 toolbar extension with multiple context-aware toolbars
     this.registerEditorExtension(createToolbarExtension(this.app, this));
-
     // add ribbon icon
     this.addRibbonIcon('plus', 'Create new note', () => this.createNewNote());
 
@@ -146,5 +160,50 @@ export default class MobilePlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
+  }
+}
+
+export class keepInTabletMode extends Component {
+  isloaded: boolean = false;
+  wasPhone: boolean = false;
+  constructor(
+    public app: App,
+    public plugin: MobilePlugin,
+  ) {
+    super();
+  }
+  onload(): void {
+    this.isloaded = true;
+    this.wasPhone = Platform.isPhone;
+    if (Platform.isPhone) {
+      this.setTabletMode();
+    }
+    this.registerEvent(
+      this.app.workspace.on('resize', () => {
+        if (Platform.isPhone) {
+          this.wasPhone = true;
+          this.setTabletMode();
+        }
+      }),
+    );
+  }
+
+  private setTabletMode() {
+    Platform.isPhone = false;
+    Platform.isTablet = true;
+    document.body.toggleClass('is-tablet', Platform.isTablet);
+    document.body.toggleClass('is-phone', Platform.isPhone);
+  }
+
+  private resetToPhoneMode() {
+    Platform.isPhone = true;
+    Platform.isTablet = false;
+    document.body.toggleClass('is-tablet', Platform.isTablet);
+    document.body.toggleClass('is-phone', Platform.isPhone);
+  }
+
+  onunload(): void {
+    this.isloaded = false;
+    if (this.wasPhone) this.resetToPhoneMode();
   }
 }

@@ -124,6 +124,10 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   gap: 0.5em;
   justify-content: flex-start;
 }
+
+.mobile-plugin-settings-header > .setting-item-control > button {
+  flex-grow: 1;
+}
 .mobile-plugin-settings-header > .setting-item-control > button.mod-cta {
   border-radius: var(--button-radius) var(--button-radius) 0 0;
 }

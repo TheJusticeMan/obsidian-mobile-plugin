@@ -236,18 +236,21 @@ export class CommandSuggestModal extends FuzzySuggestModal<Command> {
 }
 
 export class MobileSettingTab extends PluginSettingTab {
-  plugin: MobilePlugin;
-
-  constructor(app: App, plugin: MobilePlugin) {
+  constructor(public app: App, public plugin: MobilePlugin) {
     super(app, plugin);
-    this.plugin = plugin;
   }
 
   display(): void {
-    const { containerEl } = this;
+    new MobileSettingsView(this.app, this.plugin, this.containerEl);
+  }
+}
 
-    containerEl.empty();
-
+export class MobileSettingsView {
+  constructor(
+    public app: App,
+    public plugin: MobilePlugin,
+    public containerEl: HTMLElement
+  ) {
     this.renderGeneralSettings(containerEl);
   }
 
@@ -383,7 +386,7 @@ export class MobileSettingTab extends PluginSettingTab {
         .onClick(async () => {
           this.plugin.settings = { ...DEFAULT_SETTINGS };
           await this.plugin.saveSettings();
-          this.display();
+          this.renderGeneralSettings(containerEl);
         })
     );
     new Setting(containerEl)
@@ -433,7 +436,7 @@ export class MobileSettingTab extends PluginSettingTab {
           new CommandSuggestModal(this.app, async (command) => {
             this.plugin.settings.plusLongpress = command.id;
             await this.plugin.saveSettings();
-            this.display();
+            this.renderGeneralSettings(containerEl);
           }).open();
         })
       );
@@ -445,7 +448,7 @@ export class MobileSettingTab extends PluginSettingTab {
           new CommandSuggestModal(this.app, async (command) => {
             this.plugin.settings.pluspress = command.id;
             await this.plugin.saveSettings();
-            this.display();
+            this.renderGeneralSettings(containerEl);
           }).open();
         })
       );
@@ -460,7 +463,7 @@ export class MobileSettingTab extends PluginSettingTab {
               gc.commandId = command.id;
               gc.name = command.name;
               await this.plugin.saveSettings();
-              this.display();
+              this.renderGeneralSettings(containerEl);
             }).open();
           })
         )
@@ -471,7 +474,7 @@ export class MobileSettingTab extends PluginSettingTab {
             .onClick(async () => {
               this.plugin.settings.gestureCommands.splice(gcIndex, 1);
               await this.plugin.saveSettings();
-              this.display();
+              this.renderGeneralSettings(containerEl);
             })
         );
     });
@@ -502,6 +505,17 @@ export class MobileSettingTab extends PluginSettingTab {
     return names[contextType] || contextType;
   }
 }
+
+export class mySettingsModel extends Modal {
+  constructor(app: App, private plugin: MobilePlugin) {
+    super(app);
+  }
+
+  onOpen() {
+    new MobileSettingsView(this.app, this.plugin, this.contentEl);
+  }
+}
+
 export class ContextSelectionModal extends FuzzySuggestModal<ContextBinding> {
   onSubmit: (result: ContextBinding) => void;
   bindings: ContextBinding[];

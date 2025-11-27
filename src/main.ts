@@ -1,9 +1,10 @@
-import { Notice, Plugin } from "obsidian";
+import { Notice, Platform, Plugin } from "obsidian";
 import { FABManager, offset } from "./fab";
 import {
   DEFAULT_SETTINGS,
   MobilePluginSettings,
   MobileSettingTab,
+  mySettingsModel,
 } from "./settings";
 import { createToolbarExtension } from "./toolbar-extension";
 
@@ -13,6 +14,10 @@ export default class MobilePlugin extends Plugin {
   wakeLock: any = null;
 
   async onload() {
+    if (!Platform.isMobile) {
+      return;
+    }
+
     await this.loadSettings();
 
     // Register wake lock toggle command
@@ -21,6 +26,26 @@ export default class MobilePlugin extends Plugin {
       name: "Toggle wake lock",
       callback: async () => {
         await this.toggleWakeLock();
+      },
+    });
+
+    this.addCommand({
+      id: "plus-press",
+      name: "Plus Press",
+      callback: () => this.pluspress(),
+    });
+    this.addCommand({
+      id: "plus-longpress",
+      name: "Plus Long Press",
+      callback: () => this.plusLongpress(),
+    });
+
+    this.addCommand({
+      id: "mobile-plugin-settings",
+      name: "Open Mobile Plugin Settings",
+      icon: "settings",
+      callback: async () => {
+        new mySettingsModel(this.app, this).open();
       },
     });
 

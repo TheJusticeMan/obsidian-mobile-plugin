@@ -8,7 +8,7 @@ import {
 } from "@codemirror/view";
 import { App, ButtonComponent, ExtraButtonComponent } from "obsidian";
 import MobilePlugin from "./main";
-import { ContextType, ToolbarConfig } from "./settings";
+import { ContextType, ToolbarConfig, ToolbarEditor } from "./settings";
 
 /**
  * Creates a CodeMirror 6 ViewPlugin that displays a context-aware toolbar at the bottom
@@ -21,6 +21,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
       tooltip: HTMLElement | null = null;
       app: App;
       plugin: MobilePlugin;
+      mainToolbar: ToolbarConfig | null = null;
 
       constructor(view: EditorView) {
         this.decorations = Decoration.none;
@@ -109,6 +110,8 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
             }
           }
         }
+
+        this.mainToolbar = matchingToolbars[0] || null;
 
         // Return a virtual toolbar with combined commands
         return {
@@ -248,6 +251,13 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
             }
           }
         });
+        new ExtraButtonComponent(this.tooltip)
+          .setIcon("pencil")
+          .setTooltip("Edit Toolbar")
+          .onClick(() => {
+            if (this.mainToolbar)
+              new ToolbarEditor(this.app, this.plugin, this.mainToolbar).open();
+          });
       }
 
       destroy() {

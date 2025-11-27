@@ -1,9 +1,9 @@
 {
-	"id": "mobile-plugin",
+	"id": "mobile",
 	"name": "Mobile",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"minAppVersion": "0.15.0",
-	"description": "Mobile-optimized UX enhancements with floating action button, context-aware toolbars, haptic feedback, and wake lock support.",
+	"description": "Mobile-optimized UX enhancements with floating action button, context-aware toolbars, and gestures.",
 	"author": "Justice Vellacott",
 	"authorUrl": "https://github.com/TheJusticeMan",
 	"fundingUrl": "",

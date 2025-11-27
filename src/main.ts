@@ -41,7 +41,7 @@ export default class MobilePlugin extends Plugin {
     });
 
     this.addCommand({
-      id: "mobile-plugin-settings",
+      id: "mobile-settings",
       name: "Open mobile plugin settings",
       icon: "settings",
       callback: async () => {

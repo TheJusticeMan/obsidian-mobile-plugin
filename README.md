@@ -2,6 +2,8 @@
 
 A mobile-optimized UX enhancement plugin for [Obsidian](https://obsidian.md) that provides a floating action button (FAB) and context-aware toolbars.
 
+[Ask me for mobile friendly features](https://github.com/TheJusticeMan/obsidian-mobile-plugin/issues)
+
 ## Gestures
 
 **Gestures are the heart of this plugin.** You can create completely custom gestures to trigger any command in Obsidian.

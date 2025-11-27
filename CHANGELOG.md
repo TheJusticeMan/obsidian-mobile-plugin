@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### Floating Action Button (FAB)
+
 - Leaf-anchored FAB that stays within the editor container
 - **Tap** action creates new note with auto-increment naming (Untitled.md, Untitled 1.md, etc.)
 - **Long-press** (≥500ms) opens the command palette
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FolderSuggest modal for folder selection with fuzzy search
 
 #### Gesture Support
+
 - **Draw gestures** by dragging from the FAB to execute commands
 - Custom gesture recognition system with pattern matching
 - Visual feedback showing the drawn gesture path
@@ -29,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Gestures persist across sessions
 
 #### Context-Aware Toolbar
+
 - Dynamic toolbar that adapts based on cursor position and selection
 - 9 context types supported:
   - **Selection** - When text is selected
@@ -51,22 +54,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Editor focus preservation after button press
 
 #### Commands
+
 - `Create new note` - Creates note in configured home folder
 - `Toggle Wake Lock` - Keeps screen awake during editing
 
 #### Haptic Feedback
+
 - Toggle setting to enable/disable
 - 10ms vibration on FAB tap and toolbar button clicks
 - 20ms vibration on FAB long-press
 - Automatic device support detection
 
 #### Wake Lock
+
 - Toggle command to keep screen awake
 - Status bar indicator shows "🔒 Wake Lock Active" when enabled
 - Automatic release on plugin unload
 - Uses Web Wake Lock API
 
 ### Technical Details
+
 - Uses CodeMirror 6 ViewPlugin for toolbar implementation
 - Uses `syntaxTree.iterate()` for context detection
 - Supports HyperMD list line class names at any nesting depth
@@ -74,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Anchors toolbar to workspace-leaf-content container (fixes table cell rendering issue)
 
 ### Fixed
+
 - Toolbar no longer renders inside table cells
 - Editor no longer loses focus when toolbar buttons are pressed
 - Infinite toolbar element creation bug resolved
@@ -84,6 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- Additional context types
-- Toolbar themes
-- Quick actions menu
+
+- Simple file search and preview pane for better navigation.
+- Better integration with other plugins.
+- Ask me for a feature to make it easyer to capture on the go

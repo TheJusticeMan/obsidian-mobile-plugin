@@ -6,7 +6,7 @@ import {
   ViewPlugin,
   ViewUpdate,
 } from "@codemirror/view";
-import { App, ButtonComponent } from "obsidian";
+import { App, ButtonComponent, ExtraButtonComponent } from "obsidian";
 import MobilePlugin from "./main";
 import { ContextType, ToolbarConfig } from "./settings";
 
@@ -203,16 +203,9 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         // Find the workspace-leaf-content container to anchor the toolbar
         // This ensures the toolbar appears at the bottom of the editor container,
         // not inside table cells or other nested elements
-        const leafContainer = view.dom.closest('.workspace-leaf-content');
-        if (!leafContainer) {
-          return;
-        }
-
-        // Create tooltip element and append to leaf container instead of view.dom
-        this.tooltip = document.createElement('div');
-        this.tooltip.className = 'mobile-selection-toolbar';
-        this.tooltip.setAttribute('data-toolbar-id', activeToolbar.id);
-        leafContainer.appendChild(this.tooltip);
+        this.tooltip = (
+          view.dom.closest(".workspace-leaf-content") || view.dom
+        ).createDiv({ cls: "mobile-selection-toolbar" });
 
         // Get all available commands
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -225,12 +218,11 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
             this.plugin.settings.commandIcons[commandId] || command.icon;
           if (command && this.tooltip) {
             if (this.plugin.settings.useIcons && iconToUse) {
-              new ButtonComponent(this.tooltip)
-                /* .setClass("mobile-toolbar-button") */
+              new ExtraButtonComponent(this.tooltip)
                 .setIcon(iconToUse)
                 .setTooltip(command.name || commandId)
-                .onClick((e) => {
-                  e.preventDefault();
+                .onClick(() => {
+                  /* e.preventDefault(); */
                   // Haptic feedback on button click
                   this.hapticFeedback(10);
                   // Execute the command
@@ -241,7 +233,6 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                 });
             } else {
               new ButtonComponent(this.tooltip)
-                /* .setClass("mobile-toolbar-button") */
                 .setButtonText(command.name || commandId)
                 .setTooltip(command.name || commandId)
                 .onClick((e) => {

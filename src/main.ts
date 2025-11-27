@@ -18,7 +18,7 @@ export default class MobilePlugin extends Plugin {
     // Register wake lock toggle command
     this.addCommand({
       id: "toggle-wake-lock",
-      name: "Toggle Wake Lock",
+      name: "Toggle wake lock",
       callback: async () => {
         await this.toggleWakeLock();
       },
@@ -33,7 +33,7 @@ export default class MobilePlugin extends Plugin {
     // add ribbon icon
     this.addRibbonIcon(
       "plus",
-      "Create New Note",
+      "Create new note",
       async () => await this.createNewNote()
     );
 
@@ -43,6 +43,28 @@ export default class MobilePlugin extends Plugin {
 
   async createNewNote() {
     (this.app as any).commands.executeCommandById("file-explorer:new-file");
+  }
+
+  getBinds(toolbarId: string): string[] {
+    const binds: string[] = [];
+    for (const binding of this.settings.contextBindings) {
+      if (binding.toolbarId === toolbarId) {
+        binds.push(binding.contextType);
+      }
+    }
+    return binds;
+  }
+
+  plusLongpress() {
+    (this.app as any).commands.executeCommandById(
+      this.settings.plusLongpress || "command-palette:open"
+    );
+  }
+
+  pluspress() {
+    (this.app as any).commands.executeCommandById(
+      this.settings.pluspress || "file-explorer:new-file"
+    );
   }
 
   async toggleWakeLock() {
@@ -65,7 +87,7 @@ export default class MobilePlugin extends Plugin {
           this.wakeLock = null;
         });
       }
-      new Notice(this.wakeLock ? "Wake Lock Enabled" : "Wake Lock Disabled");
+      new Notice(this.wakeLock ? "Wake lock enabled" : "Wake lock disabled");
     } catch (error) {
       console.error("Wake lock error:", error);
     }

@@ -53,43 +53,6 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   /* z-index: 1000; */
 }
 
-.mobile-toolbar-button {
-  padding: 6px 12px;
-  background-color: var(--interactive-normal);
-  color: var(--text-normal);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 36px;
-  min-height: 36px;
-}
-
-.mobile-toolbar-button:hover {
-  background-color: var(--interactive-hover);
-}
-
-.mobile-toolbar-button:active {
-  background-color: var(--interactive-accent);
-  color: var(--text-on-accent);
-}
-
-.mobile-toolbar-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.mobile-toolbar-icon svg {
-  width: 18px;
-  height: 18px;
-}
-
 /* Settings Page Styles */
 .mobile-toolbar-section {
   margin: 1.5em 0;
@@ -97,13 +60,6 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   background-color: var(--background-secondary);
   border-radius: 8px;
   border: 1px solid var(--background-modifier-border);
-}
-
-.mobile-toolbar-header {
-  font-weight: 600;
-  border-bottom: 1px solid var(--background-modifier-border);
-  padding-bottom: 0.5em;
-  margin-bottom: 0.5em;
 }
 
 .mobile-command-list {
@@ -142,4 +98,14 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   z-index: 101;
   pointer-events: none;
   transition: opacity 0.5s ease;
+}
+
+.mobile-plugin-settings-header > .setting-item-control {
+  flex-wrap: wrap;
+  flex-direction: row;
+  gap: 0.5em;
+  justify-content: flex-start;
+}
+.mobile-plugin-settings-header > .setting-item-control > button.mod-cta {
+  border-radius: var(--button-radius) var(--button-radius) 0 0;
 }

@@ -4,10 +4,12 @@ import {
   Command,
   MarkdownView,
   Modal,
+  Notice,
   Setting,
 } from "obsidian";
 import MobilePlugin from "./main";
 import { CommandSuggestModal } from "./settings";
+import { json } from "stream/consumers";
 
 /**
  * Manages FAB placement and lifecycle across editor leaves.
@@ -53,26 +55,6 @@ export class FABManager {
   private createFAB(containerEl: HTMLElement): ButtonComponent {
     // Change to new ButtonComponent style
     return new MobileFAB(this.app, this.plugin, containerEl);
-
-    return new ButtonComponent(containerEl)
-      .setTooltip("Create new note (long press for command palette)")
-      .setIcon("plus")
-      .setClass("mobile-fab")
-      .onClick(async () => {
-        this.hapticFeedback(10);
-        await this.plugin.createNewNote();
-      })
-      .then((btn) =>
-        btn.buttonEl.addEventListener("contextmenu", (e) => {
-          e.preventDefault();
-          this.hapticFeedback(20);
-          // Open command palette
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (this.app as any).commands?.executeCommandById(
-            "command-palette:open"
-          );
-        })
-      );
   }
 
   /**
@@ -106,15 +88,13 @@ class MobileFAB extends ButtonComponent {
       .setClass("mobile-fab")
       .onClick(async () => {
         this.hapticFeedback(10);
-        await plugin.createNewNote();
+        plugin.pluspress();
       })
       .then((btn) =>
         btn.buttonEl.addEventListener("contextmenu", (e) => {
           e.preventDefault();
           this.hapticFeedback(20);
-          // Open command palette
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (app as any).commands?.executeCommandById("command-palette:open");
+          plugin.plusLongpress();
         })
       )
       .then((btn) => {
@@ -153,7 +133,7 @@ class MobileFAB extends ButtonComponent {
       return;
     }
     const d = client.subtract(this.start).applyDampening(0.5);
-    this.drawTempline(this.last, client, 100);
+    this.drawTempline(this.last, client, 1000);
     this.last = client;
     this.line.push(client);
     this.buttonEl.style.translate = `${d.x}px ${d.y}px`;
@@ -175,18 +155,23 @@ class MobileFAB extends ButtonComponent {
     const length = Math.sqrt(delta.x * delta.x + delta.y * delta.y);
     const angle = Math.atan2(delta.y, delta.x) * (180 / Math.PI);
     line.style.width = `${length}px`;
+    line.style.height = `8px`;
     line.style.transform = `rotate(${angle}deg)`;
     line.style.left = `${start.x}px`;
     line.style.top = `${start.y}px`;
-    line.style.transition = `opacity ${lifeTime}ms`;
-    setTimeout(() => {
-      line.style.opacity = "0";
-    }, 10);
+    line.style.transition = `opacity ${lifeTime}ms, height ${lifeTime}ms`;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        line.style.opacity = "0";
+        line.style.height = "0px";
+      });
+    });
     setTimeout(() => line.remove(), lifeTime);
   }
   newGestures: { name: string; line: offset[] }[] = [];
   detectGesture() {
     if (this.line.length < 2) return;
+    if (this.getLength(this.line) < 100) return;
 
     const normalizedInput = this.normalizeLine(this.line);
 
@@ -194,7 +179,9 @@ class MobileFAB extends ButtonComponent {
     let minDiff = Infinity;
 
     for (const gesture of this.plugin.settings.gestureCommands) {
-      const normalizedPreset = gesture.line.map((p) => new offset(p[0], p[1]));
+      const normalizedPreset = JSON.parse(gesture.gesturePath).map(
+        (p: number[]) => new offset(p[0], p[1])
+      );
       const diff = this.calculateDifference(normalizedInput, normalizedPreset);
 
       if (diff < minDiff) {
@@ -204,12 +191,24 @@ class MobileFAB extends ButtonComponent {
     }
 
     if (bestMatch && minDiff < 0.5) {
-      this.onGestureDetected(bestMatch.name);
       // Execute associated command
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (this.app as any).commands?.executeCommandById(bestMatch.commandId);
+      this.buttonEl.style.transition = "";
+      requestAnimationFrame(() => {
+        this.buttonEl.style.background = "var(--interactive-accent)";
+        requestAnimationFrame(() => {
+          this.buttonEl.style.transition = "background 2s";
+          this.buttonEl.style.background = "";
+        });
+      });
+      /* new Notice(`Executed gesture command: ${bestMatch.name}`); */
     } else {
-      new NewGesture(this.app, this.plugin, normalizedInput).open();
+      new NewGesture(this.app, this.plugin, normalizedInput).then((g) =>
+        this.plugin.settings.showCommandConfirmation
+          ? g.open()
+          : g.openCommandSelection()
+      );
       // draw the gesture for user feedback
       this.start = this.line[0];
       for (let i = 0; i < normalizedInput.length - 1; i++) {
@@ -222,13 +221,6 @@ class MobileFAB extends ButtonComponent {
     }
   }
 
-  onGestureDetected(name: string) {
-    // Placeholder for action
-    if (name === "swipe-up") {
-      // Action for swipe up
-    }
-  }
-
   normalizeLine(line: offset[]): offset[] {
     if (line.length === 0) return [];
     const start = line[0];
@@ -236,14 +228,19 @@ class MobileFAB extends ButtonComponent {
     return this.resample(translated, 40);
   }
 
+  getLength(line: offset[]): number {
+    let length = 0;
+    for (let i = 0; i < line.length - 1; i++) {
+      length += line[i].distanceTo(line[i + 1]);
+    }
+    return length;
+  }
+
   resample(line: offset[], n: number): offset[] {
     if (line.length === 0) return [];
     if (line.length === 1) return Array(n).fill(line[0]);
 
-    let totalLength = 0;
-    for (let i = 0; i < line.length - 1; i++) {
-      totalLength += line[i].distanceTo(line[i + 1]);
-    }
+    const totalLength = this.getLength(line);
 
     if (totalLength === 0) return Array(n).fill(line[0]);
 
@@ -329,7 +326,7 @@ export class offset {
 export interface GestureCommand {
   name: string;
   commandId: string;
-  line: number[][];
+  gesturePath: string;
 }
 
 class NewGesture extends Modal {
@@ -338,28 +335,50 @@ class NewGesture extends Modal {
   }
   onOpen() {
     new Setting(this.contentEl)
-      .setName("Assign Action to New Gesture")
+      .setName("Assign action to new gesture")
       .setDesc("Select a command to assign to the new gesture.")
       .addButton((btn) =>
-        btn.setButtonText("Select Command").onClick(() => {
-          new CommandSuggestModal(this.app, async (command: Command) => {
-            // Assign selected command to the new gesture
-            this.plugin.settings.gestureCommands.push({
-              name: command.name || "unnamed",
-              commandId: command.id,
-              line: this.line.map((p) => [
-                Number(p.x.toFixed(2)),
-                Number(p.y.toFixed(2)),
-              ]),
-            });
-
-            await this.plugin.saveSettings();
-            this.close();
-          }).open();
+        btn.setButtonText("Select command").onClick(() => {
+          this.openCommandSelection();
           this.close();
         })
+      )
+      .addButton((btn) =>
+        btn.setButtonText("Cancel").onClick(() => this.close())
+      )
+      .addButton((btn) =>
+        btn
+          .setButtonText("Skip to command selction")
+          .setCta()
+          .onClick(() => {
+            this.plugin.settings.showCommandConfirmation = false;
+            this.plugin.saveSettings();
+            this.openCommandSelection();
+            this.close();
+          })
       );
   }
+  openCommandSelection() {
+    new CommandSuggestModal(this.app, async (command: Command) => {
+      // Assign selected command to the new gesture
+      this.plugin.settings.gestureCommands.push({
+        name: command.name || "unnamed",
+        commandId: command.id,
+        gesturePath: JSON.stringify(
+          this.line.map((p) => [Number(p.x.toFixed(2)), Number(p.y.toFixed(2))])
+        ),
+      });
+
+      await this.plugin.saveSettings();
+      this.close();
+    }).open();
+  }
+
+  then(cb: (modal: this) => void) {
+    cb(this);
+    return this;
+  }
+
   onClose() {
     const { contentEl } = this;
     contentEl.empty();

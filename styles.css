@@ -20,7 +20,9 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   align-items: center;
   justify-content: center;
   z-index: 100;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .mobile-fab:hover {
@@ -38,7 +40,7 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 }
 
 /* Selection Toolbar */
-.mobile-selection-toolbar {
+.mobile-toolbar {
   display: flex;
   flex-wrap: nowrap;
   gap: 8px;
@@ -61,49 +63,14 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   /* z-index: 1000; */
 }
 
-.mobile-selection-toolbar::-webkit-scrollbar {
+.mobile-toolbar::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
 
 /* Prevent toolbar buttons from shrinking */
-.mobile-selection-toolbar > button,
-.mobile-selection-toolbar > .clickable-icon {
+.mobile-toolbar > button,
+.mobile-toolbar > .clickable-icon {
   flex-shrink: 0;
-}
-
-/* Settings Page Styles */
-.mobile-toolbar-section {
-  margin: 1.5em 0;
-  padding: 1em;
-  background-color: var(--background-secondary);
-  border-radius: 8px;
-  border: 1px solid var(--background-modifier-border);
-}
-
-.mobile-command-list {
-  margin: 0.5em 0;
-}
-
-.mobile-add-command-btn {
-  margin-top: 0.5em;
-}
-
-/* Settings Drag and Drop */
-.mobile-plugin-draggable-item {
-  cursor: grab;
-}
-
-.mobile-plugin-draggable-item.is-dragging {
-  opacity: 0.5;
-  cursor: grabbing;
-}
-
-.mobile-plugin-draggable-item.drag-over-top {
-  border-top: 2px solid var(--interactive-accent);
-}
-
-.mobile-plugin-draggable-item.drag-over-bottom {
-  border-bottom: 2px solid var(--interactive-accent);
 }
 
 .mobile-fab-dragline {
@@ -143,6 +110,25 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 .mobile-plugin-settings-header > .setting-item-control > button {
   flex-grow: 1;
 }
+
 .mobile-plugin-settings-header > .setting-item-control > button.mod-cta {
   border-radius: var(--button-radius) var(--button-radius) 0 0;
+}
+
+/* Settings Drag and Drop */
+.mobile-plugin-draggable-item {
+  cursor: grab;
+}
+
+.mobile-plugin-draggable-item.is-dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.mobile-plugin-draggable-item.drag-over-top {
+  border-top: 2px solid var(--interactive-accent);
+}
+
+.mobile-plugin-draggable-item.drag-over-bottom {
+  border-bottom: 2px solid var(--interactive-accent);
 }

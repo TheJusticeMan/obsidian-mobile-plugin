@@ -195,6 +195,10 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
       }
 
       showTooltip(view: EditorView) {
+        if (!this.plugin.settings.showToolbars) {
+          return;
+        }
+
         const selection = view.state.selection.main;
 
         // Get the active toolbar based on context
@@ -209,7 +213,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         // not inside table cells or other nested elements
         this.tooltip = (
           view.dom.closest('.workspace-leaf-content') || view.dom
-        ).createDiv({ cls: 'mobile-selection-toolbar' });
+        ).createDiv({ cls: 'mobile-toolbar' });
 
         // Get all available commands
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed

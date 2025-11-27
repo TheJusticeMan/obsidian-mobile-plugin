@@ -13,6 +13,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better integration with other plugins.
 - Ask me for a feature to make it easyer to capture on the go
 
+## [1.0.5] - 2025-11-27
+
+### Added
+
+- **Settings**: Toggle visibility for Floating Action Button (FAB) and Toolbars.
+- **FAB**: Configurable actions for press and long-press events.
+
+### Changed
+
+- **Refactor**: Migrated FAB command settings to a new event-driven system.
+- **Refactor**: Extracted gesture handling logic for better maintainability.
+- **Styles**: Updated toolbar class names and added transitions.
+
 ## [1.0.4] - 2025-11-27
 
 ### Added

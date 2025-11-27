@@ -50,6 +50,11 @@ Dynamic toolbars that adapt based on your cursor position and selection:
 - **Horizontal scrolling**: Scrolls when too many buttons to fit.
 - **Editor focus preservation**: Keyboard stays open when using toolbar buttons.
 
+### Tablet Mode
+
+- **Force Tablet UI**: Toggle to force the tablet interface on mobile phones.
+- **Keep in tablet mode**: Command to toggle this mode.
+
 ## Installation
 
 ### Brat
@@ -64,15 +69,17 @@ Dynamic toolbars that adapt based on your cursor position and selection:
 
 ### Settings
 
-| Setting                     | Description                                                    |
-| :-------------------------- | :------------------------------------------------------------- |
-| **Command confirmation**    | Show confirmation before selecting a new command for a gesture |
-| **Use Icons**               | Toggle between icon and text display in toolbars               |
-| **Plus long press command** | Commands available for long press on the FAB button.           |
-| **Plus press command**      | Commands available for press on the FAB button.                |
-| **Enable haptic feedback**  | Vibrate on FAB and toolbar button interactions                 |
-| **Gesture Commands**        | Manage your created gestures (rename, reassign, delete)        |
-| **Reset to default**        | Restore all settings to their original defaults                |
+| Setting                    | Description                                                    |
+| :------------------------- | :------------------------------------------------------------- |
+| **Show toolbars**          | Show context-aware toolbars at the bottom of the screen        |
+| **Show FAB**               | Show the FAB button at the bottom right of the screen          |
+| **Command confirmation**   | Show confirmation before selecting a new command for a gesture |
+| **Use Icons**              | Toggle between icon and text display in toolbars               |
+| **FAB long press**         | Select command to execute when the FAB is long-pressed         |
+| **FAB press**              | Select command to execute when the FAB is pressed              |
+| **Enable haptic feedback** | Vibrate on FAB and toolbar button interactions                 |
+| **Gesture Commands**       | Manage your created gestures (rename, reassign, delete)        |
+| **Reset to default**       | Restore all settings to their original defaults                |
 
 ### Toolbar Library
 
@@ -97,6 +104,7 @@ Bind toolbars to editing contexts:
 | Command                       | Description                                        |
 | :---------------------------- | :------------------------------------------------- |
 | `Toggle wake lock`            | Keeps the screen awake while editing               |
+| `Toggle Keep in tablet mode`  | Force tablet UI on phones                          |
 | `Plus press`                  | Executes the command configured for FAB press      |
 | `Plus long press`             | Executes the command configured for FAB long press |
 | `Open mobile plugin settings` | Opens the settings modal for this plugin           |

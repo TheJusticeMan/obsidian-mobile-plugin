@@ -9,27 +9,16 @@ import {
   SuggestModal,
   TFolder,
 } from 'obsidian';
-import { GestureCommand } from './fab';
+
 import MobilePlugin from './main';
+import { GestureCommand } from './gesture-handler';
 
 export interface ToolbarConfig {
   name: string;
   id: string;
   commands: string[];
 }
-
-export type ContextType =
-  | 'selection'
-  | 'list'
-  | 'task'
-  | 'heading'
-  | 'code-block'
-  | 'table'
-  | 'blockquote'
-  | 'link'
-  | 'default';
-
-const contextTypeBindings = [
+const allowedContexts = [
   'selection',
   'list',
   'task',
@@ -39,7 +28,11 @@ const contextTypeBindings = [
   'blockquote',
   'link',
   'default',
-].map((contextType) => ({
+] as const;
+
+export type ContextType = (typeof allowedContexts)[number];
+
+const contextTypeBindings = allowedContexts.map((contextType) => ({
   id: `binding-${Date.now()}-${contextType}`,
   contextType: contextType as ContextType,
   toolbarId: '',
@@ -50,25 +43,47 @@ export interface ContextBinding {
   toolbarId: string;
 }
 
+const MobileCMDEvents = ['fab-longpress', 'fab-press'] as const;
+
+export type MobileCMDEvent = (typeof MobileCMDEvents)[number];
+
+export const MobileCMDEventsDesc: Record<MobileCMDEvent, [string, string]> = {
+  'fab-longpress': [
+    'FAB long press',
+    'Select command to execute when the "Floating Action Button" is long-pressed',
+  ],
+  'fab-press': [
+    'FAB press',
+    'Select command to execute when the "Floating Action Button" is pressed',
+  ],
+};
+
 export interface MobilePluginSettings {
   showCommandConfirmation: boolean;
-  plusLongpress: string;
-  pluspress: string;
+  MobileCMDEvents: Record<MobileCMDEvent, string>;
+  plusLongpress?: string;
+  pluspress?: string;
   homeFolder: string;
   toolbarCommands: string[]; // Deprecated - kept for backward compatibility
   toolbars: ToolbarConfig[];
   contextBindings: ContextBinding[];
   useIcons: boolean;
+  showToolbars: boolean;
+  showFAB: boolean;
   commandIcons: Record<string, string>; // Map of command ID to icon name
   enableHapticFeedback: boolean;
   gestureCommands: GestureCommand[];
 }
 
 export const DEFAULT_SETTINGS: MobilePluginSettings = {
-  plusLongpress: 'command-palette:open',
-  pluspress: 'file-explorer:new-file',
+  MobileCMDEvents: {
+    'fab-longpress': 'command-palette:open',
+    'fab-press': 'file-explorer:new-file',
+  },
   showCommandConfirmation: true,
   homeFolder: '',
+  showToolbars: true,
+  showFAB: true,
   toolbarCommands: [
     'editor:toggle-bold',
     'editor:toggle-italics',
@@ -245,6 +260,14 @@ export class MobileSettingsView {
     this.renderGeneralSettings(containerEl);
   }
 
+  sett<S extends keyof MobilePluginSettings>(
+    key: S,
+    value: MobilePluginSettings[S],
+  ) {
+    this.plugin.settings[key] = value;
+    void this.plugin.saveSettings();
+  }
+
   private renderContextBindings(containerEl: HTMLElement) {
     this.renderHeader(containerEl, 'bindings');
     contextTypeBindings.forEach((ctb) => {
@@ -390,15 +413,32 @@ export class MobileSettingsView {
         }),
     );
     new Setting(containerEl)
+      .setName('Show toolbars')
+      .setDesc('Show context-aware toolbars at the bottom of the screen')
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.showToolbars)
+          .onChange(async (value) => this.sett('showToolbars', value)),
+      );
+
+    new Setting(containerEl)
+      .setName('Show floating action button (FAB)')
+      .setDesc('Show the FAB button at the bottom right of the screen')
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.showFAB)
+          .onChange(async (value) => this.sett('showFAB', value)),
+      );
+
+    new Setting(containerEl)
       .setName('Command confirmation')
       .setDesc('Show confirmation before selecting a new command for a gesture')
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.showCommandConfirmation)
-          .onChange(async (value) => {
-            this.plugin.settings.showCommandConfirmation = value;
-            await this.plugin.saveSettings();
-          }),
+          .onChange(async (value) =>
+            this.sett('showCommandConfirmation', value),
+          ),
       );
     new Setting(containerEl)
       .setName('Use icons in toolbar')
@@ -408,10 +448,7 @@ export class MobileSettingsView {
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.useIcons)
-          .onChange(async (value) => {
-            this.plugin.settings.useIcons = value;
-            await this.plugin.saveSettings();
-          }),
+          .onChange(async (value) => this.sett('useIcons', value)),
       );
 
     // Haptic feedback setting
@@ -423,36 +460,39 @@ export class MobileSettingsView {
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.enableHapticFeedback)
-          .onChange(async (value) => {
-            this.plugin.settings.enableHapticFeedback = value;
-            await this.plugin.saveSettings();
-          }),
-      );
-    new Setting(containerEl)
-      .setName('Plus long press command')
-      .setDesc('Commands available for long press on the FAB button.')
-      .addButton((button) =>
-        button.setButtonText(this.plugin.settings.plusLongpress).onClick(() => {
-          new CommandSuggestModal(this.app, async (command) => {
-            this.plugin.settings.plusLongpress = command.id;
-            await this.plugin.saveSettings();
-            this.renderGeneralSettings(containerEl);
-          }).open();
-        }),
-      );
-    new Setting(containerEl)
-      .setName('Plus press command')
-      .setDesc('Commands available for press on the FAB button.')
-      .addButton((button) =>
-        button.setButtonText(this.plugin.settings.pluspress).onClick(() => {
-          new CommandSuggestModal(this.app, async (command) => {
-            this.plugin.settings.pluspress = command.id;
-            await this.plugin.saveSettings();
-            this.renderGeneralSettings(containerEl);
-          }).open();
-        }),
+          .onChange(async (value) => this.sett('enableHapticFeedback', value)),
       );
 
+    Object.entries(MobileCMDEventsDesc).forEach(
+      ([event, [name, desc]]: [MobileCMDEvent, [string, string]]) => {
+        new Setting(containerEl)
+          .setName(name)
+          .setDesc(desc)
+          .addButton((button) =>
+            button
+              .setButtonText(
+                this.plugin.settings.MobileCMDEvents[event] || 'Select command',
+              )
+              .onClick(() => {
+                new CommandSuggestModal(this.app, async (command) => {
+                  this.plugin.settings.MobileCMDEvents[event] = command.id;
+                  await this.plugin.saveSettings();
+                  this.renderGeneralSettings(containerEl);
+                }).open();
+              }),
+          )
+          .addExtraButton((btn) =>
+            btn
+              .setIcon('trash')
+              .setTooltip('Clear command')
+              .onClick(async () => {
+                this.plugin.settings.MobileCMDEvents[event] = '';
+                await this.plugin.saveSettings();
+                this.renderGeneralSettings(containerEl);
+              }),
+          );
+      },
+    );
     this.plugin.settings.gestureCommands.forEach((gc, gcIndex) => {
       new Setting(containerEl)
         .setName(`Gesture command: ${gc.name}`)
@@ -665,22 +705,20 @@ export class ToolbarEditor extends Modal {
           }),
       );
 
-    const commands = this.toolbar.commands;
-
-    commands.forEach((cmdId, index) => {
+    this.toolbar.commands.forEach((cmdId, index) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
       const command = (this.app as any).commands.findCommand(cmdId);
-      const commandName = command ? command.name : cmdId;
-      const defaultIcon = command?.icon || '';
-      const customIcon =
-        this.plugin.settings.commandIcons[cmdId] || defaultIcon;
 
       const setting = new Setting(container)
-        .setName(commandName)
+        .setName(command?.name || cmdId)
         .setDesc(cmdId)
         .addButton((btn) =>
           btn
-            .setIcon(customIcon || 'question')
+            .setIcon(
+              this.plugin.settings.commandIcons[cmdId] ||
+                command?.icon ||
+                'question',
+            )
             .setTooltip('Change icon')
             .onClick(() => {
               new IconSuggestModal(this.app, async (icon) => {
@@ -775,16 +813,13 @@ export class ToolbarEditor extends Modal {
       };
     });
     new Setting(container).addButton((button) =>
-      button
-        .setButtonText('Add command')
-        .setClass('mobile-add-command-btn')
-        .onClick(() => {
-          new CommandSuggestModal(this.app, async (command) => {
-            this.toolbar.commands.push(command.id);
-            await this.plugin.saveSettings();
-            this.render(container);
-          }).open();
-        }),
+      button.setButtonText('Add command').onClick(() => {
+        new CommandSuggestModal(this.app, async (command) => {
+          this.toolbar.commands.push(command.id);
+          await this.plugin.saveSettings();
+          this.render(container);
+        }).open();
+      }),
     );
     return this;
     // Additional settings for editing commands can be added here

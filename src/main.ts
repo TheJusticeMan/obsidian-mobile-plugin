@@ -2,6 +2,7 @@ import { Platform, Plugin, Notice, Component, App } from 'obsidian';
 import { FABManager } from './fab';
 import {
   DEFAULT_SETTINGS,
+  MobileCMDEvent,
   MobilePluginSettings,
   MobileSettingTab,
   mySettingsModel,
@@ -39,13 +40,13 @@ export default class MobilePlugin extends Plugin {
     this.addCommand({
       id: 'plus-press',
       name: 'Plus press',
-      callback: () => this.pluspress(),
+      callback: () => this.triggerCMDEvent('fab-press'),
     });
 
     this.addCommand({
       id: 'plus-longpress',
       name: 'Plus long press',
-      callback: () => this.plusLongpress(),
+      callback: () => this.triggerCMDEvent('fab-longpress'),
     });
 
     this.addCommand({
@@ -98,18 +99,10 @@ export default class MobilePlugin extends Plugin {
     return binds;
   }
 
-  plusLongpress(): void {
+  triggerCMDEvent(eventType: MobileCMDEvent): void {
+    const cmdId = this.settings.MobileCMDEvents[eventType];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
-    (this.app as any).commands.executeCommandById(
-      this.settings.plusLongpress || 'command-palette:open',
-    );
-  }
-
-  pluspress(): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
-    (this.app as any).commands.executeCommandById(
-      this.settings.pluspress || 'file-explorer:new-file',
-    );
+    (this.app as any).commands.executeCommandById(cmdId);
   }
 
   async toggleWakeLock(): Promise<void> {
@@ -156,16 +149,26 @@ export default class MobilePlugin extends Plugin {
 
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    if (this.settings.plusLongpress) {
+      this.settings.MobileCMDEvents['fab-longpress'] =
+        this.settings.plusLongpress;
+      delete this.settings.plusLongpress;
+    }
+    if (this.settings.pluspress) {
+      this.settings.MobileCMDEvents['fab-press'] = this.settings.pluspress;
+      delete this.settings.pluspress;
+    }
   }
 
   async saveSettings() {
     await this.saveData(this.settings);
+    this.fabManager?.refresh();
   }
 }
 
 export class keepInTabletMode extends Component {
-  isloaded: boolean = false;
-  wasPhone: boolean = false;
+  isloaded = false;
+  wasPhone = false;
   constructor(
     public app: App,
     public plugin: MobilePlugin,

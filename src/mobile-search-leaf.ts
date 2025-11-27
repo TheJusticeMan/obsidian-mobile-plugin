@@ -9,6 +9,15 @@ import { throttleWithInterval } from './throttleWithInterval';
 
 export const VIEW_TYPE_MOBILE_SEARCH = 'mobile-search-view';
 
+/** Number of results to render initially and per scroll batch */
+const RESULTS_PER_BATCH = 10;
+
+/** Pixels from bottom of results container to trigger loading more results */
+const SCROLL_LOAD_THRESHOLD = 100;
+
+/** Maximum characters of file content to show in preview */
+const PREVIEW_LENGTH = 200;
+
 /**
  * A mobile-optimized search view that provides a sticky search input
  * with scrollable results and smart keyboard handling.
@@ -18,6 +27,18 @@ export class MobileSearchLeaf extends ItemView {
   private resultsContainer: HTMLDivElement;
   private intersectionObserver: IntersectionObserver | null = null;
   private resultComponents: Component[] = [];
+
+  /** Cache for file preview content, reset when pane opens or search is focused */
+  private previewCache: Map<string, string> = new Map();
+
+  /** Current list of files matching the search query */
+  private currentMatchingFiles: TFile[] = [];
+
+  /** Number of results currently rendered */
+  private renderedResultsCount = 0;
+
+  /** Flag to prevent multiple concurrent loadMore operations */
+  private isLoadingMore = false;
 
   constructor(leaf: WorkspaceLeaf) {
     super(leaf);
@@ -40,6 +61,9 @@ export class MobileSearchLeaf extends ItemView {
     container.empty();
     container.addClass('mobile-search-view');
 
+    // Reset preview cache when pane opens
+    this.resetCache();
+
     // Create sticky search input container
     const searchContainer = container.createDiv({
       cls: 'mobile-search-input-container',
@@ -60,6 +84,9 @@ export class MobileSearchLeaf extends ItemView {
 
     // Set up IntersectionObserver for smart focus
     this.setupIntersectionObserver();
+
+    // Show initial results (all files) when pane opens
+    await this.performSearch();
   }
 
   async onClose(): Promise<void> {
@@ -83,12 +110,19 @@ export class MobileSearchLeaf extends ItemView {
    * Sets up all event listeners for the search view.
    */
   private setupEventListeners(): void {
+    // Reset cache when search input is focused
+    this.searchInput.addEventListener('focus', () => {
+      this.resetCache();
+    });
+
     // Debounced search on input
     this.searchInput.addEventListener('input', () => this.debouncedSearch());
 
     // Keyboard handling: blur input on scroll to dismiss keyboard
+    // Also check for infinite scroll loading
     this.resultsContainer.addEventListener('scroll', () => {
       this.searchInput.blur();
+      this.checkLoadMore();
     });
 
     // Allow pressing Enter to trigger immediate search
@@ -178,44 +212,100 @@ export class MobileSearchLeaf extends ItemView {
     // Clear previous results
     this.resultsContainer.empty();
     this.cleanupResultComponents();
+    this.renderedResultsCount = 0;
 
-    if (!query) {
-      return;
-    }
-
-    // Get all markdown files
+    // Get all markdown files sorted by modification time
     const files = this.app.vault
       .getMarkdownFiles()
       .sort((a, b) => b.stat.mtime - a.stat.mtime);
 
-    // Filter files by query (match filename or path)
-    const matchingFiles = files.filter((file) => {
-      const filename = file.basename.toLowerCase();
-      const path = file.path.toLowerCase();
-      return filename.includes(query) || path.includes(query);
-    });
+    // Filter files by query (match filename or path), or show all if no query
+    if (query) {
+      this.currentMatchingFiles = files.filter((file) => {
+        const filename = file.basename.toLowerCase();
+        const path = file.path.toLowerCase();
+        return filename.includes(query) || path.includes(query);
+      });
+    } else {
+      // Show all files when no query
+      this.currentMatchingFiles = files;
+    }
 
-    // Limit results for performance
-    const maxResults = 50;
-    const limitedFiles = matchingFiles.slice(0, maxResults);
-
-    // Render all result cards in parallel for better performance
-    // Use Promise.allSettled so individual failures don't block other renders
-    await Promise.allSettled(
-      limitedFiles.map((file) => this.renderResultCard(file)),
-    );
+    // Render initial batch of results
+    await this.renderNextBatch();
 
     // Show message if no results
-    if (limitedFiles.length === 0) {
+    if (this.currentMatchingFiles.length === 0) {
       this.resultsContainer.createDiv({
         cls: 'mobile-search-no-results',
         text: 'No files found',
       });
-    } else if (matchingFiles.length > maxResults) {
-      this.resultsContainer.createDiv({
-        cls: 'mobile-search-more-results',
-        text: `Showing ${maxResults} of ${matchingFiles.length} results`,
-      });
+    }
+  }
+
+  /**
+   * Renders the next batch of results for infinite scroll.
+   */
+  private async renderNextBatch(): Promise<void> {
+    if (this.isLoadingMore) return;
+
+    const startIndex = this.renderedResultsCount;
+    const endIndex = Math.min(
+      startIndex + RESULTS_PER_BATCH,
+      this.currentMatchingFiles.length,
+    );
+
+    if (startIndex >= this.currentMatchingFiles.length) return;
+
+    this.isLoadingMore = true;
+
+    const filesToRender = this.currentMatchingFiles.slice(startIndex, endIndex);
+
+    // Render result cards in parallel for better performance
+    await Promise.allSettled(
+      filesToRender.map((file) => this.renderResultCard(file)),
+    );
+
+    this.renderedResultsCount = endIndex;
+    this.isLoadingMore = false;
+  }
+
+  /**
+   * Checks if user has scrolled near the bottom and loads more results.
+   */
+  private checkLoadMore(): void {
+    const { scrollTop, scrollHeight, clientHeight } = this.resultsContainer;
+
+    if (scrollTop + clientHeight >= scrollHeight - SCROLL_LOAD_THRESHOLD) {
+      if (this.renderedResultsCount < this.currentMatchingFiles.length) {
+        void this.renderNextBatch();
+      }
+    }
+  }
+
+  /**
+   * Resets the preview cache.
+   */
+  private resetCache(): void {
+    this.previewCache.clear();
+  }
+
+  /**
+   * Gets preview content for a file, using cache if available.
+   */
+  private async getPreviewContent(file: TFile): Promise<string> {
+    const cached = this.previewCache.get(file.path);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    try {
+      const content = await this.app.vault.cachedRead(file);
+      const previewText = content.slice(0, PREVIEW_LENGTH);
+      this.previewCache.set(file.path, previewText);
+      return previewText;
+    } catch {
+      return '';
     }
   }
 
@@ -246,11 +336,10 @@ export class MobileSearchLeaf extends ItemView {
       cls: 'mobile-search-result-preview',
     });
 
-    // Read file content and render preview
-    try {
-      const content = await this.app.vault.cachedRead(file);
-      const previewText = content.slice(0, 200);
+    // Get preview content from cache or read file
+    const previewText = await this.getPreviewContent(file);
 
+    if (previewText) {
       // Create a component for this render
       const component = new Component();
       component.load();
@@ -264,7 +353,7 @@ export class MobileSearchLeaf extends ItemView {
         file.path,
         component,
       );
-    } catch {
+    } else {
       previewEl.setText('Unable to load preview');
     }
 

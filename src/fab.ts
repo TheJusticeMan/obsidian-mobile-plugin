@@ -10,12 +10,11 @@ import MobilePlugin from "./main";
 import { CommandSuggestModal } from "./settings";
 
 /**
- * Helper function to set CSS properties on an element using setCssProps pattern
+ * Helper function to set CSS properties on an element
+ * Uses Object.assign for better performance when setting multiple properties
  */
 function setCssProps(el: HTMLElement, props: Record<string, string>): void {
-  for (const [key, value] of Object.entries(props)) {
-    el.style.setProperty(key, value);
-  }
+  Object.assign(el.style, props);
 }
 
 /**
@@ -238,11 +237,15 @@ class MobileFAB extends ButtonComponent {
 
   resample(line: Offset[], n: number): Offset[] {
     if (line.length === 0) return [];
-    if (line.length === 1) return Array(n).fill(line[0]) as Offset[];
+    if (line.length === 1) {
+      return Array.from({ length: n }, () => new Offset(line[0].x, line[0].y));
+    }
 
     const totalLength = this.getLength(line);
 
-    if (totalLength === 0) return Array(n).fill(line[0]) as Offset[];
+    if (totalLength === 0) {
+      return Array.from({ length: n }, () => new Offset(line[0].x, line[0].y));
+    }
 
     const interval = totalLength / (n - 1);
     const newLine: Offset[] = [line[0]];

@@ -40,7 +40,7 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 }
 
 /* Selection Toolbar */
-.mobile-toolbar {
+.mobile-plugin-toolbar {
   display: flex;
   flex-wrap: nowrap;
   gap: 8px;
@@ -63,13 +63,13 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   /* z-index: 1000; */
 }
 
-.mobile-toolbar::-webkit-scrollbar {
+.mobile-plugin-toolbar::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
 
 /* Prevent toolbar buttons from shrinking */
-.mobile-toolbar > button,
-.mobile-toolbar > .clickable-icon {
+.mobile-plugin-toolbar > button,
+.mobile-plugin-toolbar > .clickable-icon {
   flex-shrink: 0;
 }
 

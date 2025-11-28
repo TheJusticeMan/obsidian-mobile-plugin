@@ -213,7 +213,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         // not inside table cells or other nested elements
         this.tooltip = (
           view.dom.closest('.workspace-leaf-content') || view.dom
-        ).createDiv({ cls: 'mobile-toolbar' });
+        ).createDiv({ cls: 'mobile-plugin-toolbar' });
 
         // Get all available commands
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed

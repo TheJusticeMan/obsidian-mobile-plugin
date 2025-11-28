@@ -413,12 +413,12 @@ export class MobileSearchLeaf extends ItemView {
    */
   private showFileContextMenu(file: TFile, event: MouseEvent): void {
     const menu = new Menu();
-
     menu
       .addItem((item) =>
         item
           .setTitle('Open in new tab')
           .setIcon('file-plus')
+          .setSection('open')
           .onClick(() => {
             void this.app.workspace.openLinkText(file.path, '', 'tab');
           }),
@@ -426,15 +426,18 @@ export class MobileSearchLeaf extends ItemView {
       .addItem((item) =>
         item
           .setTitle('Open to the right')
+          .setSection('open')
           .setIcon('separator-vertical')
           .onClick(() => {
             void this.app.workspace.openLinkText(file.path, '', 'split');
           }),
       )
+      .addSeparator()
       .addItem((item) =>
         item
           .setTitle('Make a copy')
           .setIcon('documents')
+          .setSection('action')
           .onClick(async () => {
             let version = 0;
             let newPath = file.path;
@@ -449,50 +452,38 @@ export class MobileSearchLeaf extends ItemView {
             }
             await this.app.vault.copy(file, newPath);
           }),
-      )
-      .addSeparator()
-      /* .addItem((item) =>
+      );
+    this.app.workspace.trigger(
+      'file-menu',
+      menu,
+      file,
+      'mobile-search-view',
+      this.leaf,
+    );
+
+    menu
+      .addItem((item) =>
         item
           .setTitle('Rename')
           .setIcon('pencil')
+          .setSection('danger')
           .onClick(() => {
-
             // @ts-ignore
             this.app.fileManager.promptForFileRename?.(file);
           }),
-      ) */
+      )
       .addItem((item) =>
         item
           .setTitle('Delete')
           .setIcon('trash')
+          .setSection('danger')
           .setWarning(true)
           .onClick(() => {
             void this.app.fileManager.trashFile(file);
           }),
-      )
-      .addSeparator()
-      .addItem((item) =>
-        item
-          .setTitle('Copy file path')
-          .setIcon('link')
-          .onClick(() => {
-            void navigator.clipboard.writeText(file.path);
-          }),
-      )
-      .addItem((item) =>
-        item
-          .setTitle('Copy Obsidian URL')
-          .setIcon('link')
-          .onClick(() => {
-            const url = `obsidian://open?vault=${encodeURIComponent(
-              this.app.vault.getName(),
-            )}&file=${encodeURIComponent(file.path)}`;
-            void navigator.clipboard.writeText(url);
-          }),
       );
 
     // Trigger file-menu event so other plugins can add their items
-    this.app.workspace.trigger('file-menu', menu, file, 'mobile-search');
 
     menu.showAtMouseEvent(event);
   }

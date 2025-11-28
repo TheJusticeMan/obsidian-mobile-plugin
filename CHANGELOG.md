@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better integration with other plugins.
 - Ask me for a feature to make it easyer to capture on the go
 
+## [1.0.7] - 2025-11-27
+
+### Fixed
+
+- mobile-toolbar interfearing with the built in toolbar
+- Better file context menu supporting new items on("file-menu)
+
 ## [1.0.6] - 2025-11-27
 
 ### Added

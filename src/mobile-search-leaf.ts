@@ -2,6 +2,7 @@ import {
   Component,
   ItemView,
   MarkdownRenderer,
+  Menu,
   SearchComponent,
   TFile,
   WorkspaceLeaf,
@@ -399,6 +400,54 @@ export class MobileSearchLeaf extends ItemView {
     card.addEventListener('click', () => {
       void this.app.workspace.openLinkText(file.path, '', false);
     });
+
+    // Context menu handler (right-click / long-press)
+    card.addEventListener('contextmenu', (event) => {
+      event.preventDefault();
+      this.showFileContextMenu(file, event);
+    });
+  }
+
+  /**
+   * Shows a context menu for the given file.
+   */
+  private showFileContextMenu(file: TFile, event: MouseEvent): void {
+    new Menu()
+      .addItem((item) =>
+        item
+          .setTitle('Open in new tab')
+          .setIcon('file-plus')
+          .onClick(() => {
+            void this.app.workspace.openLinkText(file.path, '', 'tab');
+          }),
+      )
+      .addItem((item) =>
+        item
+          .setTitle('Open to the right')
+          .setIcon('separator-vertical')
+          .onClick(() => {
+            void this.app.workspace.openLinkText(file.path, '', 'split');
+          }),
+      )
+      .addSeparator()
+      .addItem((item) =>
+        item
+          .setTitle('Delete')
+          .setIcon('trash')
+          .onClick(() => {
+            void this.app.fileManager.trashFile(file);
+          }),
+      )
+      .addSeparator()
+      .addItem((item) =>
+        item
+          .setTitle('Copy file path')
+          .setIcon('link')
+          .onClick(() => {
+            void navigator.clipboard.writeText(file.path);
+          }),
+      )
+      .showAtMouseEvent(event);
   }
 
   /**

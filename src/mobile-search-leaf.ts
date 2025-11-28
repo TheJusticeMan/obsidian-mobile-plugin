@@ -429,11 +429,41 @@ export class MobileSearchLeaf extends ItemView {
             void this.app.workspace.openLinkText(file.path, '', 'split');
           }),
       )
+      .addItem((item) =>
+        item
+          .setTitle('Make a copy')
+          .setIcon('documents')
+          .onClick(async () => {
+            let version = 0;
+            let newPath = file.path;
+            const ext = file.extension;
+            const base = file.basename;
+            const parent = file.parent ? file.parent.path : '/';
+            const parentPath = parent === '/' ? '' : parent + '/';
+
+            while (this.app.vault.getAbstractFileByPath(newPath)) {
+              version++;
+              newPath = `${parentPath}${base} ${version}.${ext}`;
+            }
+            await this.app.vault.copy(file, newPath);
+          }),
+      )
       .addSeparator()
+      /* .addItem((item) =>
+        item
+          .setTitle('Rename')
+          .setIcon('pencil')
+          .onClick(() => {
+
+            // @ts-ignore
+            this.app.fileManager.promptForFileRename?.(file);
+          }),
+      ) */
       .addItem((item) =>
         item
           .setTitle('Delete')
           .setIcon('trash')
+          .setWarning(true)
           .onClick(() => {
             void this.app.fileManager.trashFile(file);
           }),
@@ -445,6 +475,17 @@ export class MobileSearchLeaf extends ItemView {
           .setIcon('link')
           .onClick(() => {
             void navigator.clipboard.writeText(file.path);
+          }),
+      )
+      .addItem((item) =>
+        item
+          .setTitle('Copy Obsidian URL')
+          .setIcon('link')
+          .onClick(() => {
+            const url = `obsidian://open?vault=${encodeURIComponent(
+              this.app.vault.getName(),
+            )}&file=${encodeURIComponent(file.path)}`;
+            void navigator.clipboard.writeText(url);
           }),
       )
       .showAtMouseEvent(event);

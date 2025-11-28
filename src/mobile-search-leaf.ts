@@ -412,7 +412,9 @@ export class MobileSearchLeaf extends ItemView {
    * Shows a context menu for the given file.
    */
   private showFileContextMenu(file: TFile, event: MouseEvent): void {
-    new Menu()
+    const menu = new Menu();
+
+    menu
       .addItem((item) =>
         item
           .setTitle('Open in new tab')
@@ -487,8 +489,12 @@ export class MobileSearchLeaf extends ItemView {
             )}&file=${encodeURIComponent(file.path)}`;
             void navigator.clipboard.writeText(url);
           }),
-      )
-      .showAtMouseEvent(event);
+      );
+
+    // Trigger file-menu event so other plugins can add their items
+    this.app.workspace.trigger('file-menu', menu, file, 'mobile-search');
+
+    menu.showAtMouseEvent(event);
   }
 
   /**

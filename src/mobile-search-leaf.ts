@@ -2,6 +2,7 @@ import {
   Component,
   ItemView,
   MarkdownRenderer,
+  SearchComponent,
   TFile,
   WorkspaceLeaf,
 } from 'obsidian';
@@ -26,7 +27,7 @@ const PREVIEW_LENGTH = 200;
  * with scrollable results and smart keyboard handling.
  */
 export class MobileSearchLeaf extends ItemView {
-  private searchInput: HTMLInputElement;
+  private searchInput: SearchComponent;
   private resultsContainer: HTMLDivElement;
   private intersectionObserver: IntersectionObserver | null = null;
   private resultComponents: Component[] = [];
@@ -74,11 +75,9 @@ export class MobileSearchLeaf extends ItemView {
     const searchContainer = container.createDiv({
       cls: 'mobile-search-input-container',
     });
-    this.searchInput = searchContainer.createEl('input', {
-      type: 'text',
-      placeholder: 'Search files...',
-      cls: 'mobile-search-input',
-    });
+    this.searchInput = new SearchComponent(searchContainer).setPlaceholder(
+      'Search files...',
+    );
 
     // Create scrollable results container
     this.resultsContainer = container.createDiv({
@@ -117,25 +116,27 @@ export class MobileSearchLeaf extends ItemView {
    */
   private setupEventListeners(): void {
     // Scroll to top when search input is focused
-    this.searchInput.addEventListener('focus', () => {
+    this.searchInput.inputEl.addEventListener('focus', () => {
       this.lastFocusTime = Date.now();
       this.resultsContainer.scrollTop = 0;
     });
 
     // Debounced search on input
-    this.searchInput.addEventListener('input', () => this.debouncedSearch());
+    this.searchInput.inputEl.addEventListener('input', () =>
+      this.debouncedSearch(),
+    );
 
     // Keyboard handling: blur input on scroll to dismiss keyboard
     // Also check for infinite scroll loading
     this.resultsContainer.addEventListener('scroll', () => {
       if (Date.now() - this.lastFocusTime > 100) {
-        this.searchInput.blur();
+        this.searchInput.inputEl.blur();
       }
       this.checkLoadMore();
     });
 
     // Allow pressing Enter to trigger immediate search
-    this.searchInput.addEventListener('keydown', (e: KeyboardEvent) => {
+    this.searchInput.inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
         this.debouncedSearch.cancel();
         void this.performSearch();
@@ -199,7 +200,7 @@ export class MobileSearchLeaf extends ItemView {
   private focusSearchInput(): void {
     // Use requestAnimationFrame to ensure DOM is ready
     requestAnimationFrame(() => {
-      this.searchInput.focus();
+      this.searchInput.inputEl.focus();
       this.resetCache();
     });
   }
@@ -210,15 +211,14 @@ export class MobileSearchLeaf extends ItemView {
    */
   private debouncedSearch = throttleWithInterval(
     () => void this.performSearch(),
-    300,
+    100,
   );
 
   /**
    * Performs the search and renders results.
    */
   private async performSearch(): Promise<void> {
-    console.time('MobileSearch: performSearch');
-    const query = this.searchInput.value.trim().toLowerCase();
+    const query = this.searchInput.inputEl.value.trim().toLowerCase();
 
     // Clear previous results
     this.resultsContainer.empty();
@@ -252,7 +252,6 @@ export class MobileSearchLeaf extends ItemView {
         text: 'No files found',
       });
     }
-    console.timeEnd('MobileSearch: performSearch');
   }
 
   /**
@@ -261,7 +260,6 @@ export class MobileSearchLeaf extends ItemView {
   private async renderNextBatch(): Promise<void> {
     if (this.isLoadingMore) return;
 
-    console.time('MobileSearch: renderNextBatch');
     const startIndex = this.renderedResultsCount;
     const batchSize =
       startIndex === 0
@@ -285,7 +283,6 @@ export class MobileSearchLeaf extends ItemView {
 
     this.renderedResultsCount = endIndex;
     this.isLoadingMore = false;
-    console.timeEnd('MobileSearch: renderNextBatch');
   }
 
   /**
@@ -324,7 +321,14 @@ export class MobileSearchLeaf extends ItemView {
 
     try {
       const content = await this.app.vault.cachedRead(file);
-      const previewText = content.slice(0, PREVIEW_LENGTH);
+      const frontmatterEndPosition =
+        this.app.metadataCache.getFileCache(file)?.frontmatterPosition?.end
+          .offset || 0;
+
+      const previewText = content.slice(
+        frontmatterEndPosition,
+        PREVIEW_LENGTH + frontmatterEndPosition,
+      );
       this.previewCache.set(file.path, previewText);
       return previewText;
     } catch {

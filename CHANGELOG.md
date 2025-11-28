@@ -9,9 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Simple file search and preview pane for better navigation.
 - Better integration with other plugins.
 - Ask me for a feature to make it easyer to capture on the go
+
+## [1.0.6] - 2025-11-27
+
+### Added
+
+- **Mobile Search**: A new dedicated search view optimized for mobile devices.
+  - Sticky search input field.
+  - Infinite scrolling for search results.
+  - File previews with caching for better performance.
+  - Smart keyboard handling (dismisses on scroll).
 
 ## [1.0.5] - 2025-11-27
 

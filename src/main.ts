@@ -98,6 +98,9 @@ export default class MobilePlugin extends Plugin {
     this.registerEditorExtension(createToolbarExtension(this.app, this));
     // add ribbon icon
     this.addRibbonIcon('plus', 'Create new note', () => this.createNewNote());
+    this.addRibbonIcon('search', 'Open Mobile Search', () => {
+      void this.activateMobileSearchView();
+    });
 
     // Add settings tab
     this.addSettingTab(new MobileSettingTab(this.app, this));

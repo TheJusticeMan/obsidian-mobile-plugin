@@ -55,6 +55,16 @@ Dynamic toolbars that adapt based on your cursor position and selection:
 - **Force Tablet UI**: Toggle to force the tablet interface on mobile phones.
 - **Keep in tablet mode**: Command to toggle this mode.
 
+### Mobile Search
+
+A dedicated search view optimized for mobile devices:
+
+- **Sticky search input**: Always visible at the top of the results.
+- **Infinite scrolling**: Efficiently loads results as you scroll.
+- **File previews**: Shows a preview of the file content with caching for performance.
+- **Smart keyboard handling**: Automatically dismisses the keyboard when scrolling results.
+- **Performance optimized**: Uses cached document fragments to minimize rendering overhead.
+
 ## Installation
 
 ### Brat
@@ -108,6 +118,7 @@ Bind toolbars to editing contexts:
 | `Plus press`                  | Executes the command configured for FAB press      |
 | `Plus long press`             | Executes the command configured for FAB long press |
 | `Open mobile plugin settings` | Opens the settings modal for this plugin           |
+| `Open Mobile Search`          | Opens the mobile-optimized search view             |
 
 ## Development
 

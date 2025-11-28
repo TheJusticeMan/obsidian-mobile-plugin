@@ -1,4 +1,11 @@
-import { Platform, Plugin, Notice, Component, App } from 'obsidian';
+import {
+  Platform,
+  Plugin,
+  Notice,
+  Component,
+  App,
+  MarkdownView,
+} from 'obsidian';
 import { FABManager } from './fab';
 import {
   MobileSearchLeaf,
@@ -17,6 +24,10 @@ import { createToolbarExtension } from './toolbar-extension';
 interface WakeLockSentinel {
   release(): Promise<void>;
   addEventListener(type: 'release', listener: () => void): void;
+}
+export interface CommandManager {
+  commands: Record<string, unknown>;
+  executeCommandById: (id: string) => void;
 }
 
 export default class MobilePlugin extends Plugin {
@@ -75,6 +86,62 @@ export default class MobilePlugin extends Plugin {
       },
     });
 
+    // if there is PureChutLLM plugin, and a recorder command, add a command to trigger it
+
+    const hasAudioRecorder =
+      this.commandManager?.commands['audio-recorder:start'] &&
+      this.commandManager?.commands['audio-recorder:stop'];
+    const hasPureChatLLM =
+      this.commandManager?.commands['pure-chat-llm:complete-chat-response'];
+    if (hasAudioRecorder && hasPureChatLLM) {
+      this.addCommand({
+        id: 'quick-audio-notes',
+        name: 'Quick audio notes',
+        icon: 'microphone',
+        callback: async () => {
+          // Toggle FAB record mode
+          if (this.fabManager?.getMode() === 'recording') {
+            this.fabManager?.setMode('default');
+            new Notice('FAB recording mode disabled');
+          } else {
+            this.fabManager?.setMode('recording');
+            new Notice('FAB recording mode enabled');
+          }
+        },
+      });
+      this.addCommand({
+        id: 'end-recording-and-transcribe',
+        name: 'End recording and transcribe',
+        icon: 'microphone-off',
+        callback: async () => {
+          this.commandManager?.executeCommandById('file-explorer:new-file');
+
+          const end = () => {
+            // First stop the recording
+            this.commandManager?.executeCommandById('audio-recorder:stop');
+            // Then trigger PureChatLLM transcription
+            // move the cursor into the new note after a short delay
+            const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+
+            setTimeout(() => {
+              console.log(view);
+              if (view) {
+                view.editor.focus();
+                view.editor.setValue(
+                  `\n# role: User\nTranscribe the content of this audio file into a structured markdown note\n${view.editor.getValue()}\n`,
+                );
+              }
+              this.commandManager?.executeCommandById(
+                'pure-chat-llm:complete-chat-response',
+              );
+            }, 500);
+            this.app.workspace.off('active-leaf-change', end);
+          };
+          this.app.workspace.on('active-leaf-change', end);
+        },
+      });
+    }
+
     // Initialize FAB Manager
     this.fabManager = new FABManager(this.app, this);
 
@@ -106,6 +173,10 @@ export default class MobilePlugin extends Plugin {
     this.addSettingTab(new MobileSettingTab(this.app, this));
   }
 
+  get commandManager(): CommandManager | undefined {
+    return (this.app as { commands?: CommandManager }).commands;
+  }
+
   /**
    * Activates the Mobile Search view in the left sidebar.
    */
@@ -133,8 +204,7 @@ export default class MobilePlugin extends Plugin {
 
   createNewNote(): void {
     // Using the internal commands API to execute file creation
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
-    (this.app as any).commands.executeCommandById('file-explorer:new-file');
+    this.commandManager?.executeCommandById('file-explorer:new-file');
   }
 
   getBinds(toolbarId: string): string[] {
@@ -150,7 +220,7 @@ export default class MobilePlugin extends Plugin {
   triggerCMDEvent(eventType: MobileCMDEvent): void {
     const cmdId = this.settings.MobileCMDEvents[eventType];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
-    (this.app as any).commands.executeCommandById(cmdId);
+    this.commandManager?.executeCommandById(cmdId);
   }
 
   async toggleWakeLock(): Promise<void> {

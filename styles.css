@@ -256,6 +256,10 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   right: 0;
   font-size: 11px;
   color: var(--text-faint);
-  background: linear-gradient(to right, transparent, var(--background-secondary) 20%);
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--background-secondary) 20%
+  );
   padding-left: 16px;
 }

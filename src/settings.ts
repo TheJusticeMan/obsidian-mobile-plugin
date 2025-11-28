@@ -43,7 +43,12 @@ export interface ContextBinding {
   toolbarId: string;
 }
 
-const MobileCMDEvents = ['fab-longpress', 'fab-press'] as const;
+const MobileCMDEvents = [
+  'fab-longpress',
+  'fab-press',
+  'fab-record-start',
+  'fab-record-stop',
+] as const;
 
 export type MobileCMDEvent = (typeof MobileCMDEvents)[number];
 
@@ -55,6 +60,14 @@ export const MobileCMDEventsDesc: Record<MobileCMDEvent, [string, string]> = {
   'fab-press': [
     'FAB press',
     'Select command to execute when the "Floating Action Button" is pressed',
+  ],
+  'fab-record-start': [
+    'FAB record start',
+    'Select command to execute when the "Floating Action Button" is held down in recording mode',
+  ],
+  'fab-record-stop': [
+    'FAB record stop',
+    'Select command to execute when the "Floating Action Button" is released in recording mode',
   ],
 };
 
@@ -79,6 +92,8 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
   MobileCMDEvents: {
     'fab-longpress': 'command-palette:open',
     'fab-press': 'file-explorer:new-file',
+    'fab-record-start': 'audio-recorder:start',
+    'fab-record-stop': 'audio-recorder:stop',
   },
   showCommandConfirmation: true,
   homeFolder: '',

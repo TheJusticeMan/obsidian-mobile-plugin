@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better integration with other plugins.
 - Ask me for a feature to make it easyer to capture on the go
 
+## [1.0.8] - 2025-11-28
+
+- added recording features that cna be linked with PureChatLLM
+
 ## [1.0.7] - 2025-11-27
 
 ### Fixed

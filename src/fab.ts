@@ -15,6 +15,26 @@ import { CommandSuggestModal } from './settings';
  */
 export class FABManager {
   private fabElements: Map<MarkdownView, ButtonComponent> = new Map();
+  private currentMode: 'default' | 'recording' = 'default';
+
+  /*   setIcon(name: string): void {
+    this.fabElements.forEach((fab) => {
+      fab.setIcon(name);
+    });
+  }
+ */
+  setMode(mode: 'default' | 'recording'): void {
+    this.currentMode = mode;
+    this.fabElements.forEach((fab) => {
+      if (fab instanceof MobileFAB) {
+        fab.setMode(mode);
+      }
+    });
+  }
+
+  getMode(): 'default' | 'recording' {
+    return this.currentMode;
+  }
 
   constructor(
     private app: App,
@@ -51,7 +71,10 @@ export class FABManager {
     // Don't create duplicate FABs
     if (!this.fabElements.has(view)) {
       // Create and mount FAB
-      this.fabElements.set(view, this.createFAB(view.containerEl));
+      this.fabElements.set(
+        view,
+        new MobileFAB(this.app, this.plugin, view.containerEl),
+      );
     }
   }
 
@@ -64,13 +87,6 @@ export class FABManager {
     } else {
       this.updateActiveLeaf();
     }
-  }
-
-  /**
-   * Creates a FAB element
-   */
-  private createFAB(containerEl: HTMLElement): ButtonComponent {
-    return new MobileFAB(this.app, this.plugin, containerEl);
   }
 
   /**
@@ -89,6 +105,7 @@ export class FABManager {
 
 class MobileFAB extends ButtonComponent {
   private gestureHandler: GestureHandler;
+  private mode: 'default' | 'recording' = 'default';
 
   constructor(
     private app: App,
@@ -96,26 +113,69 @@ class MobileFAB extends ButtonComponent {
     containerEl: HTMLElement,
   ) {
     super(containerEl);
+
     this.setTooltip('Create new note (long press for command palette)')
       .setIcon('plus')
       .setClass('mobile-fab')
       .onClick(() => {
+        if (this.mode === 'recording') return;
         this.hapticFeedback(10);
         plugin.triggerCMDEvent('fab-press');
       })
       .then((btn) =>
         btn.buttonEl.addEventListener('contextmenu', (e) => {
+          if (this.mode === 'recording') {
+            e.preventDefault();
+            return;
+          }
           e.preventDefault();
           this.hapticFeedback(20);
           plugin.triggerCMDEvent('fab-longpress');
         }),
       )
       .then((btn) => {
+        // Add recording mode listeners
+        const startRecording = (e: Event) => {
+          if (this.mode !== 'recording') return;
+          e.preventDefault();
+          e.stopPropagation();
+          this.hapticFeedback(10);
+          plugin.triggerCMDEvent('fab-record-start');
+          btn.buttonEl.addClass('is-recording');
+        };
+
+        const stopRecording = (e: Event) => {
+          if (this.mode !== 'recording') return;
+          e.preventDefault();
+          e.stopPropagation();
+          this.hapticFeedback(10);
+          plugin.triggerCMDEvent('fab-record-stop');
+          btn.buttonEl.removeClass('is-recording');
+        };
+
+        btn.buttonEl.addEventListener('touchstart', startRecording, {
+          passive: false,
+        });
+        btn.buttonEl.addEventListener('touchend', stopRecording, {
+          passive: false,
+        });
+        btn.buttonEl.addEventListener('mousedown', startRecording);
+        btn.buttonEl.addEventListener('mouseup', stopRecording);
+        btn.buttonEl.addEventListener('mouseleave', (e) => {
+          if (
+            this.mode === 'recording' &&
+            btn.buttonEl.hasClass('is-recording')
+          ) {
+            stopRecording(e);
+          }
+        });
+
         this.gestureHandler = new GestureHandler(
           this.app,
           btn.buttonEl,
           plugin.settings.gestureCommands,
           (line) => {
+            if (this.mode === 'recording') return;
             new NewGesture(this.app, this.plugin, line).then((g) =>
               this.plugin.settings.showCommandConfirmation
                 ? g.open()
@@ -124,6 +184,18 @@ class MobileFAB extends ButtonComponent {
           },
         );
       });
+    this.setMode(this.plugin.fabManager?.getMode() || 'default');
+  }
+
+  setMode(mode: 'default' | 'recording') {
+    this.mode = mode;
+    if (mode === 'recording') {
+      this.setIcon('microphone');
+      this.buttonEl.addClass('recording-mode');
+    } else {
+      this.setIcon('plus');
+      this.buttonEl.removeClass('recording-mode');
+    }
   }
 
   teardown() {

@@ -55,6 +55,18 @@ Dynamic toolbars that adapt based on your cursor position and selection:
 - **Force Tablet UI**: Toggle to force the tablet interface on mobile phones.
 - **Keep in tablet mode**: Command to toggle this mode.
 
+### Mobile Search
+
+A dedicated search view optimized for mobile devices:
+
+- **Sticky search input**: Always visible at the top of the results.
+- **Infinite scrolling**: Efficiently loads results as you scroll (10 initial, 50 per batch).
+- **File previews**: Shows a preview of the file content with caching for performance.
+- **Date display**: Shows file modification date at the bottom corner of each preview (relative time for recent files).
+- **File context menu**: Long-press/right-click on a result card for quick actions (open in new tab, open to the right, delete, copy file path).
+- **Smart keyboard handling**: Automatically dismisses the keyboard when scrolling results.
+- **Auto-focus**: Automatically focuses the search input when the sidebar opens.
+
 ## Installation
 
 ### Brat
@@ -108,6 +120,7 @@ Bind toolbars to editing contexts:
 | `Plus press`                  | Executes the command configured for FAB press      |
 | `Plus long press`             | Executes the command configured for FAB long press |
 | `Open mobile plugin settings` | Opens the settings modal for this plugin           |
+| `Open Mobile Search`          | Opens the mobile-optimized search view             |
 
 ## Development
 
@@ -136,10 +149,12 @@ npm run build
 
 ```
 src/
-├── main.ts              # Plugin entry point
-├── fab.ts               # Floating Action Button manager
-├── toolbar-extension.ts # Context-aware toolbar ViewPlugin
-└── settings.ts          # Settings tab and interfaces
+├── main.ts               # Plugin entry point
+├── fab.ts                # Floating Action Button manager
+├── toolbar-extension.ts  # Context-aware toolbar ViewPlugin
+├── mobile-search-leaf.ts # Mobile Search view
+├── gesture-handler.ts    # Gesture recognition and handling
+└── settings.ts           # Settings tab and interfaces
 ```
 
 ## License

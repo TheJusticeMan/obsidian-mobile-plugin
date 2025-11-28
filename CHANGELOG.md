@@ -9,9 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Simple file search and preview pane for better navigation.
 - Better integration with other plugins.
 - Ask me for a feature to make it easyer to capture on the go
+
+## [1.0.6] - 2025-11-27
+
+### Added
+
+- **Mobile Search**: A new dedicated search view optimized for mobile devices.
+  - Sticky search input field that stays at the top.
+  - Infinite scrolling for search results (10 initial results, loads 50 more per batch).
+  - File previews with caching for better performance.
+  - Date display at the bottom corner of each preview (relative time like "Today", "Yesterday", or formatted date).
+  - File context menu on long-press/right-click with options: Open in new tab, Open to the right, Delete, Copy file path.
+  - Smart keyboard handling (dismisses on scroll).
+  - Auto-focus when sidebar opens.
+  - Shows all files sorted by modification time when no query is entered.
 
 ## [1.0.5] - 2025-11-27
 

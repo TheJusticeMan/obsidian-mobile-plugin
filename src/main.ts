@@ -267,9 +267,6 @@ export default class MobilePlugin extends Plugin {
       this.fabManager.destroy();
       this.fabManager = null;
     }
-
-    // Detach Mobile Search leaves
-    this.app.workspace.detachLeavesOfType(VIEW_TYPE_MOBILE_SEARCH);
   }
 
   async loadSettings() {

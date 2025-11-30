@@ -37,10 +37,6 @@ export default class MobilePlugin extends Plugin {
   kkep: keepInTabletMode;
 
   async onload() {
-    if (!Platform.isMobile) {
-      return;
-    }
-
     await this.loadSettings();
 
     // Register wake lock toggle command

@@ -203,6 +203,7 @@ export class MobileSearchLeaf extends ItemView {
     requestAnimationFrame(() => {
       this.searchInput.inputEl.focus();
       this.resetCache();
+      this.performSearch(); // fix so the it updates when opened
     });
   }
 

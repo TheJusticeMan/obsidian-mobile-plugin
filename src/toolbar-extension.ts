@@ -66,6 +66,9 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
 
           // If swiped up more than threshold within time limit
           if (deltaY > SWIPE_THRESHOLD_PX && deltaTime < SWIPE_THRESHOLD_MS) {
+            // Prevent default scrolling behavior when expanding toolbar
+            e.preventDefault();
+
             // Toggle expanded state
             if (toolbar.classList.contains('is-expanded')) {
               toolbar.classList.remove('is-expanded');

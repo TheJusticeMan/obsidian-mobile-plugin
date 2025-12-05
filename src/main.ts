@@ -405,6 +405,138 @@ export default class MobilePlugin extends Plugin {
       },
     });
 
+    // Progressive selection command
+    this.addCommand({
+      id: 'select-more',
+      name: 'Select More',
+      editorCallback: (editor) => {
+        const from = editor.getCursor('from');
+        const to = editor.getCursor('to');
+        const hasSelection = !(from.line === to.line && from.ch === to.ch);
+
+        if (!hasSelection) {
+          // No selection - select word
+          const cursor = editor.getCursor();
+          const currentLine = editor.getLine(cursor.line);
+
+          let cursorPos = cursor.ch;
+          if (
+            cursorPos < currentLine.length &&
+            !/\w/.test(currentLine[cursorPos])
+          ) {
+            while (
+              cursorPos < currentLine.length &&
+              !/\w/.test(currentLine[cursorPos])
+            ) {
+              cursorPos++;
+            }
+          }
+
+          let start = cursorPos;
+          let end = cursorPos;
+
+          while (start > 0 && /\w/.test(currentLine[start - 1])) {
+            start--;
+          }
+          while (end < currentLine.length && /\w/.test(currentLine[end])) {
+            end++;
+          }
+
+          editor.setSelection(
+            { line: cursor.line, ch: start },
+            { line: cursor.line, ch: end },
+          );
+          return;
+        }
+
+        // Check if current selection is a word
+        const selectedText = editor.getSelection();
+        const isWord =
+          from.line === to.line &&
+          selectedText.trim().length > 0 &&
+          !selectedText.includes('\n') &&
+          /^\w+$/.test(selectedText.trim());
+
+        if (isWord) {
+          // Word selected - select sentence
+          const text = editor.getValue();
+          const offset = editor.posToOffset(from);
+
+          let start = 0;
+          let end = text.length;
+
+          for (let i = offset - 1; i >= 0; i--) {
+            if (
+              (text[i] === '.' || text[i] === '!' || text[i] === '?') &&
+              (text[i + 1] === ' ' || text[i + 1] === '\n' || i === offset - 1)
+            ) {
+              start = i + 1;
+              while (
+                start < text.length &&
+                (text[start] === ' ' || text[start] === '\n')
+              ) {
+                start++;
+              }
+              break;
+            }
+          }
+
+          const toOffset = editor.posToOffset(to);
+          for (let i = toOffset; i < text.length; i++) {
+            if (
+              (text[i] === '.' || text[i] === '!' || text[i] === '?') &&
+              (i === text.length - 1 ||
+                text[i + 1] === ' ' ||
+                text[i + 1] === '\n')
+            ) {
+              end = i + 1;
+              break;
+            }
+          }
+
+          const startPos = editor.offsetToPos(start);
+          const endPos = editor.offsetToPos(end);
+          editor.setSelection(startPos, endPos);
+          return;
+        }
+
+        // Check if current selection is a sentence or less than a line
+        const isSingleLine = from.line === to.line;
+        const currentLine = editor.getLine(from.line);
+        const isFullLine =
+          from.ch === 0 &&
+          ((from.line < editor.lastLine() &&
+            to.line === from.line + 1 &&
+            to.ch === 0) ||
+            (from.line === editor.lastLine() && to.ch === currentLine.length));
+
+        if (!isFullLine) {
+          // Not a full line - select whole line
+          const lastLine = editor.lastLine();
+          if (from.line < lastLine) {
+            editor.setSelection(
+              { line: from.line, ch: 0 },
+              { line: from.line + 1, ch: 0 },
+            );
+          } else {
+            editor.setSelection(
+              { line: from.line, ch: 0 },
+              { line: from.line, ch: currentLine.length },
+            );
+          }
+          return;
+        }
+
+        // Line selected - select all
+        const lastLine = editor.lastLine();
+        const lastLineText = editor.getLine(lastLine);
+        editor.setSelection(
+          { line: 0, ch: 0 },
+          { line: lastLine, ch: lastLineText.length },
+        );
+      },
+    });
+
     // if there is PureChutLLM plugin, and a recorder command, add a command to trigger it
 
     const hasAudioRecorder =

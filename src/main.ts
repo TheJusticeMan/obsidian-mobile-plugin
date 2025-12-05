@@ -85,7 +85,7 @@ export default class MobilePlugin extends Plugin {
     // Navigation commands
     this.addCommand({
       id: 'cursor-up',
-      name: 'Cmd up - Move cursor up',
+      name: 'Up',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
         if (cursor.line > 0) {
@@ -96,7 +96,7 @@ export default class MobilePlugin extends Plugin {
 
     this.addCommand({
       id: 'cursor-down',
-      name: 'Cmd down - Move cursor down',
+      name: 'Down',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
         const lastLine = editor.lastLine();
@@ -108,7 +108,7 @@ export default class MobilePlugin extends Plugin {
 
     this.addCommand({
       id: 'cursor-left',
-      name: 'Cmd left - Move cursor left',
+      name: 'Left',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
         if (cursor.ch > 0) {
@@ -123,7 +123,7 @@ export default class MobilePlugin extends Plugin {
 
     this.addCommand({
       id: 'cursor-right',
-      name: 'Cmd right - Move cursor right',
+      name: 'Right',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
         const currentLine = editor.getLine(cursor.line);
@@ -139,7 +139,7 @@ export default class MobilePlugin extends Plugin {
     // Selection expansion commands (Plus)
     this.addCommand({
       id: 'select-plus-bottom',
-      name: 'Select plus bottom - Expand selection to next word boundary',
+      name: 'Expand down',
       editorCallback: (editor) => {
         const selection = editor.getSelection();
         const cursor = editor.getCursor('to');
@@ -171,7 +171,7 @@ export default class MobilePlugin extends Plugin {
 
     this.addCommand({
       id: 'select-plus-top',
-      name: 'Select plus top - Expand selection to previous word boundary',
+      name: 'Expand up',
       editorCallback: (editor) => {
         const cursor = editor.getCursor('from');
         const currentLine = editor.getLine(cursor.line);
@@ -206,7 +206,7 @@ export default class MobilePlugin extends Plugin {
     // Selection contraction commands (Minus)
     this.addCommand({
       id: 'select-minus-bottom',
-      name: 'Select minus bottom - Shrink selection from end',
+      name: 'Shrink down',
       editorCallback: (editor) => {
         const from = editor.getCursor('from');
         const to = editor.getCursor('to');
@@ -239,7 +239,7 @@ export default class MobilePlugin extends Plugin {
 
     this.addCommand({
       id: 'select-minus-top',
-      name: 'Select minus top - Shrink selection from start',
+      name: 'Shrink up',
       editorCallback: (editor) => {
         const from = editor.getCursor('from');
         const to = editor.getCursor('to');
@@ -273,7 +273,7 @@ export default class MobilePlugin extends Plugin {
     // Selection commands
     this.addCommand({
       id: 'select-word',
-      name: 'Select word',
+      name: 'Word',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
         const currentLine = editor.getLine(cursor.line);
@@ -317,7 +317,7 @@ export default class MobilePlugin extends Plugin {
 
     this.addCommand({
       id: 'select-sentence',
-      name: 'Select sentence',
+      name: 'Sentence',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
         const text = editor.getValue();
@@ -368,7 +368,7 @@ export default class MobilePlugin extends Plugin {
 
     this.addCommand({
       id: 'select-line',
-      name: 'Select whole line',
+      name: 'Line',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
         const lastLine = editor.lastLine();
@@ -392,7 +392,7 @@ export default class MobilePlugin extends Plugin {
 
     this.addCommand({
       id: 'select-all',
-      name: 'Select all',
+      name: 'All',
       editorCallback: (editor) => {
         const lastLine = editor.lastLine();
         const lastLineText = editor.getLine(lastLine);
@@ -408,7 +408,7 @@ export default class MobilePlugin extends Plugin {
     // Progressive selection command
     this.addCommand({
       id: 'select-more',
-      name: 'Select more',
+      name: 'More',
       editorCallback: (editor) => {
         const from = editor.getCursor('from');
         const to = editor.getCursor('to');

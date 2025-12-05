@@ -278,9 +278,24 @@ export default class MobilePlugin extends Plugin {
         const cursor = editor.getCursor();
         const currentLine = editor.getLine(cursor.line);
 
-        // Find word boundaries around cursor
-        let start = cursor.ch;
-        let end = cursor.ch;
+        // If cursor is not on a word character, find the next word
+        let cursorPos = cursor.ch;
+        if (
+          cursorPos < currentLine.length &&
+          !/\w/.test(currentLine[cursorPos])
+        ) {
+          // Skip non-word characters to find next word
+          while (
+            cursorPos < currentLine.length &&
+            !/\w/.test(currentLine[cursorPos])
+          ) {
+            cursorPos++;
+          }
+        }
+
+        // Find word boundaries around cursor/next word
+        let start = cursorPos;
+        let end = cursorPos;
 
         // Move start backward to word boundary
         while (start > 0 && /\w/.test(currentLine[start - 1])) {
@@ -316,9 +331,7 @@ export default class MobilePlugin extends Plugin {
         for (let i = offset - 1; i >= 0; i--) {
           if (
             (text[i] === '.' || text[i] === '!' || text[i] === '?') &&
-            (i === text.length - 1 ||
-              text[i + 1] === ' ' ||
-              text[i + 1] === '\n')
+            (text[i + 1] === ' ' || text[i + 1] === '\n' || i === offset - 1)
           ) {
             start = i + 1;
             // Skip whitespace after punctuation
@@ -358,13 +371,22 @@ export default class MobilePlugin extends Plugin {
       name: 'Select Whole Line',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
-        const currentLine = editor.getLine(cursor.line);
+        const lastLine = editor.lastLine();
 
-        // Select entire line including newline
-        editor.setSelection(
-          { line: cursor.line, ch: 0 },
-          { line: cursor.line, ch: currentLine.length },
-        );
+        // Select entire line including newline if not last line
+        if (cursor.line < lastLine) {
+          editor.setSelection(
+            { line: cursor.line, ch: 0 },
+            { line: cursor.line + 1, ch: 0 },
+          );
+        } else {
+          // Last line - select to end of line
+          const currentLine = editor.getLine(cursor.line);
+          editor.setSelection(
+            { line: cursor.line, ch: 0 },
+            { line: cursor.line, ch: currentLine.length },
+          );
+        }
       },
     });
 

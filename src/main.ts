@@ -273,7 +273,7 @@ export default class MobilePlugin extends Plugin {
     // Selection commands
     this.addCommand({
       id: 'select-word',
-      name: 'Word',
+      name: 'Select word',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
         const currentLine = editor.getLine(cursor.line);
@@ -317,7 +317,7 @@ export default class MobilePlugin extends Plugin {
 
     this.addCommand({
       id: 'select-sentence',
-      name: 'Sentence',
+      name: 'Select sentence',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
         const text = editor.getValue();
@@ -368,7 +368,7 @@ export default class MobilePlugin extends Plugin {
 
     this.addCommand({
       id: 'select-line',
-      name: 'Line',
+      name: 'Select line',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
         const lastLine = editor.lastLine();
@@ -392,7 +392,7 @@ export default class MobilePlugin extends Plugin {
 
     this.addCommand({
       id: 'select-all',
-      name: 'All',
+      name: 'Select all',
       editorCallback: (editor) => {
         const lastLine = editor.lastLine();
         const lastLineText = editor.getLine(lastLine);
@@ -408,7 +408,7 @@ export default class MobilePlugin extends Plugin {
     // Progressive selection command
     this.addCommand({
       id: 'select-more',
-      name: 'More',
+      name: 'Select more',
       editorCallback: (editor) => {
         const from = editor.getCursor('from');
         const to = editor.getCursor('to');

@@ -563,7 +563,6 @@ export default class MobilePlugin extends Plugin {
             const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 
             setTimeout(() => {
-              console.log(view);
               if (view) {
                 view.editor.focus();
                 view.editor.setValue(

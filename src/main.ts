@@ -82,6 +82,194 @@ export default class MobilePlugin extends Plugin {
       },
     });
 
+    // Navigation commands
+    this.addCommand({
+      id: 'cursor-up',
+      name: 'Cmd Up - Move cursor up',
+      editorCallback: (editor) => {
+        const cursor = editor.getCursor();
+        if (cursor.line > 0) {
+          editor.setCursor({ line: cursor.line - 1, ch: cursor.ch });
+        }
+      },
+    });
+
+    this.addCommand({
+      id: 'cursor-down',
+      name: 'Cmd Down - Move cursor down',
+      editorCallback: (editor) => {
+        const cursor = editor.getCursor();
+        const lastLine = editor.lastLine();
+        if (cursor.line < lastLine) {
+          editor.setCursor({ line: cursor.line + 1, ch: cursor.ch });
+        }
+      },
+    });
+
+    this.addCommand({
+      id: 'cursor-left',
+      name: 'Cmd Left - Move cursor left',
+      editorCallback: (editor) => {
+        const cursor = editor.getCursor();
+        if (cursor.ch > 0) {
+          editor.setCursor({ line: cursor.line, ch: cursor.ch - 1 });
+        } else if (cursor.line > 0) {
+          // Move to end of previous line
+          const prevLine = editor.getLine(cursor.line - 1);
+          editor.setCursor({ line: cursor.line - 1, ch: prevLine.length });
+        }
+      },
+    });
+
+    this.addCommand({
+      id: 'cursor-right',
+      name: 'Cmd Right - Move cursor right',
+      editorCallback: (editor) => {
+        const cursor = editor.getCursor();
+        const currentLine = editor.getLine(cursor.line);
+        if (cursor.ch < currentLine.length) {
+          editor.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
+        } else if (cursor.line < editor.lastLine()) {
+          // Move to start of next line
+          editor.setCursor({ line: cursor.line + 1, ch: 0 });
+        }
+      },
+    });
+
+    // Selection expansion commands (Plus)
+    this.addCommand({
+      id: 'select-plus-bottom',
+      name: 'Select Plus Bottom - Expand selection to next word boundary',
+      editorCallback: (editor) => {
+        const selection = editor.getSelection();
+        const cursor = editor.getCursor('to');
+        const currentLine = editor.getLine(cursor.line);
+
+        // Find next word boundary or line end
+        let nextPos = cursor.ch;
+        const text = currentLine.slice(cursor.ch);
+
+        // Skip current word characters
+        const wordMatch = text.match(/^\w+/);
+        if (wordMatch) {
+          nextPos += wordMatch[0].length;
+        } else {
+          // Skip non-word characters to next word or end
+          const nonWordMatch = text.match(/^\W+/);
+          if (nonWordMatch) {
+            nextPos += nonWordMatch[0].length;
+          } else {
+            nextPos = currentLine.length;
+          }
+        }
+
+        // Set selection from current anchor to new position
+        const from = editor.getCursor('from');
+        editor.setSelection(from, { line: cursor.line, ch: nextPos });
+      },
+    });
+
+    this.addCommand({
+      id: 'select-plus-top',
+      name: 'Select Plus Top - Expand selection to previous word boundary',
+      editorCallback: (editor) => {
+        const cursor = editor.getCursor('from');
+        const currentLine = editor.getLine(cursor.line);
+
+        // Find previous word boundary
+        let prevPos = cursor.ch;
+        const text = currentLine.slice(0, cursor.ch);
+
+        // Skip backwards to find word boundary
+        if (prevPos > 0) {
+          // Reverse the string and find word boundary
+          const reversed = text.split('').reverse().join('');
+          const wordMatch = reversed.match(/^\w+/);
+          if (wordMatch) {
+            prevPos -= wordMatch[0].length;
+          } else {
+            const nonWordMatch = reversed.match(/^\W+/);
+            if (nonWordMatch) {
+              prevPos -= nonWordMatch[0].length;
+            } else {
+              prevPos = 0;
+            }
+          }
+        }
+
+        // Set selection from new position to current end
+        const to = editor.getCursor('to');
+        editor.setSelection({ line: cursor.line, ch: prevPos }, to);
+      },
+    });
+
+    // Selection contraction commands (Minus)
+    this.addCommand({
+      id: 'select-minus-bottom',
+      name: 'Select Minus Bottom - Shrink selection from end',
+      editorCallback: (editor) => {
+        const from = editor.getCursor('from');
+        const to = editor.getCursor('to');
+
+        if (from.line === to.line && from.ch === to.ch) {
+          // No selection, do nothing
+          return;
+        }
+
+        // Shrink from the end by one character
+        let newTo = { line: to.line, ch: to.ch - 1 };
+
+        // If at start of line, move to previous line end
+        if (to.ch === 0 && to.line > from.line) {
+          const prevLine = editor.getLine(to.line - 1);
+          newTo = { line: to.line - 1, ch: prevLine.length };
+        }
+
+        // Ensure we don't go past the from position
+        if (
+          newTo.line < from.line ||
+          (newTo.line === from.line && newTo.ch < from.ch)
+        ) {
+          newTo = from;
+        }
+
+        editor.setSelection(from, newTo);
+      },
+    });
+
+    this.addCommand({
+      id: 'select-minus-top',
+      name: 'Select Minus Top - Shrink selection from start',
+      editorCallback: (editor) => {
+        const from = editor.getCursor('from');
+        const to = editor.getCursor('to');
+
+        if (from.line === to.line && from.ch === to.ch) {
+          // No selection, do nothing
+          return;
+        }
+
+        // Shrink from the start by one character
+        let newFrom = { line: from.line, ch: from.ch + 1 };
+        const currentLine = editor.getLine(from.line);
+
+        // If at end of line, move to next line start
+        if (from.ch >= currentLine.length && from.line < to.line) {
+          newFrom = { line: from.line + 1, ch: 0 };
+        }
+
+        // Ensure we don't go past the to position
+        if (
+          newFrom.line > to.line ||
+          (newFrom.line === to.line && newFrom.ch > to.ch)
+        ) {
+          newFrom = to;
+        }
+
+        editor.setSelection(newFrom, to);
+      },
+    });
+
     // if there is PureChutLLM plugin, and a recorder command, add a command to trigger it
 
     const hasAudioRecorder =

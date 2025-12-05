@@ -52,15 +52,24 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   position: absolute;
   bottom: calc(10px + env(safe-area-inset-bottom));
   left: 10px;
-  right: 10px;
-  max-width: calc(100% - 20px);
+  /* Prevent overlap with FAB by adding padding on right */
+  right: 86px; /* 56px FAB width + 20px FAB right margin + 10px gap */
+  max-width: calc(100% - 96px); /* 86px right + 10px left */
   overflow-x: auto;
   overflow-y: hidden;
   /* Hide scrollbar for cleaner look while still allowing scroll */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
   -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  transition: height 0.3s ease, flex-wrap 0.3s ease;
   /* z-index: 1000; */
+}
+
+/* Expanded toolbar state - allows wrapping to show more rows */
+.mobile-plugin-toolbar.is-expanded {
+  flex-wrap: wrap;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 .mobile-plugin-toolbar::-webkit-scrollbar {

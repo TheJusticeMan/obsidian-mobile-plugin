@@ -270,6 +270,119 @@ export default class MobilePlugin extends Plugin {
       },
     });
 
+    // Selection commands
+    this.addCommand({
+      id: 'select-word',
+      name: 'Select Word',
+      editorCallback: (editor) => {
+        const cursor = editor.getCursor();
+        const currentLine = editor.getLine(cursor.line);
+
+        // Find word boundaries around cursor
+        let start = cursor.ch;
+        let end = cursor.ch;
+
+        // Move start backward to word boundary
+        while (start > 0 && /\w/.test(currentLine[start - 1])) {
+          start--;
+        }
+
+        // Move end forward to word boundary
+        while (end < currentLine.length && /\w/.test(currentLine[end])) {
+          end++;
+        }
+
+        // Select the word
+        editor.setSelection(
+          { line: cursor.line, ch: start },
+          { line: cursor.line, ch: end },
+        );
+      },
+    });
+
+    this.addCommand({
+      id: 'select-sentence',
+      name: 'Select Sentence',
+      editorCallback: (editor) => {
+        const cursor = editor.getCursor();
+        const text = editor.getValue();
+        const offset = editor.posToOffset(cursor);
+
+        // Find sentence boundaries (. ! ?) followed by space or newline
+        let start = 0;
+        let end = text.length;
+
+        // Find start of sentence (after previous sentence ending or start of text)
+        for (let i = offset - 1; i >= 0; i--) {
+          if (
+            (text[i] === '.' || text[i] === '!' || text[i] === '?') &&
+            (i === text.length - 1 ||
+              text[i + 1] === ' ' ||
+              text[i + 1] === '\n')
+          ) {
+            start = i + 1;
+            // Skip whitespace after punctuation
+            while (
+              start < text.length &&
+              (text[start] === ' ' || text[start] === '\n')
+            ) {
+              start++;
+            }
+            break;
+          }
+        }
+
+        // Find end of sentence (next sentence ending)
+        for (let i = offset; i < text.length; i++) {
+          if (
+            (text[i] === '.' || text[i] === '!' || text[i] === '?') &&
+            (i === text.length - 1 ||
+              text[i + 1] === ' ' ||
+              text[i + 1] === '\n')
+          ) {
+            end = i + 1;
+            break;
+          }
+        }
+
+        // Convert offsets to positions
+        const startPos = editor.offsetToPos(start);
+        const endPos = editor.offsetToPos(end);
+
+        editor.setSelection(startPos, endPos);
+      },
+    });
+
+    this.addCommand({
+      id: 'select-line',
+      name: 'Select Whole Line',
+      editorCallback: (editor) => {
+        const cursor = editor.getCursor();
+        const currentLine = editor.getLine(cursor.line);
+
+        // Select entire line including newline
+        editor.setSelection(
+          { line: cursor.line, ch: 0 },
+          { line: cursor.line, ch: currentLine.length },
+        );
+      },
+    });
+
+    this.addCommand({
+      id: 'select-all',
+      name: 'Select All',
+      editorCallback: (editor) => {
+        const lastLine = editor.lastLine();
+        const lastLineText = editor.getLine(lastLine);
+
+        // Select from start to end of document
+        editor.setSelection(
+          { line: 0, ch: 0 },
+          { line: lastLine, ch: lastLineText.length },
+        );
+      },
+    });
+
     // if there is PureChutLLM plugin, and a recorder command, add a command to trigger it
 
     const hasAudioRecorder =

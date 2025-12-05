@@ -48,6 +48,9 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
        * Add swipe gesture to expand toolbar
        */
       addSwipeToExpandListener(toolbar: HTMLElement): void {
+        const SWIPE_THRESHOLD_PX = 30;
+        const SWIPE_THRESHOLD_MS = 300;
+
         let touchStartY = 0;
         let touchStartTime = 0;
 
@@ -61,8 +64,8 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
           const deltaY = touchStartY - touchY;
           const deltaTime = Date.now() - touchStartTime;
 
-          // If swiped up more than 30px within 300ms
-          if (deltaY > 30 && deltaTime < 300) {
+          // If swiped up more than threshold within time limit
+          if (deltaY > SWIPE_THRESHOLD_PX && deltaTime < SWIPE_THRESHOLD_MS) {
             // Toggle expanded state
             if (toolbar.classList.contains('is-expanded')) {
               toolbar.classList.remove('is-expanded');
@@ -176,6 +179,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
             return command.checkCallback(true);
           } catch (e) {
             // If checkCallback throws, assume unavailable
+            console.warn(`Command ${commandId} checkCallback error:`, e);
             return false;
           }
         }
@@ -195,6 +199,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
             }
             return false;
           } catch (e) {
+            console.warn(`Command ${commandId} editorCheckCallback error:`, e);
             return false;
           }
         }

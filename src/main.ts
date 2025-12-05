@@ -49,20 +49,8 @@ export default class MobilePlugin extends Plugin {
     });
 
     this.addCommand({
-      id: 'plus-press',
-      name: 'Plus press',
-      callback: () => this.triggerCMDEvent('fab-press'),
-    });
-
-    this.addCommand({
-      id: 'plus-longpress',
-      name: 'Plus long press',
-      callback: () => this.triggerCMDEvent('fab-longpress'),
-    });
-
-    this.addCommand({
-      id: 'mobile-settings',
-      name: 'Open settings',
+      id: 'settings',
+      name: 'Settings',
       icon: 'settings',
       callback: () => {
         new mySettingsModel(this.app, this).open();

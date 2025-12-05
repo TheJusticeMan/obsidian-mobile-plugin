@@ -3,18 +3,15 @@
     "parser": "@typescript-eslint/parser",
     "env": { "node": true },
     "plugins": [
-      "@typescript-eslint",
-      "obsidianmd"
+      "@typescript-eslint"
     ],
     "extends": [
       "eslint:recommended",
       "plugin:@typescript-eslint/eslint-recommended",
-      "plugin:@typescript-eslint/recommended",
-      "plugin:obsidianmd/recommended"
+      "plugin:@typescript-eslint/recommended"
     ], 
     "parserOptions": {
-        "sourceType": "module",
-        "project": "./tsconfig.json"
+        "sourceType": "module"
     },
     "rules": {
       "no-unused-vars": "off",
@@ -22,6 +19,7 @@
       "@typescript-eslint/ban-ts-comment": "off",
       "no-prototype-builtins": "off",
       "@typescript-eslint/no-empty-function": "off",
-      "no-console": ["error", { "allow": ["warn", "error", "debug"] }]
+      "no-console": ["error", { "allow": ["warn", "error", "debug"] }],
+      "@typescript-eslint/no-explicit-any": "error"
     } 
   }

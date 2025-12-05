@@ -26,7 +26,7 @@
  * ```typescript
  * // Basic usage: Search input handling
  * const handleSearch = throttleWithInterval((query: string) => {
- *   console.log(`Searching for: ${query}`);
+ *   console.debug(`Searching for: ${query}`);
  *   // API call would go here
  * }, 300);
  *
@@ -41,7 +41,7 @@
  *
  * // Example with multiple arguments
  * const logPosition = throttleWithInterval((x: number, y: number) => {
- *   console.log(`Position: (${x}, ${y})`);
+ *   console.debug(`Position: (${x}, ${y})`);
  * }, 100);
  *
  * logPosition(10, 20);  // Logs: "Position: (10, 20)" (immediate)
@@ -49,7 +49,7 @@
  *
  * // Cancel example: Stop scroll handling
  * const handleScroll = throttleWithInterval((scrollTop: number) => {
- *   console.log(`Scrolled to: ${scrollTop}px`);
+ *   console.debug(`Scrolled to: ${scrollTop}px`);
  * }, 50);
  *
  * window.addEventListener('scroll', (e) => {
@@ -61,7 +61,7 @@
  * // window.removeEventListener('scroll', handleScroll);
  *
  * // Edge case: Minimum delay validation
- * const invalidThrottle = throttleWithInterval(() => console.log('test'), 0);
+ * const invalidThrottle = throttleWithInterval(() => console.debug('test'), 0);
  * // Throws: RangeError: Delay must be at least 1 millisecond
  * ```
  */
@@ -146,7 +146,7 @@ export async function testThrottleWithInterval() {
 
   // --- Test Case ---
 
-  console.log('--- Starting throttleWithInterval Refined Test ---');
+  console.debug('--- Starting throttleWithInterval Refined Test ---');
 
   // Reset captured data for this test
   capturedThrottledCalls = [];
@@ -163,57 +163,57 @@ export async function testThrottleWithInterval() {
   // --- Test Sequence ---
 
   // 1. First call: Should execute immediately
-  console.log("Calling with ('Initial', 1)");
+  console.debug("Calling with ('Initial', 1)");
   throttledLogger('Initial', 1);
 
   await simulateTime(50); // Wait a short duration, less than the delay
 
   // 2. Second call: Should queue arguments
-  console.log("Calling with ('Update 1', 2)");
+  console.debug("Calling with ('Update 1', 2)");
   throttledLogger('Update 1', 2);
 
   // 3. Third call: Should overwrite queued arguments
-  console.log("Calling with ('Latest Update', 3)");
+  console.debug("Calling with ('Latest Update', 3)");
   throttledLogger('Latest Update', 3);
 
-  console.log('Waiting for interval tick...');
+  console.debug('Waiting for interval tick...');
   await simulateTime(200); // Wait for the first interval tick. Should execute 'Latest Update', 3.
 
-  console.log('Waiting for another interval tick (no calls made)...');
+  console.debug('Waiting for another interval tick (no calls made)...');
   await simulateTime(200); // Interval should auto-clear.
 
   // 4. Call after auto-clear: Should execute immediately again
-  console.log('Attempting call after interval should have cleared:');
-  console.log("Calling with ('After Clear', 4)");
+  console.debug('Attempting call after interval should have cleared:');
+  console.debug("Calling with ('After Clear', 4)");
   throttledLogger('After Clear', 4);
 
   await simulateTime(50); // Short wait
 
   // 5. Another queued call
-  console.log("Calling with ('Another Update', 5)");
+  console.debug("Calling with ('Another Update', 5)");
   throttledLogger('Another Update', 5);
 
-  console.log('Waiting for interval tick...');
+  console.debug('Waiting for interval tick...');
   await simulateTime(200); // Interval tick, executes 'Another Update', 5
 
-  console.log('Cancelling any pending operations...');
+  console.debug('Cancelling any pending operations...');
   throttledLogger.cancel(); // Explicitly cancel
 
   await simulateTime(50); // Wait a bit
 
   // 6. Call after explicit cancel: Should execute immediately
-  console.log("Calling with ('After Cancel', 6)");
+  console.debug("Calling with ('After Cancel', 6)");
   throttledLogger('After Cancel', 6);
 
   // Small delay to ensure the immediate call is processed before we check
   await simulateTime(50);
 
-  console.log('\n--- Test Complete ---');
+  console.debug('\n--- Test Complete ---');
 
   // --- Verification ---
-  console.log('\n--- Captured Throttled Calls ---');
+  console.debug('\n--- Captured Throttled Calls ---');
   capturedThrottledCalls.forEach((call) =>
-    console.log(`Message: "${call.message}", Count: ${call.count}`),
+    console.debug(`Message: "${call.message}", Count: ${call.count}`),
   );
 
   const expectedCalls = [
@@ -224,7 +224,7 @@ export async function testThrottleWithInterval() {
     { message: 'After Cancel', count: 6 }, // Immediate call after explicit cancel
   ];
 
-  console.log('\n--- Verification Result ---');
+  console.debug('\n--- Verification Result ---');
   if (
     capturedThrottledCalls.length === expectedCalls.length &&
     capturedThrottledCalls.every(
@@ -233,7 +233,7 @@ export async function testThrottleWithInterval() {
         call.count === expectedCalls[index].count,
     )
   ) {
-    console.log(
+    console.debug(
       '✅ Test passed: Captured throttled calls match expected behavior.',
     );
   } else {
@@ -243,8 +243,8 @@ export async function testThrottleWithInterval() {
   }
 
   // Optionally, you could also verify capturedLogMessages if needed for debugging the test itself.
-  // console.log("\n--- All Captured Log Messages (for debugging test) ---");
-  // capturedLogMessages.forEach(line => console.log(line));
+  // console.debug("\n--- All Captured Log Messages (for debugging test) ---");
+  // capturedLogMessages.forEach(line => console.debug(line));
 }
 
 // Run the refined test

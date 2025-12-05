@@ -129,7 +129,6 @@ export default class MobilePlugin extends Plugin {
       id: 'select-plus-bottom',
       name: 'Expand down',
       editorCallback: (editor) => {
-        const selection = editor.getSelection();
         const cursor = editor.getCursor('to');
         const currentLine = editor.getLine(cursor.line);
 
@@ -489,7 +488,6 @@ export default class MobilePlugin extends Plugin {
         }
 
         // Check if current selection is a sentence or less than a line
-        const isSingleLine = from.line === to.line;
         const currentLine = editor.getLine(from.line);
         const isFullLine =
           from.ch === 0 &&

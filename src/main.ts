@@ -74,6 +74,7 @@ export default class MobilePlugin extends Plugin {
     this.addCommand({
       id: 'cursor-up',
       name: 'Up',
+      icon: 'arrow-up',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
         if (cursor.line > 0) {
@@ -85,6 +86,7 @@ export default class MobilePlugin extends Plugin {
     this.addCommand({
       id: 'cursor-down',
       name: 'Down',
+      icon: 'arrow-down',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
         const lastLine = editor.lastLine();
@@ -97,6 +99,7 @@ export default class MobilePlugin extends Plugin {
     this.addCommand({
       id: 'cursor-left',
       name: 'Left',
+      icon: 'arrow-left',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
         if (cursor.ch > 0) {
@@ -112,6 +115,7 @@ export default class MobilePlugin extends Plugin {
     this.addCommand({
       id: 'cursor-right',
       name: 'Right',
+      icon: 'arrow-right',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
         const currentLine = editor.getLine(cursor.line);
@@ -128,6 +132,7 @@ export default class MobilePlugin extends Plugin {
     this.addCommand({
       id: 'select-plus-bottom',
       name: 'Expand down',
+      icon: 'chevrons-down',
       editorCallback: (editor) => {
         const cursor = editor.getCursor('to');
         const currentLine = editor.getLine(cursor.line);
@@ -159,6 +164,7 @@ export default class MobilePlugin extends Plugin {
     this.addCommand({
       id: 'select-plus-top',
       name: 'Expand up',
+      icon: 'chevrons-up',
       editorCallback: (editor) => {
         const cursor = editor.getCursor('from');
         const currentLine = editor.getLine(cursor.line);
@@ -194,6 +200,7 @@ export default class MobilePlugin extends Plugin {
     this.addCommand({
       id: 'select-minus-bottom',
       name: 'Shrink down',
+      icon: 'chevron-down',
       editorCallback: (editor) => {
         const from = editor.getCursor('from');
         const to = editor.getCursor('to');
@@ -227,6 +234,7 @@ export default class MobilePlugin extends Plugin {
     this.addCommand({
       id: 'select-minus-top',
       name: 'Shrink up',
+      icon: 'chevron-up',
       editorCallback: (editor) => {
         const from = editor.getCursor('from');
         const to = editor.getCursor('to');
@@ -261,6 +269,7 @@ export default class MobilePlugin extends Plugin {
     this.addCommand({
       id: 'select-word',
       name: 'Select word',
+      icon: 'text-cursor',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
         const currentLine = editor.getLine(cursor.line);
@@ -305,6 +314,7 @@ export default class MobilePlugin extends Plugin {
     this.addCommand({
       id: 'select-sentence',
       name: 'Select sentence',
+      icon: 'type',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
         const text = editor.getValue();
@@ -356,6 +366,7 @@ export default class MobilePlugin extends Plugin {
     this.addCommand({
       id: 'select-line',
       name: 'Select line',
+      icon: 'minus',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
         const lastLine = editor.lastLine();
@@ -380,6 +391,7 @@ export default class MobilePlugin extends Plugin {
     this.addCommand({
       id: 'select-all',
       name: 'Select all',
+      icon: 'file-text',
       editorCallback: (editor) => {
         const lastLine = editor.lastLine();
         const lastLineText = editor.getLine(lastLine);
@@ -396,6 +408,7 @@ export default class MobilePlugin extends Plugin {
     this.addCommand({
       id: 'select-more',
       name: 'Select more',
+      icon: 'maximize-2',
       editorCallback: (editor) => {
         const from = editor.getCursor('from');
         const to = editor.getCursor('to');

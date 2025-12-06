@@ -48,6 +48,9 @@ export class MobileSearchLeaf extends ItemView {
   /** Timestamp of the last search input focus */
   private lastFocusTime = 0;
 
+  /** Flag to track if the view is currently visible/focused */
+  private isViewActive = false;
+
   constructor(leaf: WorkspaceLeaf) {
     super(leaf);
   }
@@ -91,6 +94,9 @@ export class MobileSearchLeaf extends ItemView {
     // Set up IntersectionObserver for smart focus
     this.setupIntersectionObserver();
 
+    // Set up file change listener
+    this.setupFileChangeListener();
+
     // Show initial results (all files) when pane opens
     await this.performSearch();
   }
@@ -120,6 +126,17 @@ export class MobileSearchLeaf extends ItemView {
     this.searchInput.inputEl.addEventListener('focus', () => {
       this.lastFocusTime = Date.now();
       this.resultsContainer.scrollTop = 0;
+      this.isViewActive = true;
+    });
+
+    // Track when input loses focus
+    this.searchInput.inputEl.addEventListener('blur', () => {
+      // Check if view is still visible after a short delay
+      setTimeout(() => {
+        if (!this.isViewVisible()) {
+          this.isViewActive = false;
+        }
+      }, 100);
     });
 
     // Debounced search on input
@@ -155,7 +172,11 @@ export class MobileSearchLeaf extends ItemView {
         for (const entry of entries) {
           if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
             // View is now visible, focus the input
+            this.isViewActive = true;
             this.focusSearchInput();
+          } else if (!entry.isIntersecting) {
+            // View is no longer visible
+            this.isViewActive = false;
           }
         }
       },
@@ -165,6 +186,55 @@ export class MobileSearchLeaf extends ItemView {
     );
 
     this.intersectionObserver.observe(this.contentEl);
+  }
+
+  /**
+   * Sets up file change listeners to update the list when files are created, deleted, or renamed.
+   * Only updates if the view is currently open/focused.
+   */
+  private setupFileChangeListener(): void {
+    // Listen for file creation
+    this.registerEvent(
+      this.app.vault.on('create', (file) => {
+        if (file instanceof TFile && this.shouldUpdateOnFileChange()) {
+          void this.performSearch();
+        }
+      }),
+    );
+
+    // Listen for file deletion
+    this.registerEvent(
+      this.app.vault.on('delete', (file) => {
+        if (file instanceof TFile && this.shouldUpdateOnFileChange()) {
+          void this.performSearch();
+        }
+      }),
+    );
+
+    // Listen for file rename
+    this.registerEvent(
+      this.app.vault.on('rename', (file) => {
+        if (file instanceof TFile && this.shouldUpdateOnFileChange()) {
+          void this.performSearch();
+        }
+      }),
+    );
+
+    // Listen for file modification (updates mtime for sorting)
+    this.registerEvent(
+      this.app.vault.on('modify', (file) => {
+        if (file instanceof TFile && this.shouldUpdateOnFileChange()) {
+          void this.performSearch();
+        }
+      }),
+    );
+  }
+
+  /**
+   * Determines if the file list should be updated based on view visibility.
+   */
+  private shouldUpdateOnFileChange(): boolean {
+    return this.isViewActive || this.isViewVisible();
   }
 
   /**

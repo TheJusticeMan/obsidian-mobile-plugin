@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Planned
+
+- Better integration with other plugins.
+- Ask me for a feature to make it easyer to capture on the go
+
+## [1.0.9] - 2025-12-06
+
 ### Added
 
 #### Editor Navigation Commands
@@ -70,6 +77,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Toolbar now properly respects command availability context
 - All command names follow sentence case convention (first word capitalized only)
 - ESLint configuration enhanced with `@typescript-eslint/no-explicit-any` enforcement
+- npm install peer dependency conflicts resolved
+  - Unified @typescript-eslint packages to version 5.62.0
+  - Removed conflicting package versions
 
 ### Code Quality
 
@@ -78,11 +88,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Installed and configured `eslint-plugin-obsidianmd` for Obsidian-specific linting
 - All commands now include appropriate Lucide icons for better UX
 - Extracted magic numbers as named constants for maintainability
-
-### Planned
-
-- Better integration with other plugins.
-- Ask me for a feature to make it easyer to capture on the go
 
 ## [1.0.8] - 2025-11-28
 

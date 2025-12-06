@@ -49,6 +49,9 @@ Dynamic toolbars that adapt based on your cursor position and selection:
 - **Icon support**: Use Lucide icons with custom override capability.
 - **Horizontal scrolling**: Scrolls when too many buttons to fit.
 - **Editor focus preservation**: Keyboard stays open when using toolbar buttons.
+- **Contextual command availability**: Toolbar buttons automatically hide when commands are unavailable based on current context.
+- **Smart layout**: Toolbar positioned to prevent overlap with the FAB (86px right padding).
+- **Swipe-to-expand**: Swipe up on the toolbar to expand and show multiple rows of commands.
 
 ### Tablet Mode
 
@@ -66,6 +69,7 @@ A dedicated search view optimized for mobile devices:
 - **File context menu**: Long-press/right-click on a result card for quick actions (open in new tab, open to the right, delete, copy file path).
 - **Smart keyboard handling**: Automatically dismisses the keyboard when scrolling results.
 - **Auto-focus**: Automatically focuses the search input when the sidebar opens.
+- **Performance optimizations**: File list updates only when drawer is open or focused, with smart file system event listeners (create, delete, rename, modify) to reduce battery usage.
 
 ## Installation
 
@@ -113,6 +117,8 @@ Bind toolbars to editing contexts:
 
 ## Commands
 
+### General Commands
+
 | Command                       | Description                                        |
 | :---------------------------- | :------------------------------------------------- |
 | `Toggle wake lock`            | Keeps the screen awake while editing               |
@@ -121,6 +127,56 @@ Bind toolbars to editing contexts:
 | `Plus long press`             | Executes the command configured for FAB long press |
 | `Open mobile plugin settings` | Opens the settings modal for this plugin           |
 | `Open Mobile Search`          | Opens the mobile-optimized search view             |
+
+### Editor Navigation Commands
+
+Precise cursor movement commands for mobile editing:
+
+| Command | Icon | Description |
+| :------ | :--- | :---------- |
+| `Up` | arrow-up | Move cursor up one line |
+| `Down` | arrow-down | Move cursor down one line |
+| `Left` | arrow-left | Move cursor left one character with line wrapping |
+| `Right` | arrow-right | Move cursor right one character with line wrapping |
+
+### Selection Commands
+
+#### Selection Expand
+
+Expand your selection to word boundaries:
+
+| Command | Icon | Description |
+| :------ | :--- | :---------- |
+| `Expand down` | chevrons-down | Extend selection to next word boundary or line end |
+| `Expand up` | chevrons-up | Extend selection backward to previous word boundary |
+
+#### Selection Contract
+
+Shrink your selection:
+
+| Command | Icon | Description |
+| :------ | :--- | :---------- |
+| `Shrink down` | chevron-down | Deselect text from the end |
+| `Shrink up` | chevron-up | Deselect text from the start |
+
+#### Smart Selection
+
+Intelligent text selection commands:
+
+| Command | Icon | Description |
+| :------ | :--- | :---------- |
+| `Select word` | text-cursor | Select word at cursor (finds next word if on whitespace) |
+| `Select sentence` | type | Select sentence at cursor (bounded by `.!?`) |
+| `Select line` | minus | Select entire line including newline |
+| `Select all` | file-text | Select entire document |
+
+#### Progressive Selection
+
+Single command for incremental selection expansion:
+
+| Command | Icon | Description |
+| :------ | :--- | :---------- |
+| `Select more` | maximize-2 | Progressively expands selection: nothing → word → sentence → line → all |
 
 ## Development
 

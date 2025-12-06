@@ -6,7 +6,12 @@ import {
   ViewPlugin,
   ViewUpdate,
 } from '@codemirror/view';
-import { App, ButtonComponent, ExtraButtonComponent } from 'obsidian';
+import {
+  App,
+  ButtonComponent,
+  ExtraButtonComponent,
+  MarkdownView,
+} from 'obsidian';
 import MobilePlugin from './main';
 import { ContextType, ToolbarConfig, ToolbarEditor } from './settings';
 
@@ -37,6 +42,45 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         if (this.plugin.settings.enableHapticFeedback && navigator.vibrate) {
           navigator.vibrate(duration);
         }
+      }
+
+      /**
+       * Add swipe gesture to expand toolbar
+       */
+      addSwipeToExpandListener(toolbar: HTMLElement): void {
+        const SWIPE_THRESHOLD_PX = 30;
+        const SWIPE_THRESHOLD_MS = 300;
+
+        let touchStartY = 0;
+        let touchStartTime = 0;
+
+        toolbar.addEventListener('touchstart', (e) => {
+          touchStartY = e.touches[0].clientY;
+          touchStartTime = Date.now();
+        });
+
+        toolbar.addEventListener('touchmove', (e) => {
+          const touchY = e.touches[0].clientY;
+          const deltaY = touchStartY - touchY;
+          const deltaTime = Date.now() - touchStartTime;
+
+          // If swiped up more than threshold within time limit
+          if (deltaY > SWIPE_THRESHOLD_PX && deltaTime < SWIPE_THRESHOLD_MS) {
+            // Prevent default scrolling behavior when expanding toolbar
+            e.preventDefault();
+
+            // Toggle expanded state
+            if (toolbar.classList.contains('is-expanded')) {
+              toolbar.classList.remove('is-expanded');
+            } else {
+              toolbar.classList.add('is-expanded');
+              this.hapticFeedback(15);
+            }
+            // Reset touch tracking
+            touchStartY = touchY;
+            touchStartTime = Date.now();
+          }
+        });
       }
 
       update(update: ViewUpdate) {
@@ -119,6 +163,52 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
           name: 'Combined toolbar',
           commands: combinedCommands,
         };
+      }
+
+      /**
+       * Check if a command is available in the current context
+       */
+      isCommandAvailable(commandId: string, view: EditorView): boolean {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
+        const command = (this.app as any).commands?.findCommand(commandId);
+
+        if (!command) {
+          return false;
+        }
+
+        // If the command has a checkCallback, run it to determine availability
+        if (command.checkCallback) {
+          try {
+            return command.checkCallback(true);
+          } catch (e) {
+            // If checkCallback throws, assume unavailable
+            console.warn(`Command ${commandId} checkCallback error:`, e);
+            return false;
+          }
+        }
+
+        // If the command has an editorCheckCallback, we need to check with editor context
+        if (command.editorCheckCallback) {
+          try {
+            // Get the active MarkdownView to access the editor
+            const activeView =
+              this.app.workspace.getActiveViewOfType(MarkdownView);
+            if (activeView && activeView.editor) {
+              return command.editorCheckCallback(
+                true,
+                activeView.editor,
+                activeView,
+              );
+            }
+            return false;
+          } catch (e) {
+            console.warn(`Command ${commandId} editorCheckCallback error:`, e);
+            return false;
+          }
+        }
+
+        // If no callback exists, assume the command is available
+        return true;
       }
 
       getMatchingContexts(view: EditorView, pos: number): Set<ContextType> {
@@ -215,16 +305,25 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
           view.dom.closest('.workspace-leaf-content') || view.dom
         ).createDiv({ cls: 'mobile-plugin-toolbar' });
 
+        // Add swipe-to-expand functionality
+        this.addSwipeToExpandListener(this.tooltip);
+
         // Get all available commands
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
         const commands = (this.app as any).commands?.commands || {};
 
-        // Add command buttons
+        // Add command buttons (only show available commands)
         activeToolbar.commands.forEach((commandId) => {
           const command = commands[commandId];
           const iconToUse =
             this.plugin.settings.commandIcons[commandId] || command.icon;
-          if (command && this.tooltip) {
+
+          // Check if command is available in current context
+          if (
+            command &&
+            this.tooltip &&
+            this.isCommandAvailable(commandId, view)
+          ) {
             if (this.plugin.settings.useIcons && iconToUse) {
               new ExtraButtonComponent(this.tooltip)
                 .setIcon(iconToUse)

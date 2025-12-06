@@ -7,6 +7,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### Editor Navigation Commands
+
+- **Cursor Navigation**: 4 new commands for precise cursor movement
+  - `Up` - Move cursor up one line (icon: arrow-up)
+  - `Down` - Move cursor down one line (icon: arrow-down)
+  - `Left` - Move cursor left one character with line wrapping (icon: arrow-left)
+  - `Right` - Move cursor right one character with line wrapping (icon: arrow-right)
+
+#### Selection Commands
+
+- **Selection Expand**: 2 commands to expand selection to word boundaries
+  - `Expand down` - Extend selection to next word boundary or line end (icon: chevrons-down)
+  - `Expand up` - Extend selection backward to previous word boundary (icon: chevrons-up)
+
+- **Selection Contract**: 2 commands to shrink selection
+  - `Shrink down` - Deselect text from end (icon: chevron-down)
+  - `Shrink up` - Deselect text from start (icon: chevron-up)
+
+- **Smart Selection**: 4 commands for intelligent text selection
+  - `Select word` - Select word at cursor, finds next word if on whitespace (icon: text-cursor)
+  - `Select sentence` - Select sentence at cursor, bounded by `.!?` (icon: type)
+  - `Select line` - Select entire line including newline (icon: minus)
+  - `Select all` - Select entire document (icon: file-text)
+
+- **Progressive Selection**: Single command for expanding selection incrementally
+  - `Select more` - Progressively expands: nothing → word → sentence → line → all (icon: maximize-2)
+
+### Changed
+
+#### Toolbar Improvements
+
+- **Contextual Command Availability**: Toolbar buttons now hide when commands are unavailable
+  - Added `isCommandAvailable()` function that evaluates `checkCallback` and `editorCheckCallback`
+  - Improved UX by showing only relevant commands based on current context
+  - Added error logging for debugging command availability issues
+
+- **Toolbar Layout Fix**: Resolved FAB overlap issue
+  - Set toolbar `right: 86px` and `max-width: calc(100% - 96px)`
+  - Prevents toolbar buttons from being hidden behind the FAB
+
+- **Swipe-to-Expand**: New gesture support for toolbar expansion
+  - Added touchmove listener with configurable thresholds (30px distance, 300ms time)
+  - Swipe up on toolbar to expand and show multiple rows
+  - Adds `.is-expanded` class with flex-wrap for multi-row display
+  - Prevents default scrolling behavior during gesture
+  - Includes haptic feedback on expansion
+
+#### Mobile Search Optimization
+
+- **Performance Improvements**: File list updates only when drawer is open or focused
+  - Added file system event listeners (create, delete, rename, modify)
+  - Smart update logic prevents unnecessary updates when view is hidden
+  - View state tracking via IntersectionObserver (>50% visibility threshold)
+  - Focus/blur events track when search input is active
+  - Reduces battery usage and CPU overhead on mobile devices
+
+### Fixed
+
+- Toolbar now properly respects command availability context
+- All command names follow sentence case convention (first word capitalized only)
+- ESLint configuration enhanced with `@typescript-eslint/no-explicit-any` enforcement
+
+### Code Quality
+
+- Removed all `console.log()` statements, replaced with `console.debug()`
+- Removed unused variables (`selection`, `isSingleLine`)
+- Installed and configured `eslint-plugin-obsidianmd` for Obsidian-specific linting
+- All commands now include appropriate Lucide icons for better UX
+- Extracted magic numbers as named constants for maintainability
+
 ### Planned
 
 - Better integration with other plugins.

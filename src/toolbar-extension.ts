@@ -49,23 +49,21 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
        */
       addSwipeToExpandListener(toolbar: HTMLElement): void {
         const SWIPE_THRESHOLD_PX = 30;
-        const SWIPE_THRESHOLD_MS = 300;
 
         let touchStartY = 0;
-        let touchStartTime = 0;
+        let hasToggled = false;
 
         toolbar.addEventListener('touchstart', (e) => {
           touchStartY = e.touches[0].clientY;
-          touchStartTime = Date.now();
+          hasToggled = false;
         });
 
         toolbar.addEventListener('touchmove', (e) => {
           const touchY = e.touches[0].clientY;
           const deltaY = touchStartY - touchY;
-          const deltaTime = Date.now() - touchStartTime;
 
-          // If swiped up more than threshold within time limit
-          if (deltaY > SWIPE_THRESHOLD_PX && deltaTime < SWIPE_THRESHOLD_MS) {
+          // If swiped up more than threshold and haven't toggled yet
+          if (deltaY > SWIPE_THRESHOLD_PX && !hasToggled) {
             // Prevent default scrolling behavior when expanding toolbar
             e.preventDefault();
 
@@ -76,9 +74,8 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
               toolbar.classList.add('is-expanded');
               this.hapticFeedback(15);
             }
-            // Reset touch tracking
-            touchStartY = touchY;
-            touchStartTime = Date.now();
+            // Mark that we've toggled to prevent multiple toggles in same gesture
+            hasToggled = true;
           }
         });
       }

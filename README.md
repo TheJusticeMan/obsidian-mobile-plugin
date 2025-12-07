@@ -50,8 +50,8 @@ Dynamic toolbars that adapt based on your cursor position and selection:
 - **Horizontal scrolling**: Scrolls when too many buttons to fit.
 - **Editor focus preservation**: Keyboard stays open when using toolbar buttons.
 - **Contextual command availability**: Toolbar buttons automatically hide when commands are unavailable based on current context.
-- **Smart layout**: Toolbar positioned to prevent overlap with the FAB (86px right padding).
-- **Swipe-to-expand**: Swipe up on the toolbar to expand and show multiple rows of commands.
+- **Smart layout**: Toolbar automatically expands to full width when FAB is hidden, otherwise maintains 86px right padding to prevent overlap.
+- **Swipe-to-expand**: Smooth gesture to expand toolbar and show multiple rows of commands (swipe up 30px).
 
 ### Tablet Mode
 
@@ -70,6 +70,7 @@ A dedicated search view optimized for mobile devices:
 - **Smart keyboard handling**: Automatically dismisses the keyboard when scrolling results.
 - **Auto-focus**: Automatically focuses the search input when the sidebar opens.
 - **Performance optimizations**: File list updates only when drawer is open or focused, with smart file system event listeners (create, delete, rename, modify) to reduce battery usage.
+- **Reliable results**: Race condition fixed to prevent empty search results on initial open or when reopening with text.
 
 ## Installation
 

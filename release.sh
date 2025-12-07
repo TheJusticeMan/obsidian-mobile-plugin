@@ -14,11 +14,8 @@ echo "Staging all modified files..."
 git add .
 
 if ! git diff --cached --quiet; then
-	echo "Please enter a commit message:"
-	read commit_message
-
 	echo "Committing your changes..."
-	git commit -m "Release $version" -m "$commit_message"
+	git commit -m "Release $version"
 else
 	echo "No changes to commit."
 fi

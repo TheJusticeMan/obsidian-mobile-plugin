@@ -45,6 +45,9 @@ export class MobileSearchLeaf extends ItemView {
   /** Flag to prevent multiple concurrent loadMore operations */
   private isLoadingMore = false;
 
+  /** Flag to prevent multiple concurrent performSearch operations */
+  private isSearching = false;
+
   /** Timestamp of the last search input focus */
   private lastFocusTime = 0;
 
@@ -288,41 +291,53 @@ export class MobileSearchLeaf extends ItemView {
 
   /**
    * Performs the search and renders results.
+   * Prevents concurrent executions to avoid race conditions.
    */
   private async performSearch(): Promise<void> {
-    const query = this.searchInput.inputEl.value.trim().toLowerCase();
-
-    // Clear previous results
-    this.resultsContainer.empty();
-    this.cleanupResultComponents();
-    this.renderedResultsCount = 0;
-
-    // Get all markdown files sorted by modification time
-    const files = this.app.vault
-      .getMarkdownFiles()
-      .sort((a, b) => b.stat.mtime - a.stat.mtime);
-
-    // Filter files by query (match filename or path), or show all if no query
-    if (query) {
-      this.currentMatchingFiles = files.filter((file) => {
-        const filename = file.basename.toLowerCase();
-        const path = file.path.toLowerCase();
-        return filename.includes(query) || path.includes(query);
-      });
-    } else {
-      // Show all files when no query
-      this.currentMatchingFiles = files;
+    // Prevent concurrent search operations
+    if (this.isSearching) {
+      return;
     }
 
-    // Render initial batch of results
-    await this.renderNextBatch();
+    this.isSearching = true;
 
-    // Show message if no results
-    if (this.currentMatchingFiles.length === 0) {
-      this.resultsContainer.createDiv({
-        cls: 'mobile-search-no-results',
-        text: 'No files found',
-      });
+    try {
+      const query = this.searchInput.inputEl.value.trim().toLowerCase();
+
+      // Clear previous results
+      this.resultsContainer.empty();
+      this.cleanupResultComponents();
+      this.renderedResultsCount = 0;
+
+      // Get all markdown files sorted by modification time
+      const files = this.app.vault
+        .getMarkdownFiles()
+        .sort((a, b) => b.stat.mtime - a.stat.mtime);
+
+      // Filter files by query (match filename or path), or show all if no query
+      if (query) {
+        this.currentMatchingFiles = files.filter((file) => {
+          const filename = file.basename.toLowerCase();
+          const path = file.path.toLowerCase();
+          return filename.includes(query) || path.includes(query);
+        });
+      } else {
+        // Show all files when no query
+        this.currentMatchingFiles = files;
+      }
+
+      // Render initial batch of results
+      await this.renderNextBatch();
+
+      // Show message if no results
+      if (this.currentMatchingFiles.length === 0) {
+        this.resultsContainer.createDiv({
+          cls: 'mobile-search-no-results',
+          text: 'No files found',
+        });
+      }
+    } finally {
+      this.isSearching = false;
     }
   }
 

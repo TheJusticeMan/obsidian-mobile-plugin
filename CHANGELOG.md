@@ -12,6 +12,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better integration with other plugins.
 - Ask me for a feature to make it easyer to capture on the go
 
+## [1.0.10] - 2025-12-07
+
+### Fixed
+
+- **Mobile Search Race Condition**: Fixed issue where search view would randomly appear empty on first open or when reopening with existing text
+  - Added `isSearching` guard flag to prevent concurrent `performSearch()` executions
+  - Multiple code paths (onOpen, IntersectionObserver, onResize) were triggering simultaneous searches
+  - Results container was being cleared by competing async operations
+  - Used try-finally block to ensure flag is always reset
+
+- **Toolbar Expand Gesture Flickering**: Fixed flickering behavior when swiping to expand toolbar
+  - Removed 300ms time constraint (`SWIPE_THRESHOLD_MS`) that was causing multiple toggles
+  - Added `hasToggled` flag to ensure toolbar only toggles once per swipe gesture
+  - Gesture now responds immediately when 30px swipe threshold is met
+
+### Changed
+
+- **Toolbar Layout Enhancement**: Toolbar now expands to full width when FAB is hidden
+  - Uses CSS `:has()` pseudo-class to detect FAB presence
+  - Toolbar automatically adjusts from `right: 86px` to `right: 10px` when FAB is disabled
+  - Added smooth transitions for better UX
+
 ## [1.0.9] - 2025-12-06
 
 ### Added

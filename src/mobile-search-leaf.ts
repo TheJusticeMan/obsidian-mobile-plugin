@@ -54,6 +54,18 @@ export class MobileSearchLeaf extends ItemView {
   /** Flag to track if the view is currently visible/focused */
   private isViewActive = false;
 
+  /** Selection mode state */
+  private isSelectionMode = false;
+
+  /** Set of selected file paths */
+  private selectedFiles: Set<string> = new Set();
+
+  /** Selection command bar container */
+  private selectionCommandBar: HTMLDivElement | null = null;
+
+  /** Map of card elements to file paths for quick lookup */
+  private cardElementMap: Map<HTMLElement, TFile> = new Map();
+
   constructor(leaf: WorkspaceLeaf) {
     super(leaf);
   }
@@ -85,6 +97,13 @@ export class MobileSearchLeaf extends ItemView {
     this.searchInput = new SearchComponent(searchContainer).setPlaceholder(
       'Search files...',
     );
+
+    // Create selection command bar (hidden by default)
+    this.selectionCommandBar = container.createDiv({
+      cls: 'mobile-search-selection-bar',
+    });
+    this.selectionCommandBar.style.display = 'none';
+    this.setupSelectionCommandBar();
 
     // Create scrollable results container
     this.resultsContainer = container.createDiv({
@@ -307,6 +326,7 @@ export class MobileSearchLeaf extends ItemView {
       // Clear previous results
       this.resultsContainer.empty();
       this.cleanupResultComponents();
+      this.cardElementMap.clear();
       this.renderedResultsCount = 0;
 
       // Get all markdown files sorted by modification time
@@ -431,6 +451,9 @@ export class MobileSearchLeaf extends ItemView {
       cls: 'mobile-search-result-card',
     });
 
+    // Store card-file mapping for selection updates
+    this.cardElementMap.set(card, file);
+
     // Filename header
     card.createDiv({
       cls: 'mobile-search-result-filename',
@@ -482,15 +505,93 @@ export class MobileSearchLeaf extends ItemView {
       text: this.formatDate(file.stat.mtime),
     });
 
-    // Click handler to open the file
-    card.addEventListener('click', () => {
-      void this.app.workspace.openLinkText(file.path, '', false);
+    // Add swipe detection for entering selection mode
+    this.setupCardSwipeDetection(card, file);
+
+    // Click handler - either toggle selection or open file
+    card.addEventListener('click', (event) => {
+      if (this.isSelectionMode) {
+        event.preventDefault();
+        this.toggleFileSelection(file, card);
+      } else {
+        void this.app.workspace.openLinkText(file.path, '', false);
+      }
     });
 
     // Context menu handler (right-click / long-press)
     card.addEventListener('contextmenu', (event) => {
       event.preventDefault();
-      this.showFileContextMenu(file, event);
+      if (this.isSelectionMode && this.selectedFiles.has(file.path)) {
+        // In selection mode with selected card, show multiple files menu
+        this.showMultipleFilesMenu(event);
+      } else {
+        // Show regular file context menu
+        this.showFileContextMenu(file, event);
+      }
+    });
+  }
+
+  /**
+   * Sets up swipe detection on a card to enter selection mode.
+   */
+  private setupCardSwipeDetection(card: HTMLElement, file: TFile): void {
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    let isSwiping = false;
+
+    card.addEventListener('touchstart', (e: TouchEvent) => {
+      if (this.isSelectionMode) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchStartTime = Date.now();
+      isSwiping = false;
+    });
+
+    card.addEventListener('touchmove', (e: TouchEvent) => {
+      if (this.isSelectionMode) return;
+      const touchX = e.touches[0].clientX;
+      const touchY = e.touches[0].clientY;
+      const deltaX = touchX - touchStartX;
+      const deltaY = touchY - touchStartY;
+
+      // Check if this is a horizontal swipe (not vertical scroll)
+      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 20) {
+        isSwiping = true;
+        e.preventDefault();
+
+        // Visual feedback for swipe
+        if (deltaX > 0) {
+          // Swipe right
+          card.style.transform = `translateX(${Math.min(deltaX, 80)}px)`;
+          card.style.transition = 'none';
+        }
+      }
+    });
+
+    card.addEventListener('touchend', (e: TouchEvent) => {
+      if (this.isSelectionMode) return;
+
+      const touchEndX = e.changedTouches[0].clientX;
+      const deltaX = touchEndX - touchStartX;
+      const swipeTime = Date.now() - touchStartTime;
+
+      // Reset transform with animation
+      card.style.transition = 'transform 0.3s ease';
+      card.style.transform = '';
+
+      // Enter selection mode if swipe right threshold met
+      if (isSwiping && deltaX > 50 && swipeTime < 500) {
+        e.preventDefault();
+        this.enterSelectionMode();
+        this.toggleFileSelection(file, card);
+      }
+    });
+
+    card.addEventListener('touchcancel', () => {
+      // Reset transform
+      card.style.transition = 'transform 0.3s ease';
+      card.style.transform = '';
     });
   }
 
@@ -570,6 +671,189 @@ export class MobileSearchLeaf extends ItemView {
       );
 
     // Trigger file-menu event so other plugins can add their items
+
+    menu.showAtMouseEvent(event);
+  }
+
+  /**
+   * Sets up the selection command bar with action buttons.
+   */
+  private setupSelectionCommandBar(): void {
+    if (!this.selectionCommandBar) return;
+
+    this.selectionCommandBar.empty();
+
+    // Cancel button
+    const cancelBtn = this.selectionCommandBar.createEl('button', {
+      cls: 'mobile-search-selection-btn',
+      text: 'Cancel',
+    });
+    cancelBtn.addEventListener('click', () => this.exitSelectionMode());
+
+    // Select all button
+    const selectAllBtn = this.selectionCommandBar.createEl('button', {
+      cls: 'mobile-search-selection-btn',
+      text: 'Select All',
+    });
+    selectAllBtn.addEventListener('click', () => this.selectAllFiles());
+
+    // Selection count
+    const countLabel = this.selectionCommandBar.createSpan({
+      cls: 'mobile-search-selection-count',
+      text: '0 selected',
+    });
+    countLabel.setAttribute('data-selection-count', '0');
+
+    // Three-dot menu button
+    const menuBtn = this.selectionCommandBar.createEl('button', {
+      cls: 'mobile-search-selection-btn mobile-search-selection-menu-btn',
+    });
+    menuBtn.createSpan({ text: '•••' });
+    menuBtn.addEventListener('click', (event) =>
+      this.showMultipleFilesMenu(event),
+    );
+  }
+
+  /**
+   * Enters selection mode.
+   */
+  private enterSelectionMode(): void {
+    this.isSelectionMode = true;
+    this.selectedFiles.clear();
+
+    // Hide search bar, show selection command bar
+    const searchContainer = this.contentEl.querySelector(
+      '.mobile-search-input-container',
+    ) as HTMLElement;
+    if (searchContainer) {
+      searchContainer.style.display = 'none';
+    }
+    if (this.selectionCommandBar) {
+      this.selectionCommandBar.style.display = 'flex';
+    }
+
+    // Update all cards to show selection state
+    this.updateAllCardsSelectionUI();
+  }
+
+  /**
+   * Exits selection mode.
+   */
+  private exitSelectionMode(): void {
+    this.isSelectionMode = false;
+    this.selectedFiles.clear();
+
+    // Show search bar, hide selection command bar
+    const searchContainer = this.contentEl.querySelector(
+      '.mobile-search-input-container',
+    ) as HTMLElement;
+    if (searchContainer) {
+      searchContainer.style.display = 'block';
+    }
+    if (this.selectionCommandBar) {
+      this.selectionCommandBar.style.display = 'none';
+    }
+
+    // Update all cards to remove selection state
+    this.updateAllCardsSelectionUI();
+  }
+
+  /**
+   * Toggles selection of a file.
+   */
+  private toggleFileSelection(file: TFile, cardElement: HTMLElement): void {
+    if (this.selectedFiles.has(file.path)) {
+      this.selectedFiles.delete(file.path);
+      cardElement.removeClass('is-selected');
+    } else {
+      this.selectedFiles.add(file.path);
+      cardElement.addClass('is-selected');
+    }
+    this.updateSelectionCount();
+  }
+
+  /**
+   * Selects all files.
+   */
+  private selectAllFiles(): void {
+    this.selectedFiles.clear();
+    for (const file of this.currentMatchingFiles) {
+      this.selectedFiles.add(file.path);
+    }
+    this.updateAllCardsSelectionUI();
+    this.updateSelectionCount();
+  }
+
+  /**
+   * Updates the selection count display.
+   */
+  private updateSelectionCount(): void {
+    if (!this.selectionCommandBar) return;
+    const countLabel = this.selectionCommandBar.querySelector(
+      '.mobile-search-selection-count',
+    ) as HTMLElement;
+    if (countLabel) {
+      const count = this.selectedFiles.size;
+      countLabel.textContent = `${count} selected`;
+    }
+  }
+
+  /**
+   * Updates all card elements to reflect current selection state.
+   */
+  private updateAllCardsSelectionUI(): void {
+    this.cardElementMap.forEach((file, cardElement) => {
+      if (this.selectedFiles.has(file.path)) {
+        cardElement.addClass('is-selected');
+      } else {
+        cardElement.removeClass('is-selected');
+      }
+    });
+  }
+
+  /**
+   * Shows the multiple files context menu.
+   */
+  private showMultipleFilesMenu(event: MouseEvent): void {
+    if (this.selectedFiles.size === 0) return;
+
+    const menu = new Menu();
+    const selectedFileObjects = Array.from(this.selectedFiles)
+      .map((path) => this.app.vault.getAbstractFileByPath(path))
+      .filter((f): f is TFile => f instanceof TFile);
+
+    menu
+      .addItem((item) =>
+        item
+          .setTitle(`Delete ${this.selectedFiles.size} files`)
+          .setIcon('trash')
+          .setWarning(true)
+          .onClick(async () => {
+            for (const file of selectedFileObjects) {
+              await this.app.fileManager.trashFile(file);
+            }
+            this.exitSelectionMode();
+          }),
+      )
+      .addItem((item) =>
+        item
+          .setTitle(`Move ${this.selectedFiles.size} files`)
+          .setIcon('folder')
+          .onClick(async () => {
+            // Use Obsidian's built-in folder suggester
+            // @ts-ignore - Obsidian internal API
+            const folder = await this.app.vault.adapter.promptForFolderPath?.(
+              'Select destination folder',
+            );
+            if (folder) {
+              for (const file of selectedFileObjects) {
+                const newPath = `${folder}/${file.name}`;
+                await this.app.fileManager.renameFile(file, newPath);
+              }
+            }
+            this.exitSelectionMode();
+          }),
+      );
 
     menu.showAtMouseEvent(event);
   }

@@ -194,6 +194,7 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 }
 
 .mobile-search-result-card {
+  position: relative;
   padding: 12px;
   margin-bottom: 8px;
   background-color: var(--background-secondary);
@@ -277,4 +278,60 @@ Includes FAB and selection toolbar styles with mobile-friendly design
     var(--background-secondary) 20%
   );
   padding-left: 16px;
+}
+
+/* Selection Mode Styles */
+.mobile-search-selection-bar {
+  position: sticky;
+  top: 0;
+  padding: 12px;
+  background-color: var(--background-secondary);
+  border-bottom: 1px solid var(--background-modifier-border);
+  z-index: 10;
+  display: none;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Style for ButtonComponent buttons in selection bar */
+.mobile-search-selection-bar > button {
+  flex-shrink: 0;
+}
+
+/* Style for ExtraButtonComponent (more actions menu) */
+.mobile-search-selection-bar > .clickable-icon {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.mobile-search-selection-count {
+  font-size: 14px;
+  color: var(--text-muted);
+  padding: 0 8px;
+}
+
+/* Selected card styling */
+.mobile-search-result-card.is-selected {
+  border: 2px solid var(--interactive-accent);
+  background-color: var(--background-modifier-hover);
+  box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+}
+
+.mobile-search-result-card.is-selected::before {
+  content: '✓';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
 }

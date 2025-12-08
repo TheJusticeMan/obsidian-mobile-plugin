@@ -295,30 +295,14 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   flex-wrap: wrap;
 }
 
-.mobile-search-selection-btn {
-  padding: 6px 12px;
-  font-size: 14px;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 6px;
-  background-color: var(--interactive-normal);
-  color: var(--text-normal);
-  cursor: pointer;
-  transition: background-color 0.15s ease;
+/* Style for ButtonComponent buttons in selection bar */
+.mobile-search-selection-bar > button {
+  flex-shrink: 0;
 }
 
-.mobile-search-selection-btn:hover {
-  background-color: var(--interactive-hover);
-}
-
-.mobile-search-selection-btn:active {
-  background-color: var(--interactive-accent);
-  color: var(--text-on-accent);
-}
-
-.mobile-search-selection-menu-btn {
-  font-weight: bold;
-  font-size: 18px;
-  padding: 6px 14px;
+/* Style for ExtraButtonComponent (more actions menu) */
+.mobile-search-selection-bar > .clickable-icon {
+  flex-shrink: 0;
   margin-left: auto;
 }
 

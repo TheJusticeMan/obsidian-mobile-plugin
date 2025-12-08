@@ -1,5 +1,7 @@
 import {
+  ButtonComponent,
   Component,
+  ExtraButtonComponent,
   ItemView,
   MarkdownRenderer,
   Menu,
@@ -685,18 +687,15 @@ export class MobileSearchLeaf extends ItemView {
     this.selectionCommandBar.empty();
 
     // Cancel button
-    const cancelBtn = this.selectionCommandBar.createEl('button', {
-      cls: 'mobile-search-selection-btn',
-      text: 'Cancel',
-    });
-    cancelBtn.addEventListener('click', () => this.exitSelectionMode());
+    new ButtonComponent(this.selectionCommandBar)
+      .setButtonText('Cancel')
+      .setCta()
+      .onClick(() => this.exitSelectionMode());
 
     // Select all button
-    const selectAllBtn = this.selectionCommandBar.createEl('button', {
-      cls: 'mobile-search-selection-btn',
-      text: 'Select All',
-    });
-    selectAllBtn.addEventListener('click', () => this.selectAllFiles());
+    new ButtonComponent(this.selectionCommandBar)
+      .setButtonText('Select All')
+      .onClick(() => this.selectAllFiles());
 
     // Selection count
     const countLabel = this.selectionCommandBar.createSpan({
@@ -706,13 +705,10 @@ export class MobileSearchLeaf extends ItemView {
     countLabel.setAttribute('data-selection-count', '0');
 
     // Three-dot menu button
-    const menuBtn = this.selectionCommandBar.createEl('button', {
-      cls: 'mobile-search-selection-btn mobile-search-selection-menu-btn',
-    });
-    menuBtn.createSpan({ text: '•••' });
-    menuBtn.addEventListener('click', (event) =>
-      this.showMultipleFilesMenu(event),
-    );
+    new ExtraButtonComponent(this.selectionCommandBar)
+      .setIcon('more-horizontal')
+      .setTooltip('More actions')
+      .onClick((event) => this.showMultipleFilesMenu(event));
   }
 
   /**

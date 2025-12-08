@@ -12,6 +12,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better integration with other plugins.
 - Ask me for a feature to make it easyer to capture on the go
 
+## [1.1.0] - 2025-12-08
+
+### Added
+
+#### Mobile Search Selection Mode
+
+- **Swipe-to-Select**: Swipe right on any search result card to enter selection mode
+  - Intuitive gesture-driven selection for bulk operations
+  - Visual feedback: card slides right (up to 80px) during swipe
+  - Smart detection distinguishes horizontal swipes from vertical scrolls
+  - Threshold: 50px horizontal movement within 500ms
+  
+- **Selection Command Bar**: Replaces search bar when in selection mode
+  - **Cancel button**: Exit selection mode and return to search
+  - **Select All button**: Select all visible search results at once
+  - **Selection counter**: Live display showing "X selected"
+  - **Three-dot menu (•••)**: Opens bulk actions menu
+  
+- **Dynamic Card Behavior**: Context-aware interaction modes
+  - Normal mode: Click opens file, context menu shows file options
+  - Selection mode: Click toggles selection, context menu on selected card shows bulk actions
+  
+- **Bulk Operations**: Multiple files menu with error handling
+  - **Delete files**: Delete all selected files with per-file error handling
+  - User feedback via Notice API showing success/failure counts
+  - Graceful handling of partial failures
+  
+- **Visual Selection Indicators**
+  - Selected cards display 2px border with `--accent` color
+  - Box shadow with accent color for depth
+  - Checkmark (✓) badge in top-right corner
+  - Highlighted background color
+  - Smooth transitions for visual feedback
+
+### Changed
+
+- Mobile search cards now support touch gesture detection for selection mode
+- Search bar visibility toggles dynamically based on selection mode state
+- Card click handlers now check selection mode before opening files
+
 ## [1.0.10] - 2025-12-07
 
 ### Fixed

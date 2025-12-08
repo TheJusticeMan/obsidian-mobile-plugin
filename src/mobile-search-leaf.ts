@@ -3,6 +3,7 @@ import {
   ItemView,
   MarkdownRenderer,
   Menu,
+  Notice,
   SearchComponent,
   TFile,
   WorkspaceLeaf,
@@ -822,38 +823,37 @@ export class MobileSearchLeaf extends ItemView {
       .map((path) => this.app.vault.getAbstractFileByPath(path))
       .filter((f): f is TFile => f instanceof TFile);
 
-    menu
-      .addItem((item) =>
-        item
-          .setTitle(`Delete ${this.selectedFiles.size} files`)
-          .setIcon('trash')
-          .setWarning(true)
-          .onClick(async () => {
-            for (const file of selectedFileObjects) {
+    menu.addItem((item) =>
+      item
+        .setTitle(`Delete ${this.selectedFiles.size} files`)
+        .setIcon('trash')
+        .setWarning(true)
+        .onClick(async () => {
+          let successCount = 0;
+          let errorCount = 0;
+
+          for (const file of selectedFileObjects) {
+            try {
               await this.app.fileManager.trashFile(file);
+              successCount++;
+            } catch (error) {
+              console.error(`Failed to delete ${file.path}:`, error);
+              errorCount++;
             }
-            this.exitSelectionMode();
-          }),
-      )
-      .addItem((item) =>
-        item
-          .setTitle(`Move ${this.selectedFiles.size} files`)
-          .setIcon('folder')
-          .onClick(async () => {
-            // Use Obsidian's built-in folder suggester
-            // @ts-ignore - Obsidian internal API
-            const folder = await this.app.vault.adapter.promptForFolderPath?.(
-              'Select destination folder',
+          }
+
+          this.exitSelectionMode();
+
+          // Show feedback to user
+          if (errorCount > 0) {
+            new Notice(
+              `Deleted ${successCount} files. ${errorCount} files failed to delete.`,
             );
-            if (folder) {
-              for (const file of selectedFileObjects) {
-                const newPath = `${folder}/${file.name}`;
-                await this.app.fileManager.renameFile(file, newPath);
-              }
-            }
-            this.exitSelectionMode();
-          }),
-      );
+          } else if (successCount > 0) {
+            new Notice(`Deleted ${successCount} files.`);
+          }
+        }),
+    );
 
     menu.showAtMouseEvent(event);
   }

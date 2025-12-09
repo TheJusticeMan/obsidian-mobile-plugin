@@ -12,6 +12,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better integration with other plugins.
 - Ask me for a feature to make it easyer to capture on the go
 
+## [1.2.0] - 2025-12-09
+
+### Added
+
+#### Mobile Search Plugin Extensibility
+
+- **`files-menu` Event Support**: Mobile search selection mode now triggers Obsidian's `files-menu` event when multiple files are selected
+  - Allows other plugins to extend the context menu with custom bulk actions
+  - Triggers `file-menu` event for single file selection (matching Obsidian's native behavior)
+  - Enables seamless integration with file management plugins
+  
+- **Dynamic Select All Button**: The select all button now intelligently toggles based on selection state
+  - Shows "Select all" when some or no files are selected
+  - Changes to "Deselect all" when all files are selected
+  - Provides clear visual feedback and reversible action
+
+### Changed
+
+#### Mobile Search Selection Mode Improvements
+
+- **Simplified Entry Method**: Replaced swipe gesture with context menu to enter selection mode
+  - Long-press or right-click on any file card to enter selection mode and select that file
+  - Removed 62 lines of swipe detection code for cleaner, more maintainable implementation
+  - More intuitive and discoverable interaction pattern
+  
+- **Smart Menu Routing**: Context menu adapts based on selection count
+  - 0 files selected → Automatically exits selection mode
+  - 1 file selected → Shows single file menu with `file-menu` event
+  - Multiple files selected → Shows multiple files menu with `files-menu` event
+  
+- **Lazy-Load Selection Support**: Files selected via "Select all" now properly show selection UI
+  - Cards check selection state when rendered during scrolling
+  - Ensures visual consistency for all selected files, even those not initially visible
+  - Fixed issue where only first 10 files showed selection indicator
+
+- **Removed Built-in Delete Action**: Bulk delete functionality removed from plugin
+  - Allows file management plugins to provide their own delete implementations via `files-menu` event
+  - Gives users and plugin developers full control over bulk actions
+  - Maintains consistency with Obsidian's plugin extensibility model
+
+### Fixed
+
+- Selection state now persists correctly across infinite scroll boundaries
+- Select all button text updates properly when selection changes
+- Context menu positioning improved with optional event parameter handling
+
 ## [1.1.1] - 2025-12-09
 
 ### Fixed

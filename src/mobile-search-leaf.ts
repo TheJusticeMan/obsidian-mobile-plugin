@@ -5,7 +5,6 @@ import {
   ItemView,
   MarkdownRenderer,
   Menu,
-  Notice,
   SearchComponent,
   TFile,
   WorkspaceLeaf,
@@ -65,6 +64,9 @@ export class MobileSearchLeaf extends ItemView {
 
   /** Selection command bar container */
   private selectionCommandBar: HTMLDivElement | null = null;
+
+  /** Select all/deselect all button */
+  private selectAllButton: ButtonComponent | null = null;
 
   /** Map of card elements to file paths for quick lookup */
   private cardElementMap: Map<HTMLElement, TFile> = new Map();
@@ -457,6 +459,11 @@ export class MobileSearchLeaf extends ItemView {
     // Store card-file mapping for selection updates
     this.cardElementMap.set(card, file);
 
+    // Apply selection state if file is already selected
+    if (this.selectedFiles.has(file.path)) {
+      card.addClass('is-selected');
+    }
+
     // Filename header
     card.createDiv({
       cls: 'mobile-search-result-filename',
@@ -508,9 +515,6 @@ export class MobileSearchLeaf extends ItemView {
       text: this.formatDate(file.stat.mtime),
     });
 
-    // Add swipe detection for entering selection mode
-    this.setupCardSwipeDetection(card, file);
-
     // Click handler - either toggle selection or open file
     card.addEventListener('click', (event) => {
       if (this.isSelectionMode) {
@@ -522,86 +526,31 @@ export class MobileSearchLeaf extends ItemView {
     });
 
     // Context menu handler (right-click / long-press)
+    // Enters selection mode if not already in it
     card.addEventListener('contextmenu', (event) => {
       event.preventDefault();
-      if (this.isSelectionMode && this.selectedFiles.has(file.path)) {
-        // In selection mode with selected card, show multiple files menu
-        this.showMultipleFilesMenu(event);
-      } else {
-        // Show regular file context menu
-        this.showFileContextMenu(file, event);
-      }
-    });
-  }
 
-  /**
-   * Sets up swipe detection on a card to enter selection mode.
-   */
-  private setupCardSwipeDetection(card: HTMLElement, file: TFile): void {
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchStartTime = 0;
-    let isSwiping = false;
-
-    card.addEventListener('touchstart', (e: TouchEvent) => {
-      if (this.isSelectionMode) return;
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-      touchStartTime = Date.now();
-      isSwiping = false;
-    });
-
-    card.addEventListener('touchmove', (e: TouchEvent) => {
-      if (this.isSelectionMode) return;
-      const touchX = e.touches[0].clientX;
-      const touchY = e.touches[0].clientY;
-      const deltaX = touchX - touchStartX;
-      const deltaY = touchY - touchStartY;
-
-      // Check if this is a horizontal swipe (not vertical scroll)
-      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 20) {
-        isSwiping = true;
-        e.preventDefault();
-
-        // Visual feedback for swipe
-        if (deltaX > 0) {
-          // Swipe right
-          card.style.transform = `translateX(${Math.min(deltaX, 80)}px)`;
-          card.style.transition = 'none';
-        }
-      }
-    });
-
-    card.addEventListener('touchend', (e: TouchEvent) => {
-      if (this.isSelectionMode) return;
-
-      const touchEndX = e.changedTouches[0].clientX;
-      const deltaX = touchEndX - touchStartX;
-      const swipeTime = Date.now() - touchStartTime;
-
-      // Reset transform with animation
-      card.style.transition = 'transform 0.3s ease';
-      card.style.transform = '';
-
-      // Enter selection mode if swipe right threshold met
-      if (isSwiping && deltaX > 50 && swipeTime < 500) {
-        e.preventDefault();
+      if (!this.isSelectionMode) {
+        // Enter selection mode and select this file
         this.enterSelectionMode();
         this.toggleFileSelection(file, card);
       }
-    });
 
-    card.addEventListener('touchcancel', () => {
-      // Reset transform
-      card.style.transition = 'transform 0.3s ease';
-      card.style.transform = '';
+      // Show appropriate menu based on selection count
+      if (this.selectedFiles.size === 1) {
+        // Show single file menu when only one file is selected
+        this.showFileContextMenu(file, event);
+      } else {
+        // Show multiple files menu when multiple files are selected
+        this.showMultipleFilesMenu(event);
+      }
     });
   }
 
   /**
    * Shows a context menu for the given file.
    */
-  private showFileContextMenu(file: TFile, event: MouseEvent): void {
+  private showFileContextMenu(file: TFile, event?: MouseEvent): void {
     const menu = new Menu();
     menu
       .addItem((item) =>
@@ -673,9 +622,14 @@ export class MobileSearchLeaf extends ItemView {
           }),
       );
 
-    // Trigger file-menu event so other plugins can add their items
-
-    menu.showAtMouseEvent(event);
+    if (event) {
+      menu.showAtMouseEvent(event);
+    } else {
+      menu.showAtPosition({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+      });
+    }
   }
 
   /**
@@ -687,15 +641,14 @@ export class MobileSearchLeaf extends ItemView {
     this.selectionCommandBar.empty();
 
     // Cancel button
-    new ButtonComponent(this.selectionCommandBar)
-      .setButtonText('Cancel')
-      .setCta()
+    new ExtraButtonComponent(this.selectionCommandBar)
+      .setIcon('cross')
       .onClick(() => this.exitSelectionMode());
 
-    // Select all button
-    new ButtonComponent(this.selectionCommandBar)
-      .setButtonText('Select All')
-      .onClick(() => this.selectAllFiles());
+    // Select all/deselect all button
+    this.selectAllButton = new ButtonComponent(this.selectionCommandBar)
+      .setButtonText('Select all')
+      .onClick(() => this.toggleSelectAll());
 
     // Selection count
     const countLabel = this.selectionCommandBar.createSpan({
@@ -706,7 +659,7 @@ export class MobileSearchLeaf extends ItemView {
 
     // Three-dot menu button
     new ExtraButtonComponent(this.selectionCommandBar)
-      .setIcon('more-horizontal')
+      .setIcon('ellipsis-vertical')
       .setTooltip('More actions')
       .onClick(() => this.showMultipleFilesMenu());
   }
@@ -767,22 +720,37 @@ export class MobileSearchLeaf extends ItemView {
       cardElement.addClass('is-selected');
     }
     this.updateSelectionCount();
+
+    // Exit selection mode if no files are selected
+    if (this.selectedFiles.size === 0) {
+      this.exitSelectionMode();
+    }
   }
 
   /**
-   * Selects all files.
+   * Toggles between selecting all files and deselecting all files.
    */
-  private selectAllFiles(): void {
-    this.selectedFiles.clear();
-    for (const file of this.currentMatchingFiles) {
-      this.selectedFiles.add(file.path);
+  private toggleSelectAll(): void {
+    const allSelected =
+      this.selectedFiles.size === this.currentMatchingFiles.length &&
+      this.currentMatchingFiles.length > 0;
+
+    if (allSelected) {
+      // Deselect all
+      this.selectedFiles.clear();
+    } else {
+      // Select all
+      this.selectedFiles.clear();
+      for (const file of this.currentMatchingFiles) {
+        this.selectedFiles.add(file.path);
+      }
     }
     this.updateAllCardsSelectionUI();
     this.updateSelectionCount();
   }
 
   /**
-   * Updates the selection count display.
+   * Updates the selection count display and select all button.
    */
   private updateSelectionCount(): void {
     if (!this.selectionCommandBar) return;
@@ -792,6 +760,16 @@ export class MobileSearchLeaf extends ItemView {
     if (countLabel) {
       const count = this.selectedFiles.size;
       countLabel.textContent = `${count} selected`;
+    }
+
+    // Update select all button text based on whether all files are selected
+    if (this.selectAllButton) {
+      const allSelected =
+        this.selectedFiles.size === this.currentMatchingFiles.length &&
+        this.currentMatchingFiles.length > 0;
+      this.selectAllButton.setButtonText(
+        allSelected ? 'Deselect all' : 'Select all',
+      );
     }
   }
 
@@ -809,6 +787,30 @@ export class MobileSearchLeaf extends ItemView {
   }
 
   /**
+   * Shows the appropriate menu based on the number of selected files.
+   * Called from the three-dot menu button.
+   */
+  private showSelectionMenu(): void {
+    if (this.selectedFiles.size === 0) {
+      // Exit selection mode if no files are selected
+      this.exitSelectionMode();
+      return;
+    }
+
+    if (this.selectedFiles.size === 1) {
+      // Show single file menu when only one file is selected
+      const filePath = Array.from(this.selectedFiles)[0];
+      const file = this.app.vault.getAbstractFileByPath(filePath);
+      if (file instanceof TFile) {
+        this.showFileContextMenu(file);
+      }
+    } else {
+      // Show multiple files menu when multiple files are selected
+      this.showMultipleFilesMenu();
+    }
+  }
+
+  /**
    * Shows the multiple files context menu.
    */
   private showMultipleFilesMenu(event?: MouseEvent): void {
@@ -819,36 +821,13 @@ export class MobileSearchLeaf extends ItemView {
       .map((path) => this.app.vault.getAbstractFileByPath(path))
       .filter((f): f is TFile => f instanceof TFile);
 
-    menu.addItem((item) =>
-      item
-        .setTitle(`Delete ${this.selectedFiles.size} files`)
-        .setIcon('trash')
-        .setWarning(true)
-        .onClick(async () => {
-          let successCount = 0;
-          let errorCount = 0;
-
-          for (const file of selectedFileObjects) {
-            try {
-              await this.app.fileManager.trashFile(file);
-              successCount++;
-            } catch (error) {
-              console.error(`Failed to delete ${file.path}:`, error);
-              errorCount++;
-            }
-          }
-
-          this.exitSelectionMode();
-
-          // Show feedback to user
-          if (errorCount > 0) {
-            new Notice(
-              `Deleted ${successCount} files. ${errorCount} files failed to delete.`,
-            );
-          } else if (successCount > 0) {
-            new Notice(`Deleted ${successCount} files.`);
-          }
-        }),
+    // Trigger files-menu event so other plugins can add their items
+    this.app.workspace.trigger(
+      'files-menu',
+      menu,
+      selectedFileObjects,
+      'mobile-search-view',
+      this.leaf,
     );
 
     if (event) {

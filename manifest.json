@@ -1,7 +1,7 @@
 {
 	"id": "mobile",
 	"name": "Mobile",
-	"version": "1.1.1",
+	"version": "1.2.0",
 	"minAppVersion": "0.15.0",
 	"description": "Mobile-optimized UX enhancements with floating action button, context-aware toolbars, and gestures.",
 	"author": "Justice Vellacott",

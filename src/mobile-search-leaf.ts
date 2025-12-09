@@ -508,9 +508,6 @@ export class MobileSearchLeaf extends ItemView {
       text: this.formatDate(file.stat.mtime),
     });
 
-    // Add swipe detection for entering selection mode
-    this.setupCardSwipeDetection(card, file);
-
     // Click handler - either toggle selection or open file
     card.addEventListener('click', (event) => {
       if (this.isSelectionMode) {
@@ -522,85 +519,24 @@ export class MobileSearchLeaf extends ItemView {
     });
 
     // Context menu handler (right-click / long-press)
+    // Enters selection mode if not already in it
     card.addEventListener('contextmenu', (event) => {
       event.preventDefault();
-      if (this.isSelectionMode && this.selectedFiles.has(file.path)) {
-        // In selection mode with selected card
-        if (this.selectedFiles.size === 1) {
-          // Show single file menu when only one file is selected
-          this.showFileContextMenu(file, event);
-        } else {
-          // Show multiple files menu when multiple files are selected
-          this.showMultipleFilesMenu(event);
-        }
-      } else {
-        // Show regular file context menu
-        this.showFileContextMenu(file, event);
-      }
-    });
-  }
 
-  /**
-   * Sets up swipe detection on a card to enter selection mode.
-   */
-  private setupCardSwipeDetection(card: HTMLElement, file: TFile): void {
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchStartTime = 0;
-    let isSwiping = false;
-
-    card.addEventListener('touchstart', (e: TouchEvent) => {
-      if (this.isSelectionMode) return;
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-      touchStartTime = Date.now();
-      isSwiping = false;
-    });
-
-    card.addEventListener('touchmove', (e: TouchEvent) => {
-      if (this.isSelectionMode) return;
-      const touchX = e.touches[0].clientX;
-      const touchY = e.touches[0].clientY;
-      const deltaX = touchX - touchStartX;
-      const deltaY = touchY - touchStartY;
-
-      // Check if this is a horizontal swipe (not vertical scroll)
-      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 20) {
-        isSwiping = true;
-        e.preventDefault();
-
-        // Visual feedback for swipe
-        if (deltaX > 0) {
-          // Swipe right
-          card.style.transform = `translateX(${Math.min(deltaX, 80)}px)`;
-          card.style.transition = 'none';
-        }
-      }
-    });
-
-    card.addEventListener('touchend', (e: TouchEvent) => {
-      if (this.isSelectionMode) return;
-
-      const touchEndX = e.changedTouches[0].clientX;
-      const deltaX = touchEndX - touchStartX;
-      const swipeTime = Date.now() - touchStartTime;
-
-      // Reset transform with animation
-      card.style.transition = 'transform 0.3s ease';
-      card.style.transform = '';
-
-      // Enter selection mode if swipe right threshold met
-      if (isSwiping && deltaX > 50 && swipeTime < 500) {
-        e.preventDefault();
+      if (!this.isSelectionMode) {
+        // Enter selection mode and select this file
         this.enterSelectionMode();
         this.toggleFileSelection(file, card);
       }
-    });
 
-    card.addEventListener('touchcancel', () => {
-      // Reset transform
-      card.style.transition = 'transform 0.3s ease';
-      card.style.transform = '';
+      // Show appropriate menu based on selection count
+      if (this.selectedFiles.size === 1) {
+        // Show single file menu when only one file is selected
+        this.showFileContextMenu(file, event);
+      } else {
+        // Show multiple files menu when multiple files are selected
+        this.showMultipleFilesMenu(event);
+      }
     });
   }
 
@@ -678,8 +614,6 @@ export class MobileSearchLeaf extends ItemView {
             void this.app.fileManager.trashFile(file);
           }),
       );
-
-    // Trigger file-menu event so other plugins can add their items
 
     menu.showAtMouseEvent(event);
   }

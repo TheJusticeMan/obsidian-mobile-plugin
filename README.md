@@ -71,11 +71,12 @@ A dedicated search view optimized for mobile devices:
 - **Auto-focus**: Automatically focuses the search input when the sidebar opens.
 - **Performance optimizations**: File list updates only when drawer is open or focused, with smart file system event listeners (create, delete, rename, modify) to reduce battery usage.
 - **Reliable results**: Race condition fixed to prevent empty search results on initial open or when reopening with text.
-- **Selection mode**: Swipe right on any result card to enter selection mode for bulk operations
+- **Selection mode**: Long-press/right-click on any result card to enter selection mode for bulk operations
   - **Selection command bar**: Cancel, Select All, selection counter, and three-dot menu for bulk actions
   - **Visual indicators**: Selected cards show accent-colored border, checkmark badge, and highlighted background
   - **Bulk delete**: Delete multiple files at once with error handling and user feedback
-  - **Smart interactions**: Tap cards to toggle selection, context menu on selected cards shows bulk actions
+  - **Smart interactions**: Tap cards to toggle selection, long-press shows menu with appropriate actions based on selection count
+  - **Auto-exit**: Selection mode automatically exits when no files are selected
 
 ## Installation
 

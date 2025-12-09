@@ -708,7 +708,7 @@ export class MobileSearchLeaf extends ItemView {
     new ExtraButtonComponent(this.selectionCommandBar)
       .setIcon('more-horizontal')
       .setTooltip('More actions')
-      .onClick((event) => this.showMultipleFilesMenu(event));
+      .onClick(() => this.showMultipleFilesMenu());
   }
 
   /**
@@ -811,7 +811,7 @@ export class MobileSearchLeaf extends ItemView {
   /**
    * Shows the multiple files context menu.
    */
-  private showMultipleFilesMenu(event: MouseEvent): void {
+  private showMultipleFilesMenu(event?: MouseEvent): void {
     if (this.selectedFiles.size === 0) return;
 
     const menu = new Menu();
@@ -851,7 +851,15 @@ export class MobileSearchLeaf extends ItemView {
         }),
     );
 
-    menu.showAtMouseEvent(event);
+    if (event) {
+      menu.showAtMouseEvent(event);
+    } else {
+      // When no event is provided (e.g., from button click), show at cursor position
+      menu.showAtPosition({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+      });
+    }
   }
 
   /**

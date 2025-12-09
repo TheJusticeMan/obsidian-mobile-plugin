@@ -638,14 +638,13 @@ export class MobileSearchLeaf extends ItemView {
     this.selectionCommandBar.empty();
 
     // Cancel button
-    new ButtonComponent(this.selectionCommandBar)
-      .setButtonText('Cancel')
-      .setCta()
+    new ExtraButtonComponent(this.selectionCommandBar)
+      .setIcon('cross')
       .onClick(() => this.exitSelectionMode());
 
     // Select all button
     new ButtonComponent(this.selectionCommandBar)
-      .setButtonText('Select All')
+      .setButtonText('Select all')
       .onClick(() => this.selectAllFiles());
 
     // Selection count
@@ -657,9 +656,9 @@ export class MobileSearchLeaf extends ItemView {
 
     // Three-dot menu button
     new ExtraButtonComponent(this.selectionCommandBar)
-      .setIcon('more-horizontal')
+      .setIcon('ellipsis-vertical')
       .setTooltip('More actions')
-      .onClick(() => this.showSelectionMenu());
+      .onClick(() => this.showMultipleFilesMenu());
   }
 
   /**

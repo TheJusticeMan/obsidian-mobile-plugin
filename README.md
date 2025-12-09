@@ -74,7 +74,7 @@ A dedicated search view optimized for mobile devices:
 - **Selection mode**: Long-press/right-click on any result card to enter selection mode for bulk operations
   - **Selection command bar**: Cancel, Select All, selection counter, and three-dot menu for bulk actions
   - **Visual indicators**: Selected cards show accent-colored border, checkmark badge, and highlighted background
-  - **Bulk delete**: Delete multiple files at once with error handling and user feedback
+  - **Plugin extensibility**: Triggers `files-menu` event for multiple files and `file-menu` for single file, allowing plugins to add custom actions
   - **Smart interactions**: Tap cards to toggle selection, long-press shows menu with appropriate actions based on selection count
   - **Auto-exit**: Selection mode automatically exits when no files are selected
 

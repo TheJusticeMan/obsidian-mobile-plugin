@@ -5,7 +5,6 @@ import {
   ItemView,
   MarkdownRenderer,
   Menu,
-  Notice,
   SearchComponent,
   TFile,
   WorkspaceLeaf,
@@ -543,7 +542,7 @@ export class MobileSearchLeaf extends ItemView {
   /**
    * Shows a context menu for the given file.
    */
-  private showFileContextMenu(file: TFile, event: MouseEvent): void {
+  private showFileContextMenu(file: TFile, event?: MouseEvent): void {
     const menu = new Menu();
     menu
       .addItem((item) =>
@@ -615,7 +614,14 @@ export class MobileSearchLeaf extends ItemView {
           }),
       );
 
-    menu.showAtMouseEvent(event);
+    if (event) {
+      menu.showAtMouseEvent(event);
+    } else {
+      menu.showAtPosition({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+      });
+    }
   }
 
   /**
@@ -769,15 +775,7 @@ export class MobileSearchLeaf extends ItemView {
       const filePath = Array.from(this.selectedFiles)[0];
       const file = this.app.vault.getAbstractFileByPath(filePath);
       if (file instanceof TFile) {
-        // Create a synthetic mouse event at center of screen
-        const syntheticEvent = new MouseEvent('contextmenu', {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-          clientX: window.innerWidth / 2,
-          clientY: window.innerHeight / 2,
-        });
-        this.showFileContextMenu(file, syntheticEvent);
+        this.showFileContextMenu(file);
       }
     } else {
       // Show multiple files menu when multiple files are selected
@@ -803,38 +801,6 @@ export class MobileSearchLeaf extends ItemView {
       selectedFileObjects,
       'mobile-search-view',
       this.leaf,
-    );
-
-    menu.addItem((item) =>
-      item
-        .setTitle(`Delete ${this.selectedFiles.size} files`)
-        .setIcon('trash')
-        .setWarning(true)
-        .onClick(async () => {
-          let successCount = 0;
-          let errorCount = 0;
-
-          for (const file of selectedFileObjects) {
-            try {
-              await this.app.fileManager.trashFile(file);
-              successCount++;
-            } catch (error) {
-              console.error(`Failed to delete ${file.path}:`, error);
-              errorCount++;
-            }
-          }
-
-          this.exitSelectionMode();
-
-          // Show feedback to user
-          if (errorCount > 0) {
-            new Notice(
-              `Deleted ${successCount} files. ${errorCount} files failed to delete.`,
-            );
-          } else if (successCount > 0) {
-            new Notice(`Deleted ${successCount} files.`);
-          }
-        }),
     );
 
     if (event) {

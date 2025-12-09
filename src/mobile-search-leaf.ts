@@ -854,7 +854,7 @@ export class MobileSearchLeaf extends ItemView {
     if (event) {
       menu.showAtMouseEvent(event);
     } else {
-      // When no event is provided (e.g., from button click), show at cursor position
+      // When no event is provided (e.g., from button click), show at center screen position
       menu.showAtPosition({
         x: window.innerWidth / 2,
         y: window.innerHeight / 2,

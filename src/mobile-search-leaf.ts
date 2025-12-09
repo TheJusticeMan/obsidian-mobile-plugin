@@ -525,8 +525,14 @@ export class MobileSearchLeaf extends ItemView {
     card.addEventListener('contextmenu', (event) => {
       event.preventDefault();
       if (this.isSelectionMode && this.selectedFiles.has(file.path)) {
-        // In selection mode with selected card, show multiple files menu
-        this.showMultipleFilesMenu(event);
+        // In selection mode with selected card
+        if (this.selectedFiles.size === 1) {
+          // Show single file menu when only one file is selected
+          this.showFileContextMenu(file, event);
+        } else {
+          // Show multiple files menu when multiple files are selected
+          this.showMultipleFilesMenu(event);
+        }
       } else {
         // Show regular file context menu
         this.showFileContextMenu(file, event);
@@ -708,7 +714,7 @@ export class MobileSearchLeaf extends ItemView {
     new ExtraButtonComponent(this.selectionCommandBar)
       .setIcon('more-horizontal')
       .setTooltip('More actions')
-      .onClick(() => this.showMultipleFilesMenu());
+      .onClick(() => this.showSelectionMenu());
   }
 
   /**
@@ -767,6 +773,11 @@ export class MobileSearchLeaf extends ItemView {
       cardElement.addClass('is-selected');
     }
     this.updateSelectionCount();
+
+    // Exit selection mode if no files are selected
+    if (this.selectedFiles.size === 0) {
+      this.exitSelectionMode();
+    }
   }
 
   /**
@@ -809,6 +820,38 @@ export class MobileSearchLeaf extends ItemView {
   }
 
   /**
+   * Shows the appropriate menu based on the number of selected files.
+   * Called from the three-dot menu button.
+   */
+  private showSelectionMenu(): void {
+    if (this.selectedFiles.size === 0) {
+      // Exit selection mode if no files are selected
+      this.exitSelectionMode();
+      return;
+    }
+
+    if (this.selectedFiles.size === 1) {
+      // Show single file menu when only one file is selected
+      const filePath = Array.from(this.selectedFiles)[0];
+      const file = this.app.vault.getAbstractFileByPath(filePath);
+      if (file instanceof TFile) {
+        // Create a synthetic mouse event at center of screen
+        const syntheticEvent = new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          clientX: window.innerWidth / 2,
+          clientY: window.innerHeight / 2,
+        });
+        this.showFileContextMenu(file, syntheticEvent);
+      }
+    } else {
+      // Show multiple files menu when multiple files are selected
+      this.showMultipleFilesMenu();
+    }
+  }
+
+  /**
    * Shows the multiple files context menu.
    */
   private showMultipleFilesMenu(event?: MouseEvent): void {
@@ -818,6 +861,15 @@ export class MobileSearchLeaf extends ItemView {
     const selectedFileObjects = Array.from(this.selectedFiles)
       .map((path) => this.app.vault.getAbstractFileByPath(path))
       .filter((f): f is TFile => f instanceof TFile);
+
+    // Trigger files-menu event so other plugins can add their items
+    this.app.workspace.trigger(
+      'files-menu',
+      menu,
+      selectedFileObjects,
+      'mobile-search-view',
+      this.leaf,
+    );
 
     menu.addItem((item) =>
       item

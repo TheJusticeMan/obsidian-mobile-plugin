@@ -65,6 +65,9 @@ export class MobileSearchLeaf extends ItemView {
   /** Selection command bar container */
   private selectionCommandBar: HTMLDivElement | null = null;
 
+  /** Select all/deselect all button */
+  private selectAllButton: ButtonComponent | null = null;
+
   /** Map of card elements to file paths for quick lookup */
   private cardElementMap: Map<HTMLElement, TFile> = new Map();
 
@@ -642,10 +645,10 @@ export class MobileSearchLeaf extends ItemView {
       .setIcon('cross')
       .onClick(() => this.exitSelectionMode());
 
-    // Select all button
-    new ButtonComponent(this.selectionCommandBar)
+    // Select all/deselect all button
+    this.selectAllButton = new ButtonComponent(this.selectionCommandBar)
       .setButtonText('Select all')
-      .onClick(() => this.selectAllFiles());
+      .onClick(() => this.toggleSelectAll());
 
     // Selection count
     const countLabel = this.selectionCommandBar.createSpan({
@@ -725,19 +728,29 @@ export class MobileSearchLeaf extends ItemView {
   }
 
   /**
-   * Selects all files.
+   * Toggles between selecting all files and deselecting all files.
    */
-  private selectAllFiles(): void {
-    this.selectedFiles.clear();
-    for (const file of this.currentMatchingFiles) {
-      this.selectedFiles.add(file.path);
+  private toggleSelectAll(): void {
+    const allSelected =
+      this.selectedFiles.size === this.currentMatchingFiles.length &&
+      this.currentMatchingFiles.length > 0;
+
+    if (allSelected) {
+      // Deselect all
+      this.selectedFiles.clear();
+    } else {
+      // Select all
+      this.selectedFiles.clear();
+      for (const file of this.currentMatchingFiles) {
+        this.selectedFiles.add(file.path);
+      }
     }
     this.updateAllCardsSelectionUI();
     this.updateSelectionCount();
   }
 
   /**
-   * Updates the selection count display.
+   * Updates the selection count display and select all button.
    */
   private updateSelectionCount(): void {
     if (!this.selectionCommandBar) return;
@@ -747,6 +760,16 @@ export class MobileSearchLeaf extends ItemView {
     if (countLabel) {
       const count = this.selectedFiles.size;
       countLabel.textContent = `${count} selected`;
+    }
+
+    // Update select all button text based on whether all files are selected
+    if (this.selectAllButton) {
+      const allSelected =
+        this.selectedFiles.size === this.currentMatchingFiles.length &&
+        this.currentMatchingFiles.length > 0;
+      this.selectAllButton.setButtonText(
+        allSelected ? 'Deselect all' : 'Select all',
+      );
     }
   }
 

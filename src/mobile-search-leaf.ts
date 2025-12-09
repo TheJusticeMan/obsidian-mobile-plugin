@@ -456,6 +456,11 @@ export class MobileSearchLeaf extends ItemView {
     // Store card-file mapping for selection updates
     this.cardElementMap.set(card, file);
 
+    // Apply selection state if file is already selected
+    if (this.selectedFiles.has(file.path)) {
+      card.addClass('is-selected');
+    }
+
     // Filename header
     card.createDiv({
       cls: 'mobile-search-result-filename',

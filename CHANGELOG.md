@@ -12,6 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better integration with other plugins.
 - Ask me for a feature to make it easyer to capture on the go
 
+## [1.1.1] - 2025-12-09
+
+### Fixed
+
+- **Build Errors**: Fixed TypeScript compilation errors in mobile-search-leaf.ts
+  - Made event parameter optional in `showMultipleFilesMenu()` method
+  - Fixed ExtraButtonComponent onClick callback signature to match expected type `() => any`
+  - Menu now shows at center screen position when no mouse event is provided
+  - Maintains backwards compatibility with contextmenu event handling
+
 ## [1.1.0] - 2025-12-08
 
 ### Added

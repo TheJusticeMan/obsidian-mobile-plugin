@@ -18,7 +18,6 @@ import {
   MobileSettingTab,
   mySettingsModel,
 } from './settings';
-// hopefully obsidian review bot will recognise this commit
 import { createToolbarExtension } from './toolbar-extension';
 
 // WakeLock API types (not in standard TS lib)

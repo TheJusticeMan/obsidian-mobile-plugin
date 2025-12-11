@@ -73,7 +73,7 @@ export default class MobilePlugin extends Plugin {
     // Navigation commands
     this.addCommand({
       id: 'cursor-up',
-      name: 'Up',
+      name: 'Move cursor up',
       icon: 'arrow-up',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
@@ -85,7 +85,7 @@ export default class MobilePlugin extends Plugin {
 
     this.addCommand({
       id: 'cursor-down',
-      name: 'Down',
+      name: 'Move cursor down',
       icon: 'arrow-down',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
@@ -602,8 +602,8 @@ export default class MobilePlugin extends Plugin {
 
     // Add command to open Mobile Search
     this.addCommand({
-      id: 'open-mobile-search',
-      name: 'Open Mobile Search',
+      id: 'open-search',
+      name: 'Open search',
       icon: 'search',
       callback: () => {
         void this.activateMobileSearchView();
@@ -614,7 +614,7 @@ export default class MobilePlugin extends Plugin {
     this.registerEditorExtension(createToolbarExtension(this.app, this));
     // add ribbon icon
     this.addRibbonIcon('plus', 'Create new note', () => this.createNewNote());
-    this.addRibbonIcon('search', 'Open Mobile Search', () => {
+    this.addRibbonIcon('search', 'Open search', () => {
       void this.activateMobileSearchView();
     });
 
@@ -647,7 +647,7 @@ export default class MobilePlugin extends Plugin {
     }
 
     if (leaf) {
-      workspace.revealLeaf(leaf);
+      void workspace.revealLeaf(leaf);
     }
   }
 
@@ -685,7 +685,7 @@ export default class MobilePlugin extends Plugin {
         this.wakeLock = null;
       } else {
         // Request wake lock
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- WakeLock API is not in standard TS lib
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- WakeLock API is not in standard TS lib
         this.wakeLock = await (navigator as any).wakeLock.request('screen');
 
         // Listen for wake lock release
@@ -700,7 +700,7 @@ export default class MobilePlugin extends Plugin {
   }
 
   onUserEnable() {
-    this.activateMobileSearchView();
+    void this.activateMobileSearchView();
   }
 
   onunload(): void {
@@ -719,6 +719,7 @@ export default class MobilePlugin extends Plugin {
   }
 
   async loadSettings() {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- loadData returns unknown type
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
     if (this.settings.plusLongpress) {
       this.settings.MobileCMDEvents['fab-longpress'] =

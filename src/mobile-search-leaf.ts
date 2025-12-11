@@ -80,7 +80,7 @@ export class MobileSearchLeaf extends ItemView {
   }
 
   getDisplayText(): string {
-    return 'Mobile Search';
+    return 'Search';
   }
 
   getIcon(): string {
@@ -107,7 +107,7 @@ export class MobileSearchLeaf extends ItemView {
     this.selectionCommandBar = container.createDiv({
       cls: 'mobile-search-selection-bar',
     });
-    this.selectionCommandBar.style.display = 'none';
+    this.selectionCommandBar.setCssProps({ display: 'none' });
     this.setupSelectionCommandBar();
 
     // Create scrollable results container
@@ -300,7 +300,7 @@ export class MobileSearchLeaf extends ItemView {
     requestAnimationFrame(() => {
       this.searchInput.inputEl.focus();
       this.resetCache();
-      this.performSearch(); // fix so the it updates when opened
+      void this.performSearch(); // fix so the it updates when opened
     });
   }
 
@@ -402,7 +402,7 @@ export class MobileSearchLeaf extends ItemView {
    */
   private checkLoadMore(): void {
     if (this.renderedResultsCount === INITIAL_RESULTS_PER_BATCH) {
-      this.renderNextBatch();
+      void this.renderNextBatch();
       return;
     }
 
@@ -603,17 +603,17 @@ export class MobileSearchLeaf extends ItemView {
     menu
       .addItem((item) =>
         item
-          .setTitle('Rename')
+          .setTitle('Rename file')
           .setIcon('pencil')
           .setSection('danger')
           .onClick(() => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
             (this.app.fileManager as any).promptForFileRename?.(file);
           }),
       )
       .addItem((item) =>
         item
-          .setTitle('Delete')
+          .setTitle('Delete file')
           .setIcon('trash')
           .setSection('danger')
           .setWarning(true)
@@ -676,10 +676,10 @@ export class MobileSearchLeaf extends ItemView {
       '.mobile-search-input-container',
     ) as HTMLElement;
     if (searchContainer) {
-      searchContainer.style.display = 'none';
+      searchContainer.setCssProps({ display: 'none' });
     }
     if (this.selectionCommandBar) {
-      this.selectionCommandBar.style.display = 'flex';
+      this.selectionCommandBar.setCssProps({ display: 'flex' });
     }
 
     // Update all cards to show selection state
@@ -698,10 +698,10 @@ export class MobileSearchLeaf extends ItemView {
       '.mobile-search-input-container',
     ) as HTMLElement;
     if (searchContainer) {
-      searchContainer.style.display = 'block';
+      searchContainer.setCssProps({ display: 'block' });
     }
     if (this.selectionCommandBar) {
-      this.selectionCommandBar.style.display = 'none';
+      this.selectionCommandBar.setCssProps({ display: 'none' });
     }
 
     // Update all cards to remove selection state

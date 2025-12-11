@@ -34,7 +34,7 @@ export type ContextType = (typeof allowedContexts)[number];
 
 const contextTypeBindings = allowedContexts.map((contextType) => ({
   id: `binding-${Date.now()}-${contextType}`,
-  contextType: contextType as ContextType,
+  contextType: contextType,
   toolbarId: '',
 }));
 
@@ -43,6 +43,7 @@ export interface ContextBinding {
   toolbarId: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used for the type only
 const MobileCMDEvents = [
   'fab-longpress',
   'fab-press',
@@ -183,7 +184,7 @@ export class FolderSuggest extends FuzzySuggestModal<TFolder> {
   getItemText(folder: TFolder): string {
     return folder.path;
   }
-  onChooseItem(folder: TFolder, evt: MouseEvent | KeyboardEvent) {
+  onChooseItem(folder: TFolder) {
     this.onSubmit(folder);
   }
 }
@@ -220,11 +221,11 @@ export class IconSuggestModal extends SuggestModal<string> {
     return item;
   }
 
-  onChooseItem(item: string, evt: MouseEvent | KeyboardEvent) {
+  onChooseItem(item: string) {
     this.onSubmit(item);
   }
 
-  onChooseSuggestion(item: string, evt: MouseEvent | KeyboardEvent) {
+  onChooseSuggestion(item: string) {
     this.onSubmit(item);
   }
 }
@@ -236,7 +237,7 @@ export class CommandSuggestModal extends FuzzySuggestModal<Command> {
   constructor(app: App, onSubmit: (result: Command) => void) {
     super(app);
     this.onSubmit = onSubmit;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
     this.commands = Object.values((this.app as any).commands.commands);
   }
 
@@ -248,7 +249,7 @@ export class CommandSuggestModal extends FuzzySuggestModal<Command> {
     return item.name;
   }
 
-  onChooseItem(item: Command, evt: MouseEvent | KeyboardEvent) {
+  onChooseItem(item: Command) {
     this.onSubmit(item);
   }
 }
@@ -315,14 +316,16 @@ export class MobileSettingsView {
               new ContextBindingChooser(
                 this.app,
                 this.plugin.settings.toolbars,
-                async (toolbar) => {
-                  const newBinding: ContextBinding = {
-                    contextType: ctb.contextType,
-                    toolbarId: toolbar.id,
-                  };
-                  this.plugin.settings.contextBindings.push(newBinding);
-                  await this.plugin.saveSettings();
-                  this.renderContextBindings(containerEl);
+                (toolbar) => {
+                  void (async () => {
+                    const newBinding: ContextBinding = {
+                      contextType: ctb.contextType,
+                      toolbarId: toolbar.id,
+                    };
+                    this.plugin.settings.contextBindings.push(newBinding);
+                    await this.plugin.saveSettings();
+                    this.renderContextBindings(containerEl);
+                  })();
                 },
               ).open();
             }),
@@ -437,8 +440,8 @@ export class MobileSettingsView {
       );
 
     new Setting(containerEl)
-      .setName('Show floating action button (FAB)')
-      .setDesc('Show the FAB button at the bottom right of the screen')
+      .setName('Show floating action button')
+      .setDesc('Show the button at the bottom right of the screen')
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.showFAB)
@@ -469,9 +472,7 @@ export class MobileSettingsView {
     // Haptic feedback setting
     new Setting(containerEl)
       .setName('Enable haptic feedback')
-      .setDesc(
-        'Vibrate on FAB and toolbar button interactions (mobile devices only)',
-      )
+      .setDesc('Vibrate on button interactions (mobile devices only)')
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.enableHapticFeedback)
@@ -489,10 +490,12 @@ export class MobileSettingsView {
                 this.plugin.settings.MobileCMDEvents[event] || 'Select command',
               )
               .onClick(() => {
-                new CommandSuggestModal(this.app, async (command) => {
-                  this.plugin.settings.MobileCMDEvents[event] = command.id;
-                  await this.plugin.saveSettings();
-                  this.renderGeneralSettings(containerEl);
+                new CommandSuggestModal(this.app, (command) => {
+                  void (async () => {
+                    this.plugin.settings.MobileCMDEvents[event] = command.id;
+                    await this.plugin.saveSettings();
+                    this.renderGeneralSettings(containerEl);
+                  })();
                 }).open();
               }),
           )
@@ -514,11 +517,13 @@ export class MobileSettingsView {
         .setDesc(`ID: ${gc.commandId}`)
         .addButton((button) =>
           button.setButtonText(gc.name).onClick(() => {
-            new CommandSuggestModal(this.app, async (command) => {
-              gc.commandId = command.id;
-              gc.name = command.name;
-              await this.plugin.saveSettings();
-              this.renderGeneralSettings(containerEl);
+            new CommandSuggestModal(this.app, (command) => {
+              void (async () => {
+                gc.commandId = command.id;
+                gc.name = command.name;
+                await this.plugin.saveSettings();
+                this.renderGeneralSettings(containerEl);
+              })();
             }).open();
           }),
         )
@@ -599,7 +604,7 @@ export class ContextSelectionModal extends FuzzySuggestModal<ContextBinding> {
     return `${binding.contextType} → ${binding.toolbarId}`;
   }
 
-  onChooseItem(binding: ContextBinding, evt: MouseEvent | KeyboardEvent) {
+  onChooseItem(binding: ContextBinding) {
     this.onSubmit(binding);
   }
 }
@@ -624,7 +629,7 @@ export class ContextBindingChooser extends FuzzySuggestModal<ToolbarConfig> {
     return toolbar.name;
   }
 
-  onChooseItem(toolbar: ToolbarConfig, evt: MouseEvent | KeyboardEvent) {
+  onChooseItem(toolbar: ToolbarConfig) {
     this.onSubmit(toolbar);
   }
 }
@@ -679,11 +684,13 @@ export class ToolbarEditor extends Modal {
           .onClick(async () => {
             new ContextSelectionModal(
               this.app,
-              async (binding) => {
-                binding.toolbarId = this.toolbar.id;
-                this.plugin.settings.contextBindings.push(binding);
-                await this.plugin.saveSettings();
-                this.render(container);
+              (binding) => {
+                void (async () => {
+                  binding.toolbarId = this.toolbar.id;
+                  this.plugin.settings.contextBindings.push(binding);
+                  await this.plugin.saveSettings();
+                  this.render(container);
+                })();
               },
               'Create new context binding for this toolbar',
             ).open();
@@ -721,25 +728,30 @@ export class ToolbarEditor extends Modal {
       );
 
     this.toolbar.commands.forEach((cmdId, index) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
       const command = (this.app as any).commands.findCommand(cmdId);
 
       const setting = new Setting(container)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
         .setName(command?.name || cmdId)
         .setDesc(cmdId)
         .addButton((btn) =>
           btn
             .setIcon(
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Obsidian's commands API is not typed
               this.plugin.settings.commandIcons[cmdId] ||
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
                 command?.icon ||
                 'question',
             )
             .setTooltip('Change icon')
             .onClick(() => {
-              new IconSuggestModal(this.app, async (icon) => {
-                this.plugin.settings.commandIcons[cmdId] = icon;
-                await this.plugin.saveSettings();
-                this.render(container);
+              new IconSuggestModal(this.app, (icon) => {
+                void (async () => {
+                  this.plugin.settings.commandIcons[cmdId] = icon;
+                  await this.plugin.saveSettings();
+                  this.render(container);
+                })();
               }).open();
             }),
         )
@@ -748,10 +760,12 @@ export class ToolbarEditor extends Modal {
             .setIcon('pencil')
             .setTooltip('Change command')
             .onClick(async () => {
-              new CommandSuggestModal(this.app, async (command) => {
-                this.toolbar.commands[index] = command.id;
-                await this.plugin.saveSettings();
-                this.render(container);
+              new CommandSuggestModal(this.app, (command) => {
+                void (async () => {
+                  this.toolbar.commands[index] = command.id;
+                  await this.plugin.saveSettings();
+                  this.render(container);
+                })();
               }).open();
             }),
         )
@@ -829,10 +843,12 @@ export class ToolbarEditor extends Modal {
     });
     new Setting(container).addButton((button) =>
       button.setButtonText('Add command').onClick(() => {
-        new CommandSuggestModal(this.app, async (command) => {
-          this.toolbar.commands.push(command.id);
-          await this.plugin.saveSettings();
-          this.render(container);
+        new CommandSuggestModal(this.app, (command) => {
+          void (async () => {
+            this.toolbar.commands.push(command.id);
+            await this.plugin.saveSettings();
+            this.render(container);
+          })();
         }).open();
       }),
     );

@@ -166,7 +166,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
        * Check if a command is available in the current context
        */
       isCommandAvailable(commandId: string, view: EditorView): boolean {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
         const command = (this.app as any).commands?.findCommand(commandId);
 
         if (!command) {
@@ -174,8 +174,10 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         }
 
         // If the command has a checkCallback, run it to determine availability
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
         if (command.checkCallback) {
           try {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
             return command.checkCallback(true);
           } catch (e) {
             // If checkCallback throws, assume unavailable
@@ -185,12 +187,14 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         }
 
         // If the command has an editorCheckCallback, we need to check with editor context
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
         if (command.editorCheckCallback) {
           try {
             // Get the active MarkdownView to access the editor
             const activeView =
               this.app.workspace.getActiveViewOfType(MarkdownView);
             if (activeView && activeView.editor) {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
               return command.editorCheckCallback(
                 true,
                 activeView.editor,
@@ -306,13 +310,16 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         this.addSwipeToExpandListener(this.tooltip);
 
         // Get all available commands
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
         const commands = (this.app as any).commands?.commands || {};
 
         // Add command buttons (only show available commands)
         activeToolbar.commands.forEach((commandId) => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
           const command = commands[commandId];
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Obsidian's commands API is not typed
           const iconToUse =
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
             this.plugin.settings.commandIcons[commandId] || command.icon;
 
           // Check if command is available in current context
@@ -323,27 +330,31 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
           ) {
             if (this.plugin.settings.useIcons && iconToUse) {
               new ExtraButtonComponent(this.tooltip)
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Obsidian's commands API is not typed
                 .setIcon(iconToUse)
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
                 .setTooltip(command.name || commandId)
                 .onClick(() => {
                   // Haptic feedback on button click
                   this.hapticFeedback(10);
                   // Execute the command
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
                   (this.app as any).commands?.executeCommandById(commandId);
                   // Refocus editor to prevent focus loss
                   view.focus();
                 });
             } else {
               new ButtonComponent(this.tooltip)
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
                 .setButtonText(command.name || commandId)
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
                 .setTooltip(command.name || commandId)
                 .onClick((e) => {
                   e.preventDefault();
                   // Haptic feedback on button click
                   this.hapticFeedback(10);
                   // Execute the command
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
                   (this.app as any).commands?.executeCommandById(commandId);
                   // Refocus editor to prevent focus loss
                   view.focus();

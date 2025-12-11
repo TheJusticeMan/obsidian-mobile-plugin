@@ -73,7 +73,7 @@ export default class MobilePlugin extends Plugin {
     // Navigation commands
     this.addCommand({
       id: 'cursor-up',
-      name: 'Move cursor up',
+      name: 'Up',
       icon: 'arrow-up',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();
@@ -85,7 +85,7 @@ export default class MobilePlugin extends Plugin {
 
     this.addCommand({
       id: 'cursor-down',
-      name: 'Move cursor down',
+      name: 'Down',
       icon: 'arrow-down',
       editorCallback: (editor) => {
         const cursor = editor.getCursor();

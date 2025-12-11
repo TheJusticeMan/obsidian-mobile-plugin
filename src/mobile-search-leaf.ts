@@ -603,7 +603,7 @@ export class MobileSearchLeaf extends ItemView {
     menu
       .addItem((item) =>
         item
-          .setTitle('Rename file')
+          .setTitle('Rename')
           .setIcon('pencil')
           .setSection('danger')
           .onClick(() => {
@@ -613,7 +613,7 @@ export class MobileSearchLeaf extends ItemView {
       )
       .addItem((item) =>
         item
-          .setTitle('Delete file')
+          .setTitle('Delete')
           .setIcon('trash')
           .setSection('danger')
           .setWarning(true)

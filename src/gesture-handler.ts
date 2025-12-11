@@ -145,9 +145,11 @@ export class GestureHandler {
     let minDiff = Infinity;
 
     for (const gesture of this.gestureCommands) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- JSON.parse returns unknown type
       const normalizedPreset = JSON.parse(gesture.gesturePath).map(
         (p: number[]) => new Offset(p[0], p[1]),
       );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- JSON.parse returns unknown type
       const diff = this.calculateDifference(normalizedInput, normalizedPreset);
 
       if (diff < minDiff) {
@@ -158,6 +160,7 @@ export class GestureHandler {
 
     if (bestMatch && minDiff < 0.5) {
       this.drawGesture(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- JSON.parse returns unknown type
         JSON.parse(bestMatch.gesturePath).map(
           (p: number[]) => new Offset(p[0], p[1]),
         ),
@@ -171,7 +174,7 @@ export class GestureHandler {
           this.element.removeClass('gesture-success');
         });
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
       (this.app as any).commands?.executeCommandById(bestMatch.commandId);
     } else {
       // Draw the gesture for user feedback

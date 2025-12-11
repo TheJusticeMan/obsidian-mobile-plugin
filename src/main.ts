@@ -552,10 +552,10 @@ export default class MobilePlugin extends Plugin {
           // Toggle FAB record mode
           if (this.fabManager?.getMode() === 'recording') {
             this.fabManager?.setMode('default');
-            new Notice('FAB recording mode disabled');
+            new Notice('Recording mode disabled');
           } else {
             this.fabManager?.setMode('recording');
-            new Notice('FAB recording mode enabled');
+            new Notice('Recording mode enabled');
           }
         },
       });
@@ -668,7 +668,7 @@ export default class MobilePlugin extends Plugin {
 
   triggerCMDEvent(eventType: MobileCMDEvent): void {
     const cmdId = this.settings.MobileCMDEvents[eventType];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
+
     this.commandManager?.executeCommandById(cmdId);
   }
 

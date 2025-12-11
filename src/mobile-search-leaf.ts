@@ -607,8 +607,8 @@ export class MobileSearchLeaf extends ItemView {
           .setIcon('pencil')
           .setSection('danger')
           .onClick(() => {
-            // @ts-ignore
-            this.app.fileManager.promptForFileRename?.(file);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian's commands API is not typed
+            (this.app.fileManager as any).promptForFileRename?.(file);
           }),
       )
       .addItem((item) =>

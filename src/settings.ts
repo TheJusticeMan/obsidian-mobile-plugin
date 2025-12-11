@@ -34,7 +34,7 @@ export type ContextType = (typeof allowedContexts)[number];
 
 const contextTypeBindings = allowedContexts.map((contextType) => ({
   id: `binding-${Date.now()}-${contextType}`,
-  contextType: contextType as ContextType,
+  contextType: contextType,
   toolbarId: '',
 }));
 
@@ -43,6 +43,7 @@ export interface ContextBinding {
   toolbarId: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used for the type only
 const MobileCMDEvents = [
   'fab-longpress',
   'fab-press',
@@ -183,7 +184,7 @@ export class FolderSuggest extends FuzzySuggestModal<TFolder> {
   getItemText(folder: TFolder): string {
     return folder.path;
   }
-  onChooseItem(folder: TFolder, evt: MouseEvent | KeyboardEvent) {
+  onChooseItem(folder: TFolder) {
     this.onSubmit(folder);
   }
 }
@@ -220,11 +221,11 @@ export class IconSuggestModal extends SuggestModal<string> {
     return item;
   }
 
-  onChooseItem(item: string, evt: MouseEvent | KeyboardEvent) {
+  onChooseItem(item: string) {
     this.onSubmit(item);
   }
 
-  onChooseSuggestion(item: string, evt: MouseEvent | KeyboardEvent) {
+  onChooseSuggestion(item: string) {
     this.onSubmit(item);
   }
 }
@@ -248,7 +249,7 @@ export class CommandSuggestModal extends FuzzySuggestModal<Command> {
     return item.name;
   }
 
-  onChooseItem(item: Command, evt: MouseEvent | KeyboardEvent) {
+  onChooseItem(item: Command) {
     this.onSubmit(item);
   }
 }
@@ -599,7 +600,7 @@ export class ContextSelectionModal extends FuzzySuggestModal<ContextBinding> {
     return `${binding.contextType} → ${binding.toolbarId}`;
   }
 
-  onChooseItem(binding: ContextBinding, evt: MouseEvent | KeyboardEvent) {
+  onChooseItem(binding: ContextBinding) {
     this.onSubmit(binding);
   }
 }
@@ -624,7 +625,7 @@ export class ContextBindingChooser extends FuzzySuggestModal<ToolbarConfig> {
     return toolbar.name;
   }
 
-  onChooseItem(toolbar: ToolbarConfig, evt: MouseEvent | KeyboardEvent) {
+  onChooseItem(toolbar: ToolbarConfig) {
     this.onSubmit(toolbar);
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "obsidian-mobile-plugin",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Mobile-optimized UX enhancements with floating action button, context-aware toolbars, and gestures.",
   "main": "main.js",
   "scripts": {
@@ -23,7 +23,7 @@
   "license": "MIT",
   "devDependencies": {
     "@codemirror/language": "^6.11.3",
-    "@codemirror/view": "^6.39.3",
+    "@codemirror/view": "^6.38.3",
     "@eslint/js": "^9.39.1",
     "@eslint/json": "^0.14.0",
     "@types/node": "^16.11.6",

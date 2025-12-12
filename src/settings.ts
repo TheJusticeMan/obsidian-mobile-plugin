@@ -13,6 +13,14 @@ import {
 import MobilePlugin from './main';
 import { GestureCommand } from './gesture-handler';
 
+// Type for Obsidian's internal commands API (not in public API)
+interface ObsidianCommandsAPI {
+  commands: {
+    commands: Record<string, Command>;
+    findCommand?: (id: string) => Command | undefined;
+  };
+}
+
 export interface ToolbarConfig {
   name: string;
   id: string;
@@ -237,8 +245,9 @@ export class CommandSuggestModal extends FuzzySuggestModal<Command> {
   constructor(app: App, onSubmit: (result: Command) => void) {
     super(app);
     this.onSubmit = onSubmit;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
-    this.commands = Object.values((this.app as any).commands.commands);
+    this.commands = Object.values(
+      (this.app as unknown as ObsidianCommandsAPI).commands.commands,
+    );
   }
 
   getItems(): Command[] {
@@ -726,18 +735,17 @@ export class ToolbarEditor extends Modal {
       );
 
     this.toolbar.commands.forEach((cmdId, index) => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
-      const command = (this.app as any).commands.findCommand(cmdId);
+      const command = (
+        this.app as unknown as ObsidianCommandsAPI
+      ).commands.findCommand?.(cmdId);
 
       const setting = new Setting(container)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
         .setName(command?.name || cmdId)
         .setDesc(cmdId)
         .addButton((btn) =>
           btn
             .setIcon(
               this.plugin.settings.commandIcons[cmdId] ||
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
                 command?.icon ||
                 'question',
             )

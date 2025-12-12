@@ -133,10 +133,11 @@ export class MobileSearchLeaf extends ItemView {
     await this.performSearch();
   }
 
-  async onClose(): Promise<void> {
+  onClose(): Promise<void> {
     this.cleanupResultComponents();
     this.cleanupObserver();
     this.debouncedSearch.cancel();
+    return Promise.resolve();
   }
 
   /**

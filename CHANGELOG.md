@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better integration with other plugins.
 - Ask me for a feature to make it easyer to capture on the go
 
+## [1.2.2] - 2025-12-12
+
+### Fixed
+
+- Updated patch version and changelog for maintenance release
+
 ## [1.2.0] - 2025-12-09
 
 ### Added

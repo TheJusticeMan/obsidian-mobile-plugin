@@ -152,11 +152,10 @@ export class GestureHandler {
     let minDiff = Infinity;
 
     for (const gesture of this.gestureCommands) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- JSON.parse returns unknown type
-      const normalizedPreset = JSON.parse(gesture.gesturePath).map(
+      const parsedPath = JSON.parse(gesture.gesturePath) as number[][];
+      const normalizedPreset = parsedPath.map(
         (p: number[]) => new Offset(p[0], p[1]),
       );
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- JSON.parse returns unknown type
       const diff = this.calculateDifference(normalizedInput, normalizedPreset);
 
       if (diff < minDiff) {
@@ -166,11 +165,9 @@ export class GestureHandler {
     }
 
     if (bestMatch && minDiff < 0.5) {
+      const parsedBestMatch = JSON.parse(bestMatch.gesturePath) as number[][];
       this.drawGesture(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- JSON.parse returns unknown type
-        JSON.parse(bestMatch.gesturePath).map(
-          (p: number[]) => new Offset(p[0], p[1]),
-        ),
+        parsedBestMatch.map((p: number[]) => new Offset(p[0], p[1])),
       );
       // Animate FAB to indicate success
       this.element.removeClass('gesture-animating');

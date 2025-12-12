@@ -728,8 +728,9 @@ export default class MobilePlugin extends Plugin {
   }
 
   async loadSettings() {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- loadData returns unknown type
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const loadedData =
+      (await this.loadData()) as Partial<MobilePluginSettings> | null;
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedData ?? {});
     if (this.settings.plusLongpress) {
       this.settings.MobileCMDEvents['fab-longpress'] =
         this.settings.plusLongpress;

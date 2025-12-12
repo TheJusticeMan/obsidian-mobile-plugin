@@ -4,8 +4,10 @@
   "description": "Mobile-optimized UX enhancements with floating action button, context-aware toolbars, and gestures.",
   "main": "main.js",
   "scripts": {
+    "init": "npm install && npm run build",
     "dev": "node esbuild.config.mjs",
     "format": "prettier --write \"src/**/*.ts\"",
+    "lint": "eslint src/ --ext .ts",
     "build": "npm run format && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
     "version": "node version-bump.mjs && git add manifest.json versions.json",
     "release": "bash release.sh"

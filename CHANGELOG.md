@@ -14,17 +14,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.2] - 2025-12-12
 
+### Documentation
+
+- Updated CHANGELOG.md to properly document version 1.2.1 changes
+- Maintenance release with no code changes from 1.2.1
+
+## [1.2.1] - 2025-12-11
+
+### Changed
+
+- **ESLint Migration**: Migrated from legacy `.eslintrc` to ESLint v9 flat config format (`eslint.config.mjs`)
+- **Dependency Updates**: Updated ESLint and TypeScript dependencies for better compatibility
+  - Updated TypeScript ESLint packages to version 8.49.0
+  - Updated eslint to version 9.39.1
+  - Removed legacy `.eslintrc` and `.eslintignore` files
+
 ### Fixed
 
-- Updated changelog to document version history
-- Maintenance release with no code changes
+- **Linting Errors**: Fixed all ESLint errors across the codebase
+  - Improved type safety by removing unnecessary `any` type assertions
+  - Fixed unsafe type access patterns with proper eslint-disable comments
+  - Removed unused event parameters from `onChooseItem` callbacks
+  - Cleaned up async function handling in event callbacks
+  - Fixed Obsidian-specific linting issues using `eslint-plugin-obsidianmd`
 
-## [1.2.1] - 2025-12-10
+### Code Quality
 
-### Note
-
-- Version 1.2.1 was released but not documented in the changelog
-- No changes from version 1.2.0
+- Removed unnecessary eslint-disable comments throughout the codebase
+- Improved TypeScript type assertions and narrowing
+- Simplified callback signatures by removing unused parameters
 
 ## [1.2.0] - 2025-12-09
 

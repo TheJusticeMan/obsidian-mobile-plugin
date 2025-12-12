@@ -14,10 +14,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.2] - 2025-12-12
 
+### Changed
+
+- **Type Safety Improvements**: Replaced `any` type assertions with proper TypeScript interfaces
+  - Added `ObsidianCommandsAPI` interface for accessing internal commands API
+  - Added `ObsidianFileManagerAPI` interface for file manager operations
+  - Added `NavigatorWithWakeLock` interface for Wake Lock API
+  - Changed type assertions from `as any` to `as unknown as InterfaceName` for safer type narrowing
+  
+- **Code Quality**: Removed unnecessary `async` keywords from callbacks that don't use `await`
+  - Updated event handlers in settings.ts (onClick, onChange callbacks)
+  - Updated command callbacks in main.ts that don't perform async operations
+  
+- **Better Type Narrowing**: Improved TypeScript type predicates
+  - Changed filter to use type predicate `f is TFolder` instead of type assertion
+
 ### Documentation
 
 - Updated CHANGELOG.md to properly document version 1.2.1 changes
-- Maintenance release with no code changes from 1.2.1
 
 ## [1.2.1] - 2025-12-11
 

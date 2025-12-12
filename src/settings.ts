@@ -51,15 +51,11 @@ export interface ContextBinding {
   toolbarId: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used for the type only
-const MobileCMDEvents = [
-  'fab-longpress',
-  'fab-press',
-  'fab-record-start',
-  'fab-record-stop',
-] as const;
-
-export type MobileCMDEvent = (typeof MobileCMDEvents)[number];
+export type MobileCMDEvent =
+  | 'fab-longpress'
+  | 'fab-press'
+  | 'fab-record-start'
+  | 'fab-record-stop';
 
 export const MobileCMDEventsDesc: Record<MobileCMDEvent, [string, string]> = {
   'fab-longpress': [

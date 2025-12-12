@@ -1,5 +1,12 @@
 import { App } from 'obsidian';
 
+// Type for Obsidian's internal commands API (not in public API)
+interface ObsidianCommandsAPI {
+  commands?: {
+    executeCommandById?: (id: string) => unknown;
+  };
+}
+
 export interface GestureCommand {
   name: string;
   commandId: string;
@@ -174,8 +181,9 @@ export class GestureHandler {
           this.element.removeClass('gesture-success');
         });
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
-      (this.app as any).commands?.executeCommandById(bestMatch.commandId);
+      (
+        this.app as unknown as ObsidianCommandsAPI
+      ).commands?.executeCommandById?.(bestMatch.commandId);
     } else {
       // Draw the gesture for user feedback
       this.drawGesture(normalizedInput);

@@ -13,6 +13,11 @@ import { throttleWithInterval } from './throttleWithInterval';
 
 export const VIEW_TYPE_MOBILE_SEARCH = 'mobile-search-view';
 
+// Type for Obsidian's internal FileManager API (not in public API)
+interface ObsidianFileManagerAPI {
+  promptForFileRename?: (file: TFile) => unknown;
+}
+
 /** Number of results to render initially */
 const INITIAL_RESULTS_PER_BATCH = 10;
 
@@ -607,8 +612,9 @@ export class MobileSearchLeaf extends ItemView {
           .setIcon('pencil')
           .setSection('danger')
           .onClick(() => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
-            (this.app.fileManager as any).promptForFileRename?.(file);
+            (
+              this.app.fileManager as unknown as ObsidianFileManagerAPI
+            ).promptForFileRename?.(file);
           }),
       )
       .addItem((item) =>

@@ -51,17 +51,7 @@ export interface ContextBinding {
   toolbarId: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used for the type only
-const MobileCMDEvents = [
-  'fab-longpress',
-  'fab-press',
-  'fab-record-start',
-  'fab-record-stop',
-] as const;
-
-export type MobileCMDEvent = (typeof MobileCMDEvents)[number];
-
-export const MobileCMDEventsDesc: Record<MobileCMDEvent, [string, string]> = {
+export const MobileCMDEventsDesc: Record<string, [string, string]> = {
   'fab-longpress': [
     'FAB long press',
     'Select command to execute when the "Floating Action Button" is long-pressed',
@@ -79,6 +69,12 @@ export const MobileCMDEventsDesc: Record<MobileCMDEvent, [string, string]> = {
     'Select command to execute when the "Floating Action Button" is released in recording mode',
   ],
 };
+
+export type MobileCMDEvent =
+  | 'fab-longpress'
+  | 'fab-press'
+  | 'fab-record-start'
+  | 'fab-record-stop';
 
 export interface MobilePluginSettings {
   showCommandConfirmation: boolean;

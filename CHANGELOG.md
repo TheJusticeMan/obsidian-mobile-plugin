@@ -16,7 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Updated patch version and changelog for maintenance release
+- Updated changelog to document version history
+- Maintenance release with no code changes
+
+## [1.2.1] - 2025-12-10
+
+### Note
+
+- Version 1.2.1 was released but not documented in the changelog
+- No changes from version 1.2.0
 
 ## [1.2.0] - 2025-12-09
 

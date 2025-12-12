@@ -607,7 +607,7 @@ export class MobileSearchLeaf extends ItemView {
           .setIcon('pencil')
           .setSection('danger')
           .onClick(() => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
             (this.app.fileManager as any).promptForFileRename?.(file);
           }),
       )

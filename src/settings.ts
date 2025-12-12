@@ -175,7 +175,7 @@ export class FolderSuggest extends FuzzySuggestModal<TFolder> {
     this.onSubmit = onSubmit;
     this.folders = app.vault
       .getAllLoadedFiles()
-      .filter((f) => f instanceof TFolder) as TFolder[];
+      .filter((f): f is TFolder => f instanceof TFolder);
     this.setPlaceholder(prompt || 'Search for a folder...');
   }
   getItems(): TFolder[] {
@@ -237,7 +237,7 @@ export class CommandSuggestModal extends FuzzySuggestModal<Command> {
   constructor(app: App, onSubmit: (result: Command) => void) {
     super(app);
     this.onSubmit = onSubmit;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
     this.commands = Object.values((this.app as any).commands.commands);
   }
 
@@ -312,7 +312,7 @@ export class MobileSettingsView {
           button
             .setIcon('plus')
             .setTooltip('Add new binding')
-            .onClick(async () => {
+            .onClick(() => {
               new ContextBindingChooser(
                 this.app,
                 this.plugin.settings.toolbars,
@@ -436,7 +436,7 @@ export class MobileSettingsView {
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.showToolbars)
-          .onChange(async (value) => this.sett('showToolbars', value)),
+          .onChange((value) => this.sett('showToolbars', value)),
       );
 
     new Setting(containerEl)
@@ -445,7 +445,7 @@ export class MobileSettingsView {
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.showFAB)
-          .onChange(async (value) => this.sett('showFAB', value)),
+          .onChange((value) => this.sett('showFAB', value)),
       );
 
     new Setting(containerEl)
@@ -454,9 +454,7 @@ export class MobileSettingsView {
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.showCommandConfirmation)
-          .onChange(async (value) =>
-            this.sett('showCommandConfirmation', value),
-          ),
+          .onChange((value) => this.sett('showCommandConfirmation', value)),
       );
     new Setting(containerEl)
       .setName('Use icons in toolbar')
@@ -466,7 +464,7 @@ export class MobileSettingsView {
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.useIcons)
-          .onChange(async (value) => this.sett('useIcons', value)),
+          .onChange((value) => this.sett('useIcons', value)),
       );
 
     // Haptic feedback setting
@@ -476,7 +474,7 @@ export class MobileSettingsView {
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.enableHapticFeedback)
-          .onChange(async (value) => this.sett('enableHapticFeedback', value)),
+          .onChange((value) => this.sett('enableHapticFeedback', value)),
       );
 
     Object.entries(MobileCMDEventsDesc).forEach(
@@ -681,7 +679,7 @@ export class ToolbarEditor extends Modal {
         btn
           .setButtonText('Add binding')
           .setIcon('plus')
-          .onClick(async () => {
+          .onClick(() => {
             new ContextSelectionModal(
               this.app,
               (binding) => {
@@ -728,17 +726,16 @@ export class ToolbarEditor extends Modal {
       );
 
     this.toolbar.commands.forEach((cmdId, index) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
       const command = (this.app as any).commands.findCommand(cmdId);
 
       const setting = new Setting(container)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
         .setName(command?.name || cmdId)
         .setDesc(cmdId)
         .addButton((btn) =>
           btn
             .setIcon(
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Obsidian's commands API is not typed
               this.plugin.settings.commandIcons[cmdId] ||
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Obsidian's commands API is not typed
                 command?.icon ||
@@ -759,7 +756,7 @@ export class ToolbarEditor extends Modal {
           btn
             .setIcon('pencil')
             .setTooltip('Change command')
-            .onClick(async () => {
+            .onClick(() => {
               new CommandSuggestModal(this.app, (command) => {
                 void (async () => {
                   this.toolbar.commands[index] = command.id;

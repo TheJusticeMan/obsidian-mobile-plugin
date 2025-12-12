@@ -548,7 +548,7 @@ export default class MobilePlugin extends Plugin {
         id: 'quick-audio-notes',
         name: 'Quick audio notes',
         icon: 'microphone',
-        callback: async () => {
+        callback: () => {
           // Toggle FAB record mode
           if (this.fabManager?.getMode() === 'recording') {
             this.fabManager?.setMode('default');
@@ -563,7 +563,7 @@ export default class MobilePlugin extends Plugin {
         id: 'end-recording-and-transcribe',
         name: 'End recording and transcribe',
         icon: 'microphone-off',
-        callback: async () => {
+        callback: () => {
           this.commandManager?.executeCommandById('file-explorer:new-file');
 
           const end = () => {
@@ -685,7 +685,7 @@ export default class MobilePlugin extends Plugin {
         this.wakeLock = null;
       } else {
         // Request wake lock
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- WakeLock API is not in standard TS lib
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- WakeLock API is not in standard TS lib
         this.wakeLock = await (navigator as any).wakeLock.request('screen');
 
         // Listen for wake lock release

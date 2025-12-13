@@ -541,8 +541,11 @@ export class MobileSearchLeaf extends ItemView {
         this.toggleFileSelection(file, card);
         // Show single file menu for the newly selected file
         this.showFileContextMenu(file, event);
+      } else if (this.selectedFiles.has(file.path)) {
+        // Already in selection mode and file is selected - show menu for all selected files
+        this.showMultipleFilesMenu(event);
       } else {
-        // Already in selection mode - show menu for this file without changing selection
+        // Already in selection mode and file is not selected - show menu for this file only
         this.showFileContextMenu(file, event);
       }
     });

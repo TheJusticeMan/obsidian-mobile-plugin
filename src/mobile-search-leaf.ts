@@ -540,6 +540,9 @@ export class MobileSearchLeaf extends ItemView {
         // Enter selection mode and select this file
         this.enterSelectionMode();
         this.toggleFileSelection(file, card);
+      } else if (!this.selectedFiles.has(file.path)) {
+        // If already in selection mode and this file is not selected, select it
+        this.toggleFileSelection(file, card);
       }
 
       // Show appropriate menu based on selection count

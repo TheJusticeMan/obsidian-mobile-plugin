@@ -668,7 +668,7 @@ export class MobileSearchLeaf extends ItemView {
     new ExtraButtonComponent(this.selectionCommandBar)
       .setIcon('ellipsis-vertical')
       .setTooltip('More actions')
-      .onClick(() => this.showMultipleFilesMenu());
+      .onClick(() => this.showSelectionMenu());
   }
 
   /**

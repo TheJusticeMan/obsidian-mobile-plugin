@@ -532,16 +532,17 @@ export class MobileSearchLeaf extends ItemView {
     });
 
     // Context menu handler (right-click / long-press)
-    // Enters selection mode if not already in it
+    // Enters selection mode if not already in it, then selects the file if unselected
     card.addEventListener('contextmenu', (event) => {
       event.preventDefault();
 
       if (!this.isSelectionMode) {
-        // Enter selection mode and select this file
+        // Enter selection mode when not already in it
         this.enterSelectionMode();
-        this.toggleFileSelection(file, card);
-      } else if (!this.selectedFiles.has(file.path)) {
-        // If already in selection mode and this file is not selected, select it
+      }
+
+      // Select this file if it's not already selected
+      if (!this.selectedFiles.has(file.path)) {
         this.toggleFileSelection(file, card);
       }
 

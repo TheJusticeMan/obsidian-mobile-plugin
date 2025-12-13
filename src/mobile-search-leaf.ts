@@ -532,27 +532,18 @@ export class MobileSearchLeaf extends ItemView {
     });
 
     // Context menu handler (right-click / long-press)
-    // Enters selection mode if not already in it, then selects the file if unselected
     card.addEventListener('contextmenu', (event) => {
       event.preventDefault();
 
       if (!this.isSelectionMode) {
-        // Enter selection mode when not already in it
+        // Enter selection mode and select this file
         this.enterSelectionMode();
-      }
-
-      // Select this file if it's not already selected
-      if (!this.selectedFiles.has(file.path)) {
         this.toggleFileSelection(file, card);
-      }
-
-      // Show appropriate menu based on selection count
-      if (this.selectedFiles.size === 1) {
-        // Show single file menu when only one file is selected
+        // Show single file menu for the newly selected file
         this.showFileContextMenu(file, event);
       } else {
-        // Show multiple files menu when multiple files are selected
-        this.showMultipleFilesMenu(event);
+        // Already in selection mode - show menu for this file without changing selection
+        this.showFileContextMenu(file, event);
       }
     });
   }

@@ -532,7 +532,6 @@ export class MobileSearchLeaf extends ItemView {
     });
 
     // Context menu handler (right-click / long-press)
-    // Enters selection mode if not already in it
     card.addEventListener('contextmenu', (event) => {
       event.preventDefault();
 
@@ -540,15 +539,14 @@ export class MobileSearchLeaf extends ItemView {
         // Enter selection mode and select this file
         this.enterSelectionMode();
         this.toggleFileSelection(file, card);
-      }
-
-      // Show appropriate menu based on selection count
-      if (this.selectedFiles.size === 1) {
-        // Show single file menu when only one file is selected
+        // Show single file menu for the newly selected file
         this.showFileContextMenu(file, event);
-      } else {
-        // Show multiple files menu when multiple files are selected
+      } else if (this.selectedFiles.has(file.path)) {
+        // Already in selection mode and file is selected - show menu for all selected files
         this.showMultipleFilesMenu(event);
+      } else {
+        // Already in selection mode and file is not selected - show menu for this file only
+        this.showFileContextMenu(file, event);
       }
     });
   }
@@ -668,7 +666,7 @@ export class MobileSearchLeaf extends ItemView {
     new ExtraButtonComponent(this.selectionCommandBar)
       .setIcon('ellipsis-vertical')
       .setTooltip('More actions')
-      .onClick(() => this.showMultipleFilesMenu());
+      .onClick(() => this.showSelectionMenu());
   }
 
   /**

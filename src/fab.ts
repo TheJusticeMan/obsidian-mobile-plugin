@@ -17,12 +17,6 @@ export class FABManager {
   private fabElements: Map<MarkdownView, ButtonComponent> = new Map();
   private currentMode: 'default' | 'recording' = 'default';
 
-  /*   setIcon(name: string): void {
-    this.fabElements.forEach((fab) => {
-      fab.setIcon(name);
-    });
-  }
- */
   setMode(mode: 'default' | 'recording'): void {
     this.currentMode = mode;
     this.fabElements.forEach((fab) => {

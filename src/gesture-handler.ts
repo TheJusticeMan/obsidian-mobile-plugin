@@ -1,12 +1,13 @@
 import { App } from 'obsidian';
+import { CommandManager } from './main';
 
-// Type for Obsidian's internal commands API (not in public API)
-interface ObsidianCommandsAPI {
-  commands?: {
-    executeCommandById?: (id: string) => unknown;
-  };
-}
-
+/**
+ * Represents a command that can be triggered by a gesture.
+ *
+ * @property name - The display name of the gesture command.
+ * @property commandId - The unique identifier for the command to execute.
+ * @property gesturePath - The path or pattern representing the gesture.
+ */
 export interface GestureCommand {
   name: string;
   commandId: string;
@@ -178,14 +179,15 @@ export class GestureHandler {
           this.element.removeClass('gesture-success');
         });
       });
-      (
-        this.app as unknown as ObsidianCommandsAPI
-      ).commands?.executeCommandById?.(bestMatch.commandId);
+      this.commandManager?.executeCommandById?.(bestMatch.commandId);
     } else {
       // Draw the gesture for user feedback
       this.drawGesture(normalizedInput);
       this.onUnknown(normalizedInput);
     }
+  }
+  get commandManager(): CommandManager | undefined {
+    return (this.app as { commands?: CommandManager }).commands;
   }
 
   normalizeLine(line: Offset[]): Offset[] {

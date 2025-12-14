@@ -10,16 +10,10 @@ import {
   TFolder,
 } from 'obsidian';
 
-import MobilePlugin from './main';
+import MobilePlugin, { CommandManager } from './main';
 import { GestureCommand } from './gesture-handler';
 
 // Type for Obsidian's internal commands API (not in public API)
-interface ObsidianCommandsAPI {
-  commands: {
-    commands: Record<string, Command>;
-    findCommand?: (id: string) => Command | undefined;
-  };
-}
 
 export interface ToolbarConfig {
   name: string;
@@ -241,9 +235,10 @@ export class CommandSuggestModal extends FuzzySuggestModal<Command> {
   constructor(app: App, onSubmit: (result: Command) => void) {
     super(app);
     this.onSubmit = onSubmit;
-    this.commands = Object.values(
-      (this.app as unknown as ObsidianCommandsAPI).commands.commands,
-    );
+    this.commands = Object.values(this.commandManager?.commands || {});
+  }
+  get commandManager(): CommandManager | undefined {
+    return (this.app as { commands?: CommandManager }).commands;
   }
 
   getItems(): Command[] {
@@ -731,9 +726,7 @@ export class ToolbarEditor extends Modal {
       );
 
     this.toolbar.commands.forEach((cmdId, index) => {
-      const command = (
-        this.app as unknown as ObsidianCommandsAPI
-      ).commands.findCommand?.(cmdId);
+      const command = this.commandManager?.findCommand?.(cmdId);
 
       const setting = new Setting(container)
         .setName(command?.name || cmdId)
@@ -855,6 +848,9 @@ export class ToolbarEditor extends Modal {
     );
     return this;
     // Additional settings for editing commands can be added here
+  }
+  get commandManager(): CommandManager | undefined {
+    return (this.app as { commands?: CommandManager }).commands;
   }
 
   onClose() {

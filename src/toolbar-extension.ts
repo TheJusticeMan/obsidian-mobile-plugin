@@ -9,24 +9,11 @@ import {
 import {
   App,
   ButtonComponent,
-  Command,
   ExtraButtonComponent,
   MarkdownView,
 } from 'obsidian';
-import MobilePlugin from './main';
+import MobilePlugin, { CommandManager } from './main';
 import { ContextType, ToolbarConfig, ToolbarEditor } from './settings';
-
-// Type for Obsidian's internal commands API (not in public API)
-interface CommandsMap {
-  [key: string]: Command;
-}
-
-interface ObsidianCommandsAPI {
-  commands?: CommandsMap & {
-    findCommand?: (id: string) => Command | undefined;
-    executeCommandById?: (id: string) => unknown;
-  };
-}
 
 /**
  * Creates a CodeMirror 6 ViewPlugin that displays a context-aware toolbar at the bottom
@@ -49,6 +36,9 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         // Find the editor container to anchor the toolbar
 
         this.updateTooltip(view);
+      }
+      get commandManager(): CommandManager | undefined {
+        return (this.app as { commands?: CommandManager }).commands;
       }
 
       hapticFeedback(duration = 10): void {
@@ -179,9 +169,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
        * Check if a command is available in the current context
        */
       isCommandAvailable(commandId: string, view: EditorView): boolean {
-        const command = (
-          this.app as unknown as ObsidianCommandsAPI
-        ).commands?.findCommand?.(commandId);
+        const command = this.commandManager?.findCommand?.(commandId);
 
         if (!command) {
           return false;
@@ -317,19 +305,19 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         this.tooltip = (
           view.dom.closest('.workspace-leaf-content') || view.dom
         ).createDiv({ cls: 'mobile-plugin-toolbar' });
-
         // Add swipe-to-expand functionality
-        this.addSwipeToExpandListener(this.tooltip);
+        if (this.tooltip) this.addSwipeToExpandListener(this.tooltip);
 
         // Get all available commands
-        const commands =
-          (this.app as unknown as ObsidianCommandsAPI).commands || {};
+        const commands = this.commandManager?.commands || {};
 
         // Add command buttons (only show available commands)
         activeToolbar.commands.forEach((commandId) => {
           const command = commands[commandId];
           const iconToUse =
-            this.plugin.settings.commandIcons[commandId] || command?.icon;
+            this.plugin.settings.commandIcons[commandId] ||
+            command?.icon ||
+            'question-mark-glyph';
 
           // Check if command is available in current context
           if (
@@ -345,9 +333,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                   // Haptic feedback on button click
                   this.hapticFeedback(10);
                   // Execute the command
-                  (
-                    this.app as unknown as ObsidianCommandsAPI
-                  ).commands?.executeCommandById?.(commandId);
+                  this.commandManager?.executeCommandById?.(commandId);
                   // Refocus editor to prevent focus loss
                   view.focus();
                 });
@@ -360,22 +346,25 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                   // Haptic feedback on button click
                   this.hapticFeedback(10);
                   // Execute the command
-                  (
-                    this.app as unknown as ObsidianCommandsAPI
-                  ).commands?.executeCommandById?.(commandId);
+                  this.commandManager?.executeCommandById?.(commandId);
                   // Refocus editor to prevent focus loss
                   view.focus();
                 });
             }
           }
         });
-        new ExtraButtonComponent(this.tooltip)
-          .setIcon('pencil')
-          .setTooltip('Edit toolbar')
-          .onClick(() => {
-            if (this.mainToolbar)
-              new ToolbarEditor(this.app, this.plugin, this.mainToolbar).open();
-          });
+        if (this.tooltip)
+          new ExtraButtonComponent(this.tooltip)
+            .setIcon('pencil')
+            .setTooltip('Edit toolbar')
+            .onClick(() => {
+              if (this.mainToolbar)
+                new ToolbarEditor(
+                  this.app,
+                  this.plugin,
+                  this.mainToolbar,
+                ).open();
+            });
       }
 
       destroy() {

@@ -1,10 +1,11 @@
 import {
+  App,
+  Command,
+  Component,
+  MarkdownView,
+  Notice,
   Platform,
   Plugin,
-  Notice,
-  Component,
-  App,
-  MarkdownView,
 } from 'obsidian';
 import { FABManager } from './fab';
 import {
@@ -26,14 +27,19 @@ interface WakeLockSentinel {
   addEventListener(type: 'release', listener: () => void): void;
 }
 
-interface NavigatorWithWakeLock extends Navigator {
+interface WakeLockNavigator {
   wakeLock?: {
     request: (type: string) => Promise<WakeLockSentinel>;
   };
 }
 
+export interface CommandsMap {
+  [key: string]: Command;
+}
+
 export interface CommandManager {
-  commands: Record<string, unknown>;
+  commands: CommandsMap;
+  findCommand?: (id: string) => Command | undefined;
   executeCommandById: (id: string) => void;
 }
 
@@ -68,6 +74,7 @@ export default class MobilePlugin extends Plugin {
     this.addCommand({
       id: 'keep-in-tablet-mode',
       name: 'Toggle keep in tablet mode',
+      icon: 'tablet-smartphone',
       callback: () => {
         if (this.kkep.isloaded) {
           this.removeChild(this.kkep);
@@ -693,7 +700,7 @@ export default class MobilePlugin extends Plugin {
       } else {
         // Request wake lock
         this.wakeLock =
-          (await (navigator as NavigatorWithWakeLock).wakeLock?.request(
+          (await (navigator as WakeLockNavigator).wakeLock?.request(
             'screen',
           )) || null;
 

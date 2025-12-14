@@ -85,7 +85,7 @@ export class MobileSearchLeaf extends ItemView {
   }
 
   getDisplayText(): string {
-    return 'Search';
+    return 'Quick search';
   }
 
   getIcon(): string {

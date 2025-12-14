@@ -12,6 +12,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better integration with other plugins.
 - Ask me for a feature to make it easyer to capture on the go
 
+## [1.2.3] - 2025-12-14
+
+### Added
+
+- **Tablet Mode**: Added icon to "Toggle keep in tablet mode" command.
+- **Toolbar**: Added default icon fallback for commands without icons.
+
+### Changed
+
+- **Refactoring**: Centralized `CommandManager` type definitions in `main.ts` and updated all files to use it, removing duplicate interfaces.
+- **Search**: Renamed "Search" view to "Quick search".
+- **Internal**: Improved type safety for accessing Obsidian's internal commands API.
+
+### Fixed
+
+- **Toolbar**: Added safety checks for tooltip creation to prevent potential errors.
+
 ## [1.2.2] - 2025-12-12
 
 ### Changed
@@ -21,11 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `ObsidianFileManagerAPI` interface for file manager operations
   - Added `NavigatorWithWakeLock` interface for Wake Lock API
   - Changed type assertions from `as any` to `as unknown as InterfaceName` for safer type narrowing
-  
 - **Code Quality**: Removed unnecessary `async` keywords from callbacks that don't use `await`
   - Updated event handlers in settings.ts (onClick, onChange callbacks)
   - Updated command callbacks in main.ts that don't perform async operations
-  
 - **Better Type Narrowing**: Improved TypeScript type predicates
   - Changed filter to use type predicate `f is TFolder` instead of type assertion
 
@@ -68,7 +83,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Allows other plugins to extend the context menu with custom bulk actions
   - Triggers `file-menu` event for single file selection (matching Obsidian's native behavior)
   - Enables seamless integration with file management plugins
-  
 - **Dynamic Select All Button**: The select all button now intelligently toggles based on selection state
   - Shows "Select all" when some or no files are selected
   - Changes to "Deselect all" when all files are selected
@@ -82,12 +96,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Long-press or right-click on any file card to enter selection mode and select that file
   - Removed 62 lines of swipe detection code for cleaner, more maintainable implementation
   - More intuitive and discoverable interaction pattern
-  
 - **Smart Menu Routing**: Context menu adapts based on selection count
   - 0 files selected → Automatically exits selection mode
   - 1 file selected → Shows single file menu with `file-menu` event
   - Multiple files selected → Shows multiple files menu with `files-menu` event
-  
 - **Lazy-Load Selection Support**: Files selected via "Select all" now properly show selection UI
   - Cards check selection state when rendered during scrolling
   - Ensures visual consistency for all selected files, even those not initially visible
@@ -125,22 +137,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Visual feedback: card slides right (up to 80px) during swipe
   - Smart detection distinguishes horizontal swipes from vertical scrolls
   - Threshold: 50px horizontal movement within 500ms
-  
 - **Selection Command Bar**: Replaces search bar when in selection mode
   - **Cancel button**: Exit selection mode and return to search
   - **Select All button**: Select all visible search results at once
   - **Selection counter**: Live display showing "X selected"
   - **Three-dot menu (•••)**: Opens bulk actions menu
-  
 - **Dynamic Card Behavior**: Context-aware interaction modes
   - Normal mode: Click opens file, context menu shows file options
   - Selection mode: Click toggles selection, context menu on selected card shows bulk actions
-  
 - **Bulk Operations**: Multiple files menu with error handling
   - **Delete files**: Delete all selected files with per-file error handling
   - User feedback via Notice API showing success/failure counts
   - Graceful handling of partial failures
-  
 - **Visual Selection Indicators**
   - Selected cards display 2px border with `--accent` color
   - Box shadow with accent color for depth

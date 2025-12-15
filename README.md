@@ -79,6 +79,16 @@ A dedicated search view optimized for mobile devices:
   - **Dynamic Select All button**: Button text changes to "Deselect all" when all files are selected, providing clear feedback
   - **Auto-exit**: Selection mode automatically exits when no files are selected
   - **Lazy-load support**: Selected files show proper UI even when rendered later during scrolling
+- **Open Tabs**: Option to display your currently open tabs for quick navigation.
+
+### Tab gestures
+
+Enhance your tab management in the mobile tab switcher:
+
+- **Swipe right**: Close a tab instantly.  
+  Note: Start the swipe from the middle of the tab for reliable detection.
+- **Drag and drop**: Reorder tabs by dragging one tab onto another.  
+  Note: Start dragging from the middle of the tab (not the edges) to avoid missed drags.
 
 ## Installation
 
@@ -94,17 +104,20 @@ A dedicated search view optimized for mobile devices:
 
 ### Settings
 
-| Setting                    | Description                                                    |
-| :------------------------- | :------------------------------------------------------------- |
-| **Show toolbars**          | Show context-aware toolbars at the bottom of the screen        |
-| **Show FAB**               | Show the FAB button at the bottom right of the screen          |
-| **Command confirmation**   | Show confirmation before selecting a new command for a gesture |
-| **Use Icons**              | Toggle between icon and text display in toolbars               |
-| **FAB long press**         | Select command to execute when the FAB is long-pressed         |
-| **FAB press**              | Select command to execute when the FAB is pressed              |
-| **Enable haptic feedback** | Vibrate on FAB and toolbar button interactions                 |
-| **Gesture Commands**       | Manage your created gestures (rename, reassign, delete)        |
-| **Reset to default**       | Restore all settings to their original defaults                |
+| Setting                    | Description                                                         |
+| :------------------------- | :------------------------------------------------------------------ |
+| **Show toolbars**          | Show context-aware toolbars at the bottom of the screen             |
+| **Show built-in toolbar**  | Show Obsidian's built-in mobile toolbar at the bottom of the screen |
+| **Show FAB**               | Show the FAB button at the bottom right of the screen               |
+| **Show tabs in search**    | Display open tabs when using the mobile search view                 |
+| **Tab reordering**         | Enable drag and drop to reorder tabs in the tab bar                 |
+| **Command confirmation**   | Show confirmation before selecting a new command for a gesture      |
+| **Use Icons**              | Toggle between icon and text display in toolbars                    |
+| **FAB long press**         | Select command to execute when the FAB is long-pressed              |
+| **FAB press**              | Select command to execute when the FAB is pressed                   |
+| **Enable haptic feedback** | Vibrate on FAB and toolbar button interactions                      |
+| **Gesture Commands**       | Manage your created gestures (rename, reassign, delete)             |
+| **Reset to default**       | Restore all settings to their original defaults                     |
 
 ### Toolbar Library
 

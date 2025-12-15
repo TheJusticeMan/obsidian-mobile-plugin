@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Search**: Fixed search pane opening empty after scrolling and reopening by resetting scroll position to prevent race conditions during initial render.
 - **Search**: Fixed search panel menu selection logic to correctly reflect file count and selection state.
 - **Performance**: Updated `throttleWithInterval` to prevent overlapping executions of async callbacks, ensuring smoother search and scroll handling.
 

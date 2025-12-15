@@ -51,7 +51,10 @@ export default class MobilePlugin extends Plugin {
 
   async onload() {
     await this.loadSettings();
-
+    document.body.toggleClass(
+      'hidden-mobile-toolbar',
+      !this.settings.showBuiltInToolbar,
+    );
     // Register wake lock toggle command
     this.addCommand({
       id: 'toggle-wake-lock',

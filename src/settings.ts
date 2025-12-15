@@ -86,6 +86,7 @@ export interface MobilePluginSettings {
   commandIcons: Record<string, string>; // Map of command ID to icon name
   enableHapticFeedback: boolean;
   gestureCommands: GestureCommand[];
+  showBuiltInToolbar: boolean;
 }
 
 export const DEFAULT_SETTINGS: MobilePluginSettings = {
@@ -116,6 +117,7 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
         'editor:toggle-highlight',
         'editor:insert-link',
         'editor:toggle-checklist-status',
+        'mobile:select-more',
         'mobile:quick-audio-notes',
         'mobile:keep-in-tablet-mode',
       ],
@@ -183,6 +185,7 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
       commands: [
         'editor:copy',
         'editor:cut',
+        'mobile:select-more',
         'editor:toggle-bold',
         'editor:toggle-italics',
         'editor:toggle-highlight',
@@ -242,6 +245,7 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
     'editor:cut': 'lucide-scissors-line-dashed',
   },
   enableHapticFeedback: true,
+  showBuiltInToolbar: false,
 };
 
 /**
@@ -538,6 +542,19 @@ export class MobileSettingsView {
         toggle
           .setValue(this.plugin.settings.showToolbars)
           .onChange((value) => this.sett('showToolbars', value)),
+      );
+    new Setting(containerEl)
+      .setName('Show built-in toolbar')
+      .setDesc(
+        "Show Obsidian's built-in mobile toolbar at the bottom of the screen",
+      )
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.showBuiltInToolbar)
+          .onChange((value) => {
+            this.sett('showBuiltInToolbar', value);
+            document.body.toggleClass('hidden-mobile-toolbar', !value);
+          }),
       );
 
     new Setting(containerEl)

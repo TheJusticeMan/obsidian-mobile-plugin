@@ -321,6 +321,10 @@ export class MobileSearchLeaf extends ItemView {
 
       // Clear previous results
       this.resultsContainer.empty();
+
+      // Reset scroll position to prevent scroll events during initial render
+      this.resultsContainer.scrollTop = 0;
+
       this.cleanupResultComponents();
       this.cardElementMap.clear();
       this.renderedResultsCount = 0;

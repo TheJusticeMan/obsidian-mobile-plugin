@@ -199,7 +199,7 @@ export class MobileSearchLeaf extends ItemView {
    */
   private setupIntersectionObserver(): void {
     this.intersectionObserver = new IntersectionObserver(
-      (entries) => {
+      entries => {
         for (const entry of entries) {
           if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
             // View is now visible, focus the input
@@ -226,7 +226,7 @@ export class MobileSearchLeaf extends ItemView {
   private setupFileChangeListener(): void {
     // Listen for file creation
     this.registerEvent(
-      this.app.vault.on('create', (file) => {
+      this.app.vault.on('create', file => {
         if (file instanceof TFile && this.shouldUpdateOnFileChange()) {
           void this.debouncedSearch();
         }
@@ -235,7 +235,7 @@ export class MobileSearchLeaf extends ItemView {
 
     // Listen for file deletion
     this.registerEvent(
-      this.app.vault.on('delete', (file) => {
+      this.app.vault.on('delete', file => {
         if (file instanceof TFile && this.shouldUpdateOnFileChange()) {
           void this.debouncedSearch();
         }
@@ -244,7 +244,7 @@ export class MobileSearchLeaf extends ItemView {
 
     // Listen for file rename
     this.registerEvent(
-      this.app.vault.on('rename', (file) => {
+      this.app.vault.on('rename', file => {
         if (file instanceof TFile && this.shouldUpdateOnFileChange()) {
           void this.debouncedSearch();
         }
@@ -253,7 +253,7 @@ export class MobileSearchLeaf extends ItemView {
 
     // Listen for file modification (updates mtime for sorting)
     this.registerEvent(
-      this.app.vault.on('modify', (file) => {
+      this.app.vault.on('modify', file => {
         if (file instanceof TFile && this.shouldUpdateOnFileChange()) {
           void this.debouncedSearch();
         }
@@ -340,7 +340,7 @@ export class MobileSearchLeaf extends ItemView {
 
       // Filter files by query (match filename or path), or show all if no query
       if (query) {
-        this.currentMatchingFiles = files.filter((file) => {
+        this.currentMatchingFiles = files.filter(file => {
           const filename = file.basename.toLowerCase();
           const path = file.path.toLowerCase();
           return filename.includes(query) || path.includes(query);
@@ -400,7 +400,7 @@ export class MobileSearchLeaf extends ItemView {
 
     // Render result cards in parallel for better performance
     await Promise.allSettled(
-      filesToRender.map((file) => this.renderResultCard(file)),
+      filesToRender.map(file => this.renderResultCard(file)),
     );
 
     this.renderedResultsCount = endIndex;
@@ -527,7 +527,7 @@ export class MobileSearchLeaf extends ItemView {
     });
 
     // Click handler - either toggle selection or open file
-    card.addEventListener('click', (event) => {
+    card.addEventListener('click', event => {
       if (this.isSelectionMode) {
         event.preventDefault();
         this.toggleFileSelection(file, card);
@@ -537,7 +537,7 @@ export class MobileSearchLeaf extends ItemView {
     });
 
     // Context menu handler (right-click / long-press)
-    card.addEventListener('contextmenu', (event) => {
+    card.addEventListener('contextmenu', event => {
       event.preventDefault();
 
       if (!this.isSelectionMode) {
@@ -562,7 +562,7 @@ export class MobileSearchLeaf extends ItemView {
   private showFileContextMenu(file: TFile, event?: MouseEvent): void {
     const menu = new Menu();
     menu
-      .addItem((item) =>
+      .addItem(item =>
         item
           .setTitle('Open in new tab')
           .setIcon('file-plus')
@@ -571,7 +571,7 @@ export class MobileSearchLeaf extends ItemView {
             void this.app.workspace.openLinkText(file.path, '', 'tab');
           }),
       )
-      .addItem((item) =>
+      .addItem(item =>
         item
           .setTitle('Open to the right')
           .setSection('open')
@@ -581,7 +581,7 @@ export class MobileSearchLeaf extends ItemView {
           }),
       )
       .addSeparator()
-      .addItem((item) =>
+      .addItem(item =>
         item
           .setTitle('Make a copy')
           .setIcon('documents')
@@ -610,7 +610,7 @@ export class MobileSearchLeaf extends ItemView {
     );
 
     menu
-      .addItem((item) =>
+      .addItem(item =>
         item
           .setTitle('Rename')
           .setIcon('pencil')
@@ -621,7 +621,7 @@ export class MobileSearchLeaf extends ItemView {
             ).promptForFileRename?.(file);
           }),
       )
-      .addItem((item) =>
+      .addItem(item =>
         item
           .setTitle('Delete')
           .setIcon('trash')
@@ -828,10 +828,10 @@ export class MobileSearchLeaf extends ItemView {
 
     const menu = new Menu();
     const selectedFileObjects = Array.from(this.selectedFiles)
-      .map((path) => this.app.vault.getAbstractFileByPath(path))
+      .map(path => this.app.vault.getAbstractFileByPath(path))
       .filter((f): f is TFile => f instanceof TFile);
     menu
-      .addItem((item) =>
+      .addItem(item =>
         item
           .setTitle(`Open ${this.selectedFiles.size} files`)
           .setIcon('folder-opened')
@@ -843,7 +843,7 @@ export class MobileSearchLeaf extends ItemView {
             }
           }),
       )
-      .addItem((item) =>
+      .addItem(item =>
         item
           .setTitle(`Delete ${this.selectedFiles.size} files`)
           .setIcon('trash')

@@ -235,7 +235,7 @@ async onload() {
 
 ```ts
 this.registerEvent(
-  this.app.workspace.on('file-open', (f) => {
+  this.app.workspace.on('file-open', f => {
     /* ... */
   }),
 );

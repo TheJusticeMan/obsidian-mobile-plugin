@@ -141,11 +141,11 @@ Bind toolbars to editing contexts:
 
 Precise cursor movement commands for mobile editing:
 
-| Command | Icon | Description |
-| :------ | :--- | :---------- |
-| `Up` | arrow-up | Move cursor up one line |
-| `Down` | arrow-down | Move cursor down one line |
-| `Left` | arrow-left | Move cursor left one character with line wrapping |
+| Command | Icon        | Description                                        |
+| :------ | :---------- | :------------------------------------------------- |
+| `Up`    | arrow-up    | Move cursor up one line                            |
+| `Down`  | arrow-down  | Move cursor down one line                          |
+| `Left`  | arrow-left  | Move cursor left one character with line wrapping  |
 | `Right` | arrow-right | Move cursor right one character with line wrapping |
 
 ### Selection Commands
@@ -154,37 +154,37 @@ Precise cursor movement commands for mobile editing:
 
 Expand your selection to word boundaries:
 
-| Command | Icon | Description |
-| :------ | :--- | :---------- |
-| `Expand down` | chevrons-down | Extend selection to next word boundary or line end |
-| `Expand up` | chevrons-up | Extend selection backward to previous word boundary |
+| Command       | Icon          | Description                                         |
+| :------------ | :------------ | :-------------------------------------------------- |
+| `Expand down` | chevrons-down | Extend selection to next word boundary or line end  |
+| `Expand up`   | chevrons-up   | Extend selection backward to previous word boundary |
 
 #### Selection Contract
 
 Shrink your selection:
 
-| Command | Icon | Description |
-| :------ | :--- | :---------- |
-| `Shrink down` | chevron-down | Deselect text from the end |
-| `Shrink up` | chevron-up | Deselect text from the start |
+| Command       | Icon         | Description                  |
+| :------------ | :----------- | :--------------------------- |
+| `Shrink down` | chevron-down | Deselect text from the end   |
+| `Shrink up`   | chevron-up   | Deselect text from the start |
 
 #### Smart Selection
 
 Intelligent text selection commands:
 
-| Command | Icon | Description |
-| :------ | :--- | :---------- |
-| `Select word` | text-cursor | Select word at cursor (finds next word if on whitespace) |
-| `Select sentence` | type | Select sentence at cursor (bounded by `.!?`) |
-| `Select line` | minus | Select entire line including newline |
-| `Select all` | file-text | Select entire document |
+| Command           | Icon        | Description                                              |
+| :---------------- | :---------- | :------------------------------------------------------- |
+| `Select word`     | text-cursor | Select word at cursor (finds next word if on whitespace) |
+| `Select sentence` | type        | Select sentence at cursor (bounded by `.!?`)             |
+| `Select line`     | minus       | Select entire line including newline                     |
+| `Select all`      | file-text   | Select entire document                                   |
 
 #### Progressive Selection
 
 Single command for incremental selection expansion:
 
-| Command | Icon | Description |
-| :------ | :--- | :---------- |
+| Command       | Icon       | Description                                                             |
+| :------------ | :--------- | :---------------------------------------------------------------------- |
 | `Select more` | maximize-2 | Progressively expands selection: nothing → word → sentence → line → all |
 
 ## Development

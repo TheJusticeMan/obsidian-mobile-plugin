@@ -57,12 +57,12 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         let touchStartY = 0;
         let hasToggled = false;
 
-        toolbar.addEventListener('touchstart', (e) => {
+        toolbar.addEventListener('touchstart', e => {
           touchStartY = e.touches[0].clientY;
           hasToggled = false;
         });
 
-        toolbar.addEventListener('touchmove', (e) => {
+        toolbar.addEventListener('touchmove', e => {
           const touchY = e.touches[0].clientY;
           const deltaY = touchStartY - touchY;
 
@@ -127,7 +127,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
           for (const binding of this.plugin.settings.contextBindings) {
             if (binding.contextType === contextType) {
               const toolbar = this.plugin.settings.toolbars.find(
-                (t) => t.id === binding.toolbarId,
+                t => t.id === binding.toolbarId,
               );
               if (toolbar) {
                 matchingToolbars.push(toolbar);
@@ -331,7 +331,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         const commands = this.commandManager?.commands || {};
 
         // Add command buttons (only show available commands)
-        activeToolbar.commands.forEach((commandId) => {
+        activeToolbar.commands.forEach(commandId => {
           const command = commands[commandId];
           const iconToUse =
             this.plugin.settings.commandIcons[commandId] ||
@@ -356,7 +356,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
               new ButtonComponent(this.tooltip)
                 .setButtonText(command?.name || commandId)
                 .setTooltip(command?.name || commandId)
-                .onClick((e) => {
+                .onClick(e => {
                   e.preventDefault();
                   // Haptic feedback on button click
                   this.hapticFeedback(10);

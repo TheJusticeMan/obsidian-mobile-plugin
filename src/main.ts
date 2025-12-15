@@ -57,6 +57,32 @@ export default class MobilePlugin extends Plugin {
     );
 
     // Register wake lock toggle command
+    this.registerCommands();
+
+    this.kkep = new keepInTabletMode(this.app, this);
+
+    // Initialize FAB Manager
+    this.fabManager = new FABManager(this.app, this);
+
+    // Register the Mobile Search view
+    this.registerView(
+      VIEW_TYPE_MOBILE_SEARCH,
+      leaf => new MobileSearchLeaf(leaf),
+    );
+
+    // Register the CodeMirror 6 toolbar extension with multiple context-aware toolbars
+    this.registerEditorExtension(createToolbarExtension(this.app, this));
+    // add ribbon icon
+    this.addRibbonIcon('plus', 'Create new note', () => this.createNewNote());
+    this.addRibbonIcon('search', 'Open search', () => {
+      void this.activateMobileSearchView();
+    });
+
+    // Add settings tab
+    this.addSettingTab(new MobileSettingTab(this.app, this));
+  }
+
+  private registerCommands() {
     this.addCommand({
       id: 'toggle-wake-lock',
       name: 'Toggle wake lock',
@@ -73,8 +99,6 @@ export default class MobilePlugin extends Plugin {
         new mySettingsModel(this.app, this).open();
       },
     });
-
-    this.kkep = new keepInTabletMode(this.app, this);
 
     this.addCommand({
       id: 'keep-in-tablet-mode',
@@ -94,7 +118,7 @@ export default class MobilePlugin extends Plugin {
       id: 'cursor-up',
       name: 'Up',
       icon: 'arrow-up',
-      editorCallback: (editor) => {
+      editorCallback: editor => {
         const cursor = editor.getCursor();
         if (cursor.line > 0) {
           editor.setCursor({ line: cursor.line - 1, ch: cursor.ch });
@@ -106,7 +130,7 @@ export default class MobilePlugin extends Plugin {
       id: 'cursor-down',
       name: 'Down',
       icon: 'arrow-down',
-      editorCallback: (editor) => {
+      editorCallback: editor => {
         const cursor = editor.getCursor();
         const lastLine = editor.lastLine();
         if (cursor.line < lastLine) {
@@ -119,7 +143,7 @@ export default class MobilePlugin extends Plugin {
       id: 'cursor-left',
       name: 'Left',
       icon: 'arrow-left',
-      editorCallback: (editor) => {
+      editorCallback: editor => {
         const cursor = editor.getCursor();
         if (cursor.ch > 0) {
           editor.setCursor({ line: cursor.line, ch: cursor.ch - 1 });
@@ -135,7 +159,7 @@ export default class MobilePlugin extends Plugin {
       id: 'cursor-right',
       name: 'Right',
       icon: 'arrow-right',
-      editorCallback: (editor) => {
+      editorCallback: editor => {
         const cursor = editor.getCursor();
         const currentLine = editor.getLine(cursor.line);
         if (cursor.ch < currentLine.length) {
@@ -152,7 +176,7 @@ export default class MobilePlugin extends Plugin {
       id: 'select-plus-bottom',
       name: 'Expand down',
       icon: 'chevrons-down',
-      editorCallback: (editor) => {
+      editorCallback: editor => {
         const cursor = editor.getCursor('to');
         const currentLine = editor.getLine(cursor.line);
 
@@ -184,7 +208,7 @@ export default class MobilePlugin extends Plugin {
       id: 'select-plus-top',
       name: 'Expand up',
       icon: 'chevrons-up',
-      editorCallback: (editor) => {
+      editorCallback: editor => {
         const cursor = editor.getCursor('from');
         const currentLine = editor.getLine(cursor.line);
 
@@ -220,7 +244,7 @@ export default class MobilePlugin extends Plugin {
       id: 'select-minus-bottom',
       name: 'Shrink down',
       icon: 'chevron-down',
-      editorCallback: (editor) => {
+      editorCallback: editor => {
         const from = editor.getCursor('from');
         const to = editor.getCursor('to');
 
@@ -254,7 +278,7 @@ export default class MobilePlugin extends Plugin {
       id: 'select-minus-top',
       name: 'Shrink up',
       icon: 'chevron-up',
-      editorCallback: (editor) => {
+      editorCallback: editor => {
         const from = editor.getCursor('from');
         const to = editor.getCursor('to');
 
@@ -289,7 +313,7 @@ export default class MobilePlugin extends Plugin {
       id: 'select-word',
       name: 'Select word',
       icon: 'text-cursor',
-      editorCallback: (editor) => {
+      editorCallback: editor => {
         const cursor = editor.getCursor();
         const currentLine = editor.getLine(cursor.line);
 
@@ -334,7 +358,7 @@ export default class MobilePlugin extends Plugin {
       id: 'select-sentence',
       name: 'Select sentence',
       icon: 'type',
-      editorCallback: (editor) => {
+      editorCallback: editor => {
         const cursor = editor.getCursor();
         const text = editor.getValue();
         const offset = editor.posToOffset(cursor);
@@ -386,7 +410,7 @@ export default class MobilePlugin extends Plugin {
       id: 'select-line',
       name: 'Select line',
       icon: 'minus',
-      editorCallback: (editor) => {
+      editorCallback: editor => {
         const cursor = editor.getCursor();
         const lastLine = editor.lastLine();
 
@@ -411,7 +435,7 @@ export default class MobilePlugin extends Plugin {
       id: 'select-all',
       name: 'Select all',
       icon: 'file-text',
-      editorCallback: (editor) => {
+      editorCallback: editor => {
         const lastLine = editor.lastLine();
         const lastLineText = editor.getLine(lastLine);
 
@@ -428,7 +452,7 @@ export default class MobilePlugin extends Plugin {
       id: 'select-more',
       name: 'Select more',
       icon: 'maximize-2',
-      editorCallback: (editor) => {
+      editorCallback: editor => {
         const from = editor.getCursor('from');
         const to = editor.getCursor('to');
         const hasSelection = !(from.line === to.line && from.ch === to.ch);
@@ -556,7 +580,6 @@ export default class MobilePlugin extends Plugin {
     });
 
     // if there is PureChutLLM plugin, and a recorder command, add a command to trigger it
-
     const hasAudioRecorder =
       this.commandManager?.commands['audio-recorder:start'] &&
       this.commandManager?.commands['audio-recorder:stop'];
@@ -610,15 +633,6 @@ export default class MobilePlugin extends Plugin {
       });
     }
 
-    // Initialize FAB Manager
-    this.fabManager = new FABManager(this.app, this);
-
-    // Register the Mobile Search view
-    this.registerView(
-      VIEW_TYPE_MOBILE_SEARCH,
-      (leaf) => new MobileSearchLeaf(leaf),
-    );
-
     // Add command to open Mobile Search
     this.addCommand({
       id: 'open-search',
@@ -628,17 +642,6 @@ export default class MobilePlugin extends Plugin {
         void this.activateMobileSearchView();
       },
     });
-
-    // Register the CodeMirror 6 toolbar extension with multiple context-aware toolbars
-    this.registerEditorExtension(createToolbarExtension(this.app, this));
-    // add ribbon icon
-    this.addRibbonIcon('plus', 'Create new note', () => this.createNewNote());
-    this.addRibbonIcon('search', 'Open search', () => {
-      void this.activateMobileSearchView();
-    });
-
-    // Add settings tab
-    this.addSettingTab(new MobileSettingTab(this.app, this));
   }
 
   get commandManager(): CommandManager | undefined {

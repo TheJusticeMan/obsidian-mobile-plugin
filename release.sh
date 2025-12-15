@@ -14,10 +14,10 @@ echo "Staging all modified files..."
 git add .
 
 if ! git diff --cached --quiet; then
-	echo "Committing your changes..."
-	git commit -m "Release $version"
+  echo "Committing your changes..."
+  git commit -m "Release $version"
 else
-	echo "No changes to commit."
+  echo "No changes to commit."
 fi
 
 echo "Creating a tag for version $version..."

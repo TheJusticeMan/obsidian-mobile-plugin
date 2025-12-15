@@ -193,7 +193,7 @@ export class GestureHandler {
   normalizeLine(line: Offset[]): Offset[] {
     if (line.length === 0) return [];
     const start = line[0];
-    const translated = line.map((p) => p.subtract(start));
+    const translated = line.map(p => p.subtract(start));
     return this.resample(translated, 40);
   }
 

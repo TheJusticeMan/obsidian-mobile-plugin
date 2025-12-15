@@ -19,7 +19,7 @@ export class FABManager {
 
   setMode(mode: 'default' | 'recording'): void {
     this.currentMode = mode;
-    this.fabElements.forEach((fab) => {
+    this.fabElements.forEach(fab => {
       if (fab instanceof MobileFAB) {
         fab.setMode(mode);
       }
@@ -87,7 +87,7 @@ export class FABManager {
    * Cleans up all FABs
    */
   destroy(): void {
-    this.fabElements.forEach((fab) => {
+    this.fabElements.forEach(fab => {
       if (fab instanceof MobileFAB) {
         fab.teardown();
       }
@@ -116,8 +116,8 @@ class MobileFAB extends ButtonComponent {
         this.hapticFeedback(10);
         plugin.triggerCMDEvent('fab-press');
       })
-      .then((btn) =>
-        btn.buttonEl.addEventListener('contextmenu', (e) => {
+      .then(btn =>
+        btn.buttonEl.addEventListener('contextmenu', e => {
           if (this.mode === 'recording') {
             e.preventDefault();
             return;
@@ -127,7 +127,7 @@ class MobileFAB extends ButtonComponent {
           plugin.triggerCMDEvent('fab-longpress');
         }),
       )
-      .then((btn) => {
+      .then(btn => {
         // Add recording mode listeners
         const startRecording = (e: Event) => {
           if (this.mode !== 'recording') return;
@@ -155,7 +155,7 @@ class MobileFAB extends ButtonComponent {
         });
         btn.buttonEl.addEventListener('mousedown', startRecording);
         btn.buttonEl.addEventListener('mouseup', stopRecording);
-        btn.buttonEl.addEventListener('mouseleave', (e) => {
+        btn.buttonEl.addEventListener('mouseleave', e => {
           if (
             this.mode === 'recording' &&
             btn.buttonEl.hasClass('is-recording')
@@ -168,9 +168,9 @@ class MobileFAB extends ButtonComponent {
           this.app,
           btn.buttonEl,
           plugin.settings.gestureCommands,
-          (line) => {
+          line => {
             if (this.mode === 'recording') return;
-            new NewGesture(this.app, this.plugin, line).then((g) =>
+            new NewGesture(this.app, this.plugin, line).then(g =>
               this.plugin.settings.showCommandConfirmation
                 ? g.open()
                 : g.openCommandSelection(),
@@ -216,16 +216,14 @@ class NewGesture extends Modal {
     new Setting(this.contentEl)
       .setName('Assign action to new gesture')
       .setDesc('Select a command to assign to the new gesture.')
-      .addButton((btn) =>
+      .addButton(btn =>
         btn.setButtonText('Select command').onClick(() => {
           this.openCommandSelection();
           this.close();
         }),
       )
-      .addButton((btn) =>
-        btn.setButtonText('Cancel').onClick(() => this.close()),
-      )
-      .addButton((btn) =>
+      .addButton(btn => btn.setButtonText('Cancel').onClick(() => this.close()))
+      .addButton(btn =>
         btn
           .setButtonText('Skip to command selection')
           .setCta()
@@ -245,10 +243,7 @@ class NewGesture extends Modal {
         name: command.name || 'unnamed',
         commandId: command.id,
         gesturePath: JSON.stringify(
-          this.line.map((p) => [
-            Number(p.x.toFixed(2)),
-            Number(p.y.toFixed(2)),
-          ]),
+          this.line.map(p => [Number(p.x.toFixed(2)), Number(p.y.toFixed(2))]),
         ),
       });
 

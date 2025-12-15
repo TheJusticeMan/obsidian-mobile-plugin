@@ -6,7 +6,7 @@
   "scripts": {
     "init": "npm install && npm run build",
     "dev": "node esbuild.config.mjs",
-    "format": "prettier --write \"src/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.ts\" && prettier --write \"*.md\"",
     "lint": "eslint src/ --ext .ts",
     "build": "npm run format && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
     "version": "node version-bump.mjs && git add manifest.json versions.json",
@@ -36,7 +36,8 @@
     "eslint-plugin-obsidianmd": "^0.1.9",
     "globals": "^16.5.0",
     "obsidian": "latest",
-    "prettier": "^3.7.1",
+    "prettier": "^3.7.4",
+    "prettier-plugin-sh": "^0.18.0",
     "tslib": "2.4.0",
     "typescript": "^4.9.5",
     "typescript-eslint": "^8.49.0"

@@ -35,7 +35,7 @@ const allowedContexts = [
 
 export type ContextType = (typeof allowedContexts)[number];
 
-const contextTypeBindings = allowedContexts.map((contextType) => ({
+const contextTypeBindings = allowedContexts.map(contextType => ({
   id: `binding-${Date.now()}-${contextType}`,
   contextType: contextType,
   toolbarId: '',
@@ -297,13 +297,13 @@ export class IconSuggestModal extends SuggestModal<string> {
   icons: string[];
   getSuggestions(query: string): string[] | Promise<string[]> {
     const lowerQuery = query.toLowerCase();
-    return this.icons.filter((icon) => icon.toLowerCase().includes(lowerQuery));
+    return this.icons.filter(icon => icon.toLowerCase().includes(lowerQuery));
   }
 
   renderSuggestion(value: string, el: HTMLElement): void {
     new Setting(el)
       .setName(value)
-      .addExtraButton((btn) => btn.setIcon(`${value}`));
+      .addExtraButton(btn => btn.setIcon(`${value}`));
   }
 
   constructor(app: App, onSubmit: (result: string) => void) {
@@ -391,17 +391,17 @@ export class MobileSettingsView {
 
   private renderContextBindings(containerEl: HTMLElement) {
     this.renderHeader(containerEl, 'bindings');
-    contextTypeBindings.forEach((ctb) => {
+    contextTypeBindings.forEach(ctb => {
       new Setting(containerEl)
         .setName(this.getContextDisplayName(ctb.contextType))
-        .then((setting) => {
+        .then(setting => {
           this.plugin.settings.contextBindings.forEach((b, i) => {
             if (b.contextType === ctb.contextType) {
-              setting.addButton((btn) =>
+              setting.addButton(btn =>
                 btn
                   .setButtonText(
                     this.plugin.settings.toolbars.find(
-                      (t) => t.id === b.toolbarId,
+                      t => t.id === b.toolbarId,
                     )?.name || b.toolbarId,
                   )
                   .onClick(() => {
@@ -413,7 +413,7 @@ export class MobileSettingsView {
             }
           });
         })
-        .addExtraButton((button) =>
+        .addExtraButton(button =>
           button
             .setIcon('plus')
             .setTooltip('Add new binding')
@@ -421,7 +421,7 @@ export class MobileSettingsView {
               new ContextBindingChooser(
                 this.app,
                 this.plugin.settings.toolbars,
-                (toolbar) => {
+                toolbar => {
                   void (async () => {
                     const newBinding: ContextBinding = {
                       contextType: ctb.contextType,
@@ -446,7 +446,7 @@ export class MobileSettingsView {
     new Setting(containerEl)
       .setHeading()
       .setClass('mobile-plugin-settings-header')
-      .addButton((button) => {
+      .addButton(button => {
         button.setButtonText('General settings').onClick(() => {
           this.renderGeneralSettings(containerEl);
         });
@@ -454,7 +454,7 @@ export class MobileSettingsView {
           button.setCta();
         }
       })
-      .addButton((button) => {
+      .addButton(button => {
         button.setButtonText('Context bindings').onClick(() => {
           this.renderContextBindings(containerEl);
         });
@@ -462,9 +462,9 @@ export class MobileSettingsView {
           button.setCta();
         }
       })
-      .then((setting) =>
-        this.plugin.settings.toolbars.forEach((toolbar) => {
-          setting.addButton((button) => {
+      .then(setting =>
+        this.plugin.settings.toolbars.forEach(toolbar => {
+          setting.addButton(button => {
             button
               .setButtonText(`Edit toolbar: ${toolbar.name}`)
               .onClick(() => {
@@ -477,7 +477,7 @@ export class MobileSettingsView {
           });
         }),
       )
-      .addButton((button) => {
+      .addButton(button => {
         button.setButtonText('Add new toolbar').onClick(async () => {
           const newToolbar: ToolbarConfig = {
             id: `toolbar-${Date.now()}`,
@@ -525,7 +525,7 @@ export class MobileSettingsView {
             this.display();
           })
       ); */
-    new Setting(containerEl).addButton((button) =>
+    new Setting(containerEl).addButton(button =>
       button
         .setButtonText('Reset to default settings')
         .setWarning()
@@ -538,20 +538,20 @@ export class MobileSettingsView {
     new Setting(containerEl)
       .setName('Show toolbars')
       .setDesc('Show context-aware toolbars at the bottom of the screen')
-      .addToggle((toggle) =>
+      .addToggle(toggle =>
         toggle
           .setValue(this.plugin.settings.showToolbars)
-          .onChange((value) => this.sett('showToolbars', value)),
+          .onChange(value => this.sett('showToolbars', value)),
       );
     new Setting(containerEl)
       .setName('Show built-in toolbar')
       .setDesc(
         "Show Obsidian's built-in mobile toolbar at the bottom of the screen",
       )
-      .addToggle((toggle) =>
+      .addToggle(toggle =>
         toggle
           .setValue(this.plugin.settings.showBuiltInToolbar)
-          .onChange((value) => {
+          .onChange(value => {
             this.sett('showBuiltInToolbar', value);
             document.body.toggleClass('hidden-mobile-toolbar', !value);
           }),
@@ -560,39 +560,39 @@ export class MobileSettingsView {
     new Setting(containerEl)
       .setName('Show floating action button')
       .setDesc('Show the button at the bottom right of the screen')
-      .addToggle((toggle) =>
+      .addToggle(toggle =>
         toggle
           .setValue(this.plugin.settings.showFAB)
-          .onChange((value) => this.sett('showFAB', value)),
+          .onChange(value => this.sett('showFAB', value)),
       );
 
     new Setting(containerEl)
       .setName('Command confirmation')
       .setDesc('Show confirmation before selecting a new command for a gesture')
-      .addToggle((toggle) =>
+      .addToggle(toggle =>
         toggle
           .setValue(this.plugin.settings.showCommandConfirmation)
-          .onChange((value) => this.sett('showCommandConfirmation', value)),
+          .onChange(value => this.sett('showCommandConfirmation', value)),
       );
     new Setting(containerEl)
       .setName('Use icons in toolbar')
       .setDesc(
         'Display icons instead of text labels for toolbar commands. You can customize icons for each command below.',
       )
-      .addToggle((toggle) =>
+      .addToggle(toggle =>
         toggle
           .setValue(this.plugin.settings.useIcons)
-          .onChange((value) => this.sett('useIcons', value)),
+          .onChange(value => this.sett('useIcons', value)),
       );
 
     // Haptic feedback setting
     new Setting(containerEl)
       .setName('Enable haptic feedback')
       .setDesc('Vibrate on button interactions (mobile devices only)')
-      .addToggle((toggle) =>
+      .addToggle(toggle =>
         toggle
           .setValue(this.plugin.settings.enableHapticFeedback)
-          .onChange((value) => this.sett('enableHapticFeedback', value)),
+          .onChange(value => this.sett('enableHapticFeedback', value)),
       );
 
     Object.entries(MobileCMDEventsDesc).forEach(
@@ -600,13 +600,13 @@ export class MobileSettingsView {
         new Setting(containerEl)
           .setName(name)
           .setDesc(desc)
-          .addButton((button) =>
+          .addButton(button =>
             button
               .setButtonText(
                 this.plugin.settings.MobileCMDEvents[event] || 'Select command',
               )
               .onClick(() => {
-                new CommandSuggestModal(this.app, (command) => {
+                new CommandSuggestModal(this.app, command => {
                   void (async () => {
                     this.plugin.settings.MobileCMDEvents[event] = command.id;
                     await this.plugin.saveSettings();
@@ -615,7 +615,7 @@ export class MobileSettingsView {
                 }).open();
               }),
           )
-          .addExtraButton((btn) =>
+          .addExtraButton(btn =>
             btn
               .setIcon('trash')
               .setTooltip('Clear command')
@@ -631,9 +631,9 @@ export class MobileSettingsView {
       new Setting(containerEl)
         .setName(`Gesture command: ${gc.name}`)
         .setDesc(`ID: ${gc.commandId}`)
-        .addButton((button) =>
+        .addButton(button =>
           button.setButtonText(gc.name).onClick(() => {
-            new CommandSuggestModal(this.app, (command) => {
+            new CommandSuggestModal(this.app, command => {
               void (async () => {
                 gc.commandId = command.id;
                 gc.name = command.name;
@@ -643,7 +643,7 @@ export class MobileSettingsView {
             }).open();
           }),
         )
-        .addExtraButton((btn) =>
+        .addExtraButton(btn =>
           btn
             .setIcon('trash')
             .setTooltip('Delete gesture command')
@@ -776,13 +776,13 @@ export class ToolbarEditor extends Modal {
     new Setting(container)
       .setName(this.toolbar.name)
       .setDesc(`${this.plugin.getBinds(this.toolbar.id).join(', ')}`)
-      .then((setting) =>
-        this.plugin.getBinds(this.toolbar.id).forEach((bind) => {
-          setting.addButton((button) =>
+      .then(setting =>
+        this.plugin.getBinds(this.toolbar.id).forEach(bind => {
+          setting.addButton(button =>
             button.setButtonText(bind).onClick(() => {
               this.plugin.settings.contextBindings =
                 this.plugin.settings.contextBindings.filter(
-                  (b) =>
+                  b =>
                     !(
                       b.contextType === bind && b.toolbarId === this.toolbar.id
                     ),
@@ -793,14 +793,14 @@ export class ToolbarEditor extends Modal {
           );
         }),
       )
-      .addButton((btn) =>
+      .addButton(btn =>
         btn
           .setButtonText('Add binding')
           .setIcon('plus')
           .onClick(() => {
             new ContextSelectionModal(
               this.app,
-              (binding) => {
+              binding => {
                 void (async () => {
                   binding.toolbarId = this.toolbar.id;
                   this.plugin.settings.contextBindings.push(binding);
@@ -813,28 +813,28 @@ export class ToolbarEditor extends Modal {
           }),
       )
       .addText(
-        (text) =>
+        text =>
           (text
             .setPlaceholder('Toolbar name')
             .setValue(this.toolbar.name)
-            .onChange(async (value) => {
+            .onChange(async value => {
               this.toolbar.name = value;
               await this.plugin.saveSettings();
             }).inputEl.onblur = () => this.render(container)),
       )
-      .addExtraButton((btn) =>
+      .addExtraButton(btn =>
         btn
           .setIcon('trash')
           .setTooltip('Delete toolbar')
           .onClick(async () => {
             // Remove toolbar and any bindings using it
             const toolbarIndex = this.plugin.settings.toolbars.findIndex(
-              (t) => t.id === this.toolbar.id,
+              t => t.id === this.toolbar.id,
             );
             this.plugin.settings.toolbars.splice(toolbarIndex, 1);
             this.plugin.settings.contextBindings =
               this.plugin.settings.contextBindings.filter(
-                (b) => b.toolbarId !== this.toolbar.id,
+                b => b.toolbarId !== this.toolbar.id,
               );
             await this.plugin.saveSettings();
             container.empty();
@@ -849,7 +849,7 @@ export class ToolbarEditor extends Modal {
       const setting = new Setting(container)
         .setName(command?.name || cmdId)
         .setDesc(cmdId)
-        .addButton((btn) =>
+        .addButton(btn =>
           btn
             .setIcon(
               this.plugin.settings.commandIcons[cmdId] ||
@@ -858,7 +858,7 @@ export class ToolbarEditor extends Modal {
             )
             .setTooltip('Change icon')
             .onClick(() => {
-              new IconSuggestModal(this.app, (icon) => {
+              new IconSuggestModal(this.app, icon => {
                 void (async () => {
                   this.plugin.settings.commandIcons[cmdId] = icon;
                   await this.plugin.saveSettings();
@@ -867,12 +867,12 @@ export class ToolbarEditor extends Modal {
               }).open();
             }),
         )
-        .addExtraButton((btn) =>
+        .addExtraButton(btn =>
           btn
             .setIcon('pencil')
             .setTooltip('Change command')
             .onClick(() => {
-              new CommandSuggestModal(this.app, (command) => {
+              new CommandSuggestModal(this.app, command => {
                 void (async () => {
                   this.toolbar.commands[index] = command.id;
                   await this.plugin.saveSettings();
@@ -881,7 +881,7 @@ export class ToolbarEditor extends Modal {
               }).open();
             }),
         )
-        .addExtraButton((btn) =>
+        .addExtraButton(btn =>
           btn
             .setIcon('trash')
             .setTooltip('Remove command')
@@ -896,7 +896,7 @@ export class ToolbarEditor extends Modal {
       el.draggable = true;
       el.addClass('mobile-plugin-draggable-item');
 
-      el.ondragstart = (event) => {
+      el.ondragstart = event => {
         event.dataTransfer?.setData('text/plain', index.toString());
         el.addClass('is-dragging');
       };
@@ -905,7 +905,7 @@ export class ToolbarEditor extends Modal {
         el.removeClass('is-dragging');
       };
 
-      el.ondragover = (event) => {
+      el.ondragover = event => {
         event.preventDefault();
         const rect = el.getBoundingClientRect();
         const midY = rect.top + rect.height / 2;
@@ -925,7 +925,7 @@ export class ToolbarEditor extends Modal {
         el.removeClass('drag-over-bottom');
       };
 
-      el.ondrop = async (event) => {
+      el.ondrop = async event => {
         event.preventDefault();
         el.removeClass('drag-over-top');
         el.removeClass('drag-over-bottom');
@@ -953,9 +953,9 @@ export class ToolbarEditor extends Modal {
         }
       };
     });
-    new Setting(container).addButton((button) =>
+    new Setting(container).addButton(button =>
       button.setButtonText('Add command').onClick(() => {
-        new CommandSuggestModal(this.app, (command) => {
+        new CommandSuggestModal(this.app, command => {
           void (async () => {
             this.toolbar.commands.push(command.id);
             await this.plugin.saveSettings();

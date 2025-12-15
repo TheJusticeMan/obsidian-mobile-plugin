@@ -7,12 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Planned
+### Added
 
-- Better integration with other plugins.
-- Ask me for a feature to make it easyer to capture on the go
+- **Toolbar**: Significantly expanded context-aware toolbars.
+  - Added new toolbars: `Table actions`, `Heading actions`, `Code block actions`, `Blockquote actions`, `Link actions`, `Selection`, and `All commands`.
+  - Added support for new contexts: `task`, `heading`, `code-block`, `table`, `blockquote`, and `link`.
+  - Added many new commands to default toolbars for better mobile accessibility.
+  - Added custom icons for heading and table commands.
 
-## [1.2.3] - 2025-12-14
+### Changed
+
+- **Toolbar**: Improved toolbar rendering logic and context detection prioritization.
+- **Toolbar**: Renamed `showTooltip` to `renderToolbar` for clarity.
+
+## [1.2.4] - 2025-12-15
 
 ### Added
 

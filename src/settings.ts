@@ -20,6 +20,7 @@ export interface ToolbarConfig {
   id: string;
   commands: string[];
 }
+
 const allowedContexts = [
   'selection',
   'list',
@@ -111,7 +112,12 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
       commands: [
         'editor:toggle-bold',
         'editor:toggle-italics',
+        'editor:toggle-strikethrough',
+        'editor:toggle-highlight',
         'editor:insert-link',
+        'editor:toggle-checklist-status',
+        'mobile:quick-audio-notes',
+        'mobile:keep-in-tablet-mode',
       ],
     },
     {
@@ -121,17 +127,103 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
         'editor:toggle-checklist-status',
         'editor:indent-list',
         'editor:unindent-list',
+        'editor:swap-line-up',
+        'editor:swap-line-down',
+        'editor:toggle-bullet-list',
+        'editor:toggle-numbered-list',
+      ],
+    },
+    {
+      id: 'table-actions',
+      name: 'Table actions',
+      commands: [
+        'editor:table-row-before',
+        'editor:table-row-after',
+        'editor:table-col-before',
+        'editor:table-col-after',
+        'editor:table-row-delete',
+        'editor:table-col-delete',
+        'editor:table-col-align-left',
+        'editor:table-col-align-center',
+        'editor:table-col-align-right',
+      ],
+    },
+    {
+      id: 'heading-actions',
+      name: 'Heading actions',
+      commands: [
+        'editor:set-heading-0',
+        'editor:set-heading-1',
+        'editor:set-heading-2',
+        'editor:set-heading-3',
+      ],
+    },
+    {
+      id: 'code-block-actions',
+      name: 'Code block actions',
+      commands: ['editor:toggle-code', 'editor:insert-codeblock'],
+    },
+    {
+      id: 'blockquote-actions',
+      name: 'Blockquote actions',
+      commands: ['editor:toggle-blockquote'],
+    },
+    {
+      id: 'link-actions',
+      name: 'Link actions',
+      commands: [
+        'editor:follow-link',
+        'editor:open-link-in-new-leaf',
+        'editor:open-link-in-new-split',
+      ],
+    },
+    {
+      id: 'selection',
+      name: 'Selection',
+      commands: [
+        'editor:copy',
+        'editor:cut',
+        'editor:toggle-bold',
+        'editor:toggle-italics',
+        'editor:toggle-highlight',
+        'editor:insert-link',
+        'pure-chat-llm:edit-selection',
+        'note-composer:split-file',
       ],
     },
   ],
   contextBindings: [
     {
       contextType: 'selection',
-      toolbarId: 'formatting',
+      toolbarId: 'selection',
     },
     {
       contextType: 'list',
       toolbarId: 'list-actions',
+    },
+    {
+      contextType: 'task',
+      toolbarId: 'list-actions',
+    },
+    {
+      contextType: 'heading',
+      toolbarId: 'heading-actions',
+    },
+    {
+      contextType: 'code-block',
+      toolbarId: 'code-block-actions',
+    },
+    {
+      contextType: 'table',
+      toolbarId: 'table-actions',
+    },
+    {
+      contextType: 'blockquote',
+      toolbarId: 'blockquote-actions',
+    },
+    {
+      contextType: 'link',
+      toolbarId: 'link-actions',
     },
     {
       contextType: 'default',
@@ -139,7 +231,16 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
     },
   ],
   useIcons: true,
-  commandIcons: {},
+  commandIcons: {
+    'editor:set-heading-1': 'lucide-heading-1',
+    'editor:set-heading-2': 'lucide-heading-2',
+    'editor:set-heading-3': 'lucide-heading-3',
+    'editor:set-heading-0': 'lucide-remove-formatting',
+    'editor:table-row-delete': 'lucide-table-rows-split',
+    'editor:table-col-delete': 'lucide-table-columns-split',
+    'editor:copy': 'lucide-copy',
+    'editor:cut': 'lucide-scissors-line-dashed',
+  },
   enableHapticFeedback: true,
 };
 

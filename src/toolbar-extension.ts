@@ -107,7 +107,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
 
         // Show toolbar if there's a selection or cursor is in specific context
         if (!selection.empty || this.hasContext(view, selection.from)) {
-          this.showTooltip(view);
+          this.renderToolbar(view);
         }
       }
 
@@ -128,13 +128,15 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         const matchingToolbars: ToolbarConfig[] = [];
         const seenCommands = new Set<string>();
 
-        for (const binding of this.plugin.settings.contextBindings) {
-          if (activeContexts.has(binding.contextType)) {
-            const toolbar = this.plugin.settings.toolbars.find(
-              (t) => t.id === binding.toolbarId,
-            );
-            if (toolbar) {
-              matchingToolbars.push(toolbar);
+        for (const contextType of activeContexts) {
+          for (const binding of this.plugin.settings.contextBindings) {
+            if (binding.contextType === contextType) {
+              const toolbar = this.plugin.settings.toolbars.find(
+                (t) => t.id === binding.toolbarId,
+              );
+              if (toolbar) {
+                matchingToolbars.push(toolbar);
+              }
             }
           }
         }
@@ -214,11 +216,10 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
 
       getMatchingContexts(view: EditorView, pos: number): Set<ContextType> {
         const contexts = new Set<ContextType>();
-        contexts.add('default');
-
         if (!view.state.selection.main.empty) {
           contexts.add('selection');
         }
+        contexts.add('default');
 
         syntaxTree(view.state).iterate({
           from: pos,
@@ -285,7 +286,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         return contexts;
       }
 
-      showTooltip(view: EditorView) {
+      renderToolbar(view: EditorView) {
         if (!this.plugin.settings.showToolbars) {
           return;
         }

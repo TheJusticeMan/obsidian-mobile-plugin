@@ -55,6 +55,7 @@ export default class MobilePlugin extends Plugin {
       'hidden-mobile-toolbar',
       !this.settings.showBuiltInToolbar,
     );
+
     // Register wake lock toggle command
     this.addCommand({
       id: 'toggle-wake-lock',
@@ -72,6 +73,7 @@ export default class MobilePlugin extends Plugin {
         new mySettingsModel(this.app, this).open();
       },
     });
+
     this.kkep = new keepInTabletMode(this.app, this);
 
     this.addCommand({

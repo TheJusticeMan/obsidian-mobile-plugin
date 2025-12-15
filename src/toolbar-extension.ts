@@ -27,6 +27,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
       app: App;
       plugin: MobilePlugin;
       mainToolbar: ToolbarConfig | null = null;
+      currentToolbar: ToolbarConfig | null = null;
 
       constructor(view: EditorView) {
         this.decorations = Decoration.none;
@@ -99,12 +100,6 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
       updateTooltip(view: EditorView) {
         const selection = view.state.selection.main;
 
-        // Remove existing tooltip if present
-        if (this.tooltip) {
-          this.tooltip.remove();
-          this.tooltip = null;
-        }
-
         // Show toolbar if there's a selection or cursor is in specific context
         if (!selection.empty || this.hasContext(view, selection.from)) {
           this.renderToolbar(view);
@@ -152,7 +147,8 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
           for (const command of toolbar.commands) {
             if (!seenCommands.has(command)) {
               seenCommands.add(command);
-              combinedCommands.push(command);
+              if (this.isCommandAvailable(command, view))
+                combinedCommands.push(command);
             }
           }
         }
@@ -287,7 +283,10 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
       }
 
       renderToolbar(view: EditorView) {
+        // Helper to remove existing tooltip
+
         if (!this.plugin.settings.showToolbars) {
+          this.removeTooltipIfExists();
           return;
         }
 
@@ -297,8 +296,27 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         const activeToolbar = this.getActiveToolbar(view, selection.from);
 
         if (!activeToolbar || activeToolbar.commands.length === 0) {
+          this.removeTooltipIfExists();
           return;
         }
+
+        // see if toolbar is unchanged
+        if (
+          this.currentToolbar &&
+          this.currentToolbar.id === activeToolbar.id &&
+          this.currentToolbar.commands.length ===
+            activeToolbar.commands.length &&
+          this.currentToolbar.commands.every(
+            (cmd, idx) => cmd === activeToolbar.commands[idx],
+          )
+        ) {
+          // Toolbar is unchanged, no need to re-render
+          return;
+        }
+
+        this.currentToolbar = activeToolbar;
+
+        this.removeTooltipIfExists();
 
         // Find the workspace-leaf-content container to anchor the toolbar
         // This ensures the toolbar appears at the bottom of the editor container,
@@ -321,11 +339,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
             'question-mark-glyph';
 
           // Check if command is available in current context
-          if (
-            command &&
-            this.tooltip &&
-            this.isCommandAvailable(commandId, view)
-          ) {
+          if (command && this.tooltip) {
             if (this.plugin.settings.useIcons && iconToUse) {
               new ExtraButtonComponent(this.tooltip)
                 .setIcon(iconToUse)
@@ -368,11 +382,15 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
             });
       }
 
-      destroy() {
+      private removeTooltipIfExists() {
         if (this.tooltip) {
           this.tooltip.remove();
           this.tooltip = null;
         }
+      }
+
+      destroy() {
+        this.removeTooltipIfExists();
       }
     },
     {

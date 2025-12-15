@@ -65,42 +65,84 @@
  * // Throws: RangeError: Delay must be at least 1 millisecond
  * ```
  */
-export function throttleWithInterval<T extends unknown[]>(
-  callback: (...args: T) => void,
+export function throttleWithInterval<T extends unknown[], Ret>(
+  callback: (...args: T) => Ret,
   delay = 100,
-): { (...args: T): void; cancel(): void } {
+): {
+  (...args: T): Ret;
+  cancel(): void;
+  isExecuting: boolean;
+  queuedArgs: T | null;
+} {
   // Input validation
   if (delay < 1) {
     throw new RangeError('Delay must be at least 1 millisecond');
   }
 
   let intervalId: NodeJS.Timer | null = null;
-  let queuedArgs: T | null = null;
   let isAwaitingCall = false;
+  let lastReturnValue: Ret;
 
-  const throttled = (...args: T) => {
+  const throttled: {
+    (...args: T): Ret;
+    cancel(): void;
+    isExecuting: boolean;
+    queuedArgs: T | null;
+  } = (...args: T) => {
     // Always use the most recent arguments
-    queuedArgs = args;
+    throttled.queuedArgs = args;
 
     if (!intervalId) {
       // First call executes immediately
-      callback(...args);
+      throttled.isExecuting = true;
+      try {
+        lastReturnValue = callback(...args);
+      } catch (e) {
+        throttled.isExecuting = false;
+        throw e;
+      }
+
+      if (lastReturnValue instanceof Promise) {
+        void lastReturnValue.finally(() => {
+          throttled.isExecuting = false;
+        });
+      } else {
+        throttled.isExecuting = false;
+      }
 
       // Start the interval for subsequent calls
       intervalId = setInterval(() => {
-        if (isAwaitingCall && queuedArgs) {
+        if (throttled.isExecuting) return; // Prevent overlapping executions
+
+        if (isAwaitingCall && throttled.queuedArgs) {
           // Execute with the most recent queued arguments
           isAwaitingCall = false;
-          callback(...queuedArgs);
-          queuedArgs = null; // Clear after execution
+
+          throttled.isExecuting = true;
+          try {
+            lastReturnValue = callback(...throttled.queuedArgs);
+          } catch (e) {
+            throttled.isExecuting = false;
+            throw e;
+          }
+
+          if (lastReturnValue instanceof Promise) {
+            void lastReturnValue.finally(() => {
+              throttled.isExecuting = false;
+            });
+          } else {
+            throttled.isExecuting = false;
+          }
         } else {
           // No pending calls, clean up the interval
           throttled.cancel();
         }
       }, delay);
+      return lastReturnValue;
     } else {
       // Subsequent calls just mark that we're waiting
       isAwaitingCall = true;
+      return lastReturnValue;
     }
   };
 
@@ -111,8 +153,12 @@ export function throttleWithInterval<T extends unknown[]>(
     }
     // Reset state
     isAwaitingCall = false;
-    queuedArgs = null;
+    throttled.queuedArgs = null;
+    throttled.isExecuting = false;
   };
+
+  throttled.isExecuting = false;
+  throttled.queuedArgs = null;
 
   return throttled;
 }

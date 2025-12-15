@@ -52,9 +52,6 @@ export class MobileSearchLeaf extends ItemView {
   /** Flag to prevent multiple concurrent loadMore operations */
   private isLoadingMore = false;
 
-  /** Flag to prevent multiple concurrent performSearch operations */
-  private isSearching = false;
-
   /** Timestamp of the last search input focus */
   private lastFocusTime = 0;
 
@@ -130,7 +127,7 @@ export class MobileSearchLeaf extends ItemView {
     this.setupFileChangeListener();
 
     // Show initial results (all files) when pane opens
-    await this.performSearch();
+    await this.debouncedSearch();
   }
 
   onClose(): Promise<void> {
@@ -173,8 +170,9 @@ export class MobileSearchLeaf extends ItemView {
     });
 
     // Debounced search on input
-    this.searchInput.inputEl.addEventListener('input', () =>
-      this.debouncedSearch(),
+    this.searchInput.inputEl.addEventListener(
+      'input',
+      () => void this.debouncedSearch(),
     );
 
     // Keyboard handling: blur input on scroll to dismiss keyboard
@@ -190,7 +188,7 @@ export class MobileSearchLeaf extends ItemView {
     this.searchInput.inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
         this.debouncedSearch.cancel();
-        void this.performSearch();
+        void this.debouncedSearch();
       }
     });
   }
@@ -230,7 +228,7 @@ export class MobileSearchLeaf extends ItemView {
     this.registerEvent(
       this.app.vault.on('create', (file) => {
         if (file instanceof TFile && this.shouldUpdateOnFileChange()) {
-          void this.performSearch();
+          void this.debouncedSearch();
         }
       }),
     );
@@ -239,7 +237,7 @@ export class MobileSearchLeaf extends ItemView {
     this.registerEvent(
       this.app.vault.on('delete', (file) => {
         if (file instanceof TFile && this.shouldUpdateOnFileChange()) {
-          void this.performSearch();
+          void this.debouncedSearch();
         }
       }),
     );
@@ -248,7 +246,7 @@ export class MobileSearchLeaf extends ItemView {
     this.registerEvent(
       this.app.vault.on('rename', (file) => {
         if (file instanceof TFile && this.shouldUpdateOnFileChange()) {
-          void this.performSearch();
+          void this.debouncedSearch();
         }
       }),
     );
@@ -257,7 +255,7 @@ export class MobileSearchLeaf extends ItemView {
     this.registerEvent(
       this.app.vault.on('modify', (file) => {
         if (file instanceof TFile && this.shouldUpdateOnFileChange()) {
-          void this.performSearch();
+          void this.debouncedSearch();
         }
       }),
     );
@@ -306,7 +304,7 @@ export class MobileSearchLeaf extends ItemView {
     requestAnimationFrame(() => {
       this.searchInput.inputEl.focus();
       this.resetCache();
-      void this.performSearch(); // fix so the it updates when opened
+      void this.debouncedSearch(); // fix so the it updates when opened
     });
   }
 
@@ -315,7 +313,7 @@ export class MobileSearchLeaf extends ItemView {
    * Uses a 300ms delay.
    */
   private debouncedSearch = throttleWithInterval(
-    () => void this.performSearch(),
+    () => this.performSearch(),
     100,
   );
 
@@ -325,9 +323,6 @@ export class MobileSearchLeaf extends ItemView {
    */
   private async performSearch(): Promise<void> {
     // Prevent concurrent search operations
-    if (this.isSearching) return;
-
-    this.isSearching = true;
 
     try {
       const query = this.searchInput.inputEl.value.trim().toLowerCase();
@@ -355,6 +350,8 @@ export class MobileSearchLeaf extends ItemView {
         this.currentMatchingFiles = files;
       }
 
+      this.updateSelectionItems(this.currentMatchingFiles);
+
       // Render initial batch of results
       await this.renderNextBatch();
 
@@ -366,7 +363,16 @@ export class MobileSearchLeaf extends ItemView {
         });
       }
     } finally {
-      this.isSearching = false;
+      console.debug('Search operation completed.');
+    }
+  }
+
+  updateSelectionItems(files: TFile[]): void {
+    for (const filePath of this.selectedFiles) {
+      const file = this.app.vault.getAbstractFileByPath(filePath);
+      if (!(file instanceof TFile) || !files.includes(file)) {
+        this.selectedFiles.delete(filePath);
+      }
     }
   }
 
@@ -405,7 +411,7 @@ export class MobileSearchLeaf extends ItemView {
    * Checks if user has scrolled near the bottom and loads more results.
    */
   private checkLoadMore(): void {
-    if (this.isSearching) return;
+    if (this.debouncedSearch.isExecuting) return;
     if (this.renderedResultsCount === INITIAL_RESULTS_PER_BATCH) {
       void this.renderNextBatch();
       return;

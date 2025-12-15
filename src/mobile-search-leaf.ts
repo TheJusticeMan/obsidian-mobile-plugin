@@ -325,9 +325,7 @@ export class MobileSearchLeaf extends ItemView {
    */
   private async performSearch(): Promise<void> {
     // Prevent concurrent search operations
-    if (this.isSearching) {
-      return;
-    }
+    if (this.isSearching) return;
 
     this.isSearching = true;
 
@@ -407,6 +405,7 @@ export class MobileSearchLeaf extends ItemView {
    * Checks if user has scrolled near the bottom and loads more results.
    */
   private checkLoadMore(): void {
+    if (this.isSearching) return;
     if (this.renderedResultsCount === INITIAL_RESULTS_PER_BATCH) {
       void this.renderNextBatch();
       return;
@@ -512,7 +511,7 @@ export class MobileSearchLeaf extends ItemView {
         component,
       );
     } else {
-      previewEl.setText('Unable to load preview');
+      previewEl.setText('File is empty');
     }
 
     // Date at the bottom corner of the preview
@@ -543,7 +542,7 @@ export class MobileSearchLeaf extends ItemView {
         this.showFileContextMenu(file, event);
       } else if (this.selectedFiles.has(file.path)) {
         // Already in selection mode and file is selected - show menu for all selected files
-        this.showMultipleFilesMenu(event);
+        this.showSelectionMenu(event);
       } else {
         // Already in selection mode and file is not selected - show menu for this file only
         this.showFileContextMenu(file, event);
@@ -795,7 +794,7 @@ export class MobileSearchLeaf extends ItemView {
    * Shows the appropriate menu based on the number of selected files.
    * Called from the three-dot menu button.
    */
-  private showSelectionMenu(): void {
+  private showSelectionMenu(event?: MouseEvent): void {
     if (this.selectedFiles.size === 0) {
       // Exit selection mode if no files are selected
       this.exitSelectionMode();
@@ -807,11 +806,11 @@ export class MobileSearchLeaf extends ItemView {
       const filePath = Array.from(this.selectedFiles)[0];
       const file = this.app.vault.getAbstractFileByPath(filePath);
       if (file instanceof TFile) {
-        this.showFileContextMenu(file);
+        this.showFileContextMenu(file, event);
       }
     } else {
       // Show multiple files menu when multiple files are selected
-      this.showMultipleFilesMenu();
+      this.showMultipleFilesMenu(event);
     }
   }
 
@@ -825,6 +824,32 @@ export class MobileSearchLeaf extends ItemView {
     const selectedFileObjects = Array.from(this.selectedFiles)
       .map((path) => this.app.vault.getAbstractFileByPath(path))
       .filter((f): f is TFile => f instanceof TFile);
+    menu
+      .addItem((item) =>
+        item
+          .setTitle(`Open ${this.selectedFiles.size} files`)
+          .setIcon('folder-opened')
+          .setSection('open')
+          .onClick(() => {
+            for (const file of selectedFileObjects) {
+              /* this.app.workspace.open; */
+              void this.app.workspace.openLinkText(file.path, '', true);
+            }
+          }),
+      )
+      .addItem((item) =>
+        item
+          .setTitle(`Delete ${this.selectedFiles.size} files`)
+          .setIcon('trash')
+          .setSection('danger')
+          .setWarning(true)
+          .onClick(() => {
+            for (const file of selectedFileObjects) {
+              void this.app.fileManager.trashFile(file);
+            }
+            this.exitSelectionMode();
+          }),
+      );
 
     // Trigger files-menu event so other plugins can add their items
     this.app.workspace.trigger(

@@ -229,46 +229,30 @@ export class MobileSearchLeaf extends ItemView {
    */
   private setupFileChangeListener(): void {
     // Listen for file creation
-    this.registerEvent(
-      this.app.vault.on('create', file => {
-        if (file instanceof TFile && this.shouldUpdateOnFileChange()) {
-          void this.debouncedSearch();
-        }
-      }),
-    );
+    this.registerEvent(this.app.vault.on('create', this.debouncedSearch));
 
     // Listen for file deletion
-    this.registerEvent(
-      this.app.vault.on('delete', file => {
-        if (file instanceof TFile && this.shouldUpdateOnFileChange()) {
-          void this.debouncedSearch();
-        }
-      }),
-    );
+    this.registerEvent(this.app.vault.on('delete', this.debouncedSearch));
 
     // Listen for file rename
-    this.registerEvent(
-      this.app.vault.on('rename', file => {
-        if (file instanceof TFile && this.shouldUpdateOnFileChange()) {
-          void this.debouncedSearch();
-        }
-      }),
-    );
+    this.registerEvent(this.app.vault.on('rename', this.debouncedSearch));
 
     // Listen for file modification (updates mtime for sorting)
+    this.registerEvent(this.app.vault.on('modify', this.debouncedSearch));
+
     this.registerEvent(
-      this.app.vault.on('modify', file => {
-        if (file instanceof TFile && this.shouldUpdateOnFileChange()) {
-          void this.debouncedSearch();
-        }
-      }),
+      this.app.workspace.on('layout-change', this.debouncedSearch),
+    );
+
+    this.registerEvent(
+      this.app.workspace.on('active-leaf-change', this.debouncedSearch),
     );
   }
 
   /**
    * Determines if the file list should be updated based on view visibility.
    */
-  private shouldUpdateOnFileChange(): boolean {
+  private get shouldUpdate(): boolean {
     return this.isViewActive || this.isViewVisible();
   }
 
@@ -326,6 +310,7 @@ export class MobileSearchLeaf extends ItemView {
    * Prevents concurrent executions to avoid race conditions.
    */
   private async performSearch(): Promise<void> {
+    if (!this.shouldUpdate) return;
     // Prevent concurrent search operations
 
     try {
@@ -389,6 +374,9 @@ export class MobileSearchLeaf extends ItemView {
           text: `${leaf.getDisplayText()}`,
         });
         tabDiv.addEventListener('click', () => {
+          app.workspace.setActiveLeaf(leaf, { focus: true });
+        });
+        tabDiv.addEventListener('mouseup', () => {
           app.workspace.setActiveLeaf(leaf, { focus: true });
         });
       }
@@ -564,6 +552,11 @@ export class MobileSearchLeaf extends ItemView {
       }
     });
 
+    card.addEventListener('mouseup', () => {
+      if (!this.isSelectionMode) {
+        void this.app.workspace.openLinkText(file.path, '', false);
+      }
+    });
     // Context menu handler (right-click / long-press)
     card.addEventListener('contextmenu', event => {
       event.preventDefault();

@@ -6,12 +6,17 @@ import {
   Notice,
   Platform,
   Plugin,
+  WorkspaceLeaf,
 } from 'obsidian';
 import { FABManager } from './fab';
 import {
   MobileSearchLeaf,
   VIEW_TYPE_MOBILE_SEARCH,
 } from './mobile-search-leaf';
+import {
+  AppWithMobileTabSwitcher,
+  updateMobileTabGestures,
+} from './MobileTabGestures';
 import {
   DEFAULT_SETTINGS,
   MobileCMDEvent,
@@ -48,6 +53,8 @@ export default class MobilePlugin extends Plugin {
   fabManager: FABManager | null = null;
   wakeLock: WakeLockSentinel | null = null;
   kkep: keepInTabletMode;
+  isTabSwitcherOpened: boolean = false;
+  leafDragging: WorkspaceLeaf | null = null;
 
   async onload() {
     await this.loadSettings();
@@ -67,7 +74,7 @@ export default class MobilePlugin extends Plugin {
     // Register the Mobile Search view
     this.registerView(
       VIEW_TYPE_MOBILE_SEARCH,
-      leaf => new MobileSearchLeaf(leaf),
+      leaf => new MobileSearchLeaf(leaf, this),
     );
 
     // Register the CodeMirror 6 toolbar extension with multiple context-aware toolbars
@@ -76,6 +83,28 @@ export default class MobilePlugin extends Plugin {
     this.addRibbonIcon('plus', 'Create new note', () => this.createNewNote());
     this.addRibbonIcon('search', 'Open search', () => {
       void this.activateMobileSearchView();
+    });
+
+    this.app.workspace.onLayoutReady(() => {
+      this.registerInterval(
+        window.setInterval(() => {
+          const isopen =
+            (this.app as unknown as AppWithMobileTabSwitcher)?.mobileTabSwitcher
+              ?.containerEl?.parentNode != null;
+          if (!isopen) {
+            this.isTabSwitcherOpened = false;
+            return;
+          }
+          if (isopen && !this.isTabSwitcherOpened) {
+            updateMobileTabGestures(this);
+            this.isTabSwitcherOpened = true;
+          }
+        }, 100),
+      );
+    });
+
+    this.app.workspace.on('layout-change', () => {
+      updateMobileTabGestures(this);
     });
 
     // Add settings tab

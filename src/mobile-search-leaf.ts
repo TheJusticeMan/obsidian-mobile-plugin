@@ -9,6 +9,7 @@ import {
   TFile,
   WorkspaceLeaf,
 } from 'obsidian';
+import MobilePlugin from './main';
 import { throttleWithInterval } from './throttleWithInterval';
 
 export const VIEW_TYPE_MOBILE_SEARCH = 'mobile-search-view';
@@ -73,7 +74,10 @@ export class MobileSearchLeaf extends ItemView {
   /** Map of card elements to file paths for quick lookup */
   private cardElementMap: Map<HTMLElement, TFile> = new Map();
 
-  constructor(leaf: WorkspaceLeaf) {
+  constructor(
+    leaf: WorkspaceLeaf,
+    public plugin: MobilePlugin,
+  ) {
     super(leaf);
   }
 
@@ -332,6 +336,9 @@ export class MobileSearchLeaf extends ItemView {
       this.cleanupResultComponents();
       this.cardElementMap.clear();
       this.renderedResultsCount = 0;
+      if (this.plugin.settings.showTabsInSearchView) {
+        this.showTabPreviews(query);
+      }
 
       // Get all markdown files sorted by modification time
       const files = this.app.vault
@@ -365,6 +372,27 @@ export class MobileSearchLeaf extends ItemView {
     } finally {
       console.debug('Search operation completed.');
     }
+  }
+
+  showTabPreviews(query: string): void {
+    const { app } = this.plugin;
+    const activeLeaf = app.workspace.getMostRecentLeaf();
+
+    app.workspace.iterateRootLeaves(leaf => {
+      const tabName = leaf.getDisplayText().toLowerCase();
+      if (tabName.includes(query)) {
+        const tabDiv = this.resultsContainer.createDiv({
+          cls:
+            leaf === activeLeaf
+              ? 'mobile-search-result-card is-active'
+              : 'mobile-search-result-card',
+          text: `${leaf.getDisplayText()}`,
+        });
+        tabDiv.addEventListener('click', () => {
+          app.workspace.setActiveLeaf(leaf, { focus: true });
+        });
+      }
+    });
   }
 
   updateSelectionItems(files: TFile[]): void {

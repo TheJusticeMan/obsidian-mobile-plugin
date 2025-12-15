@@ -72,12 +72,12 @@ export const MobileCMDEventsDesc: Record<MobileCMDEvent, [string, string]> = {
 };
 
 export interface MobilePluginSettings {
+  enableTabReordering: boolean;
   showCommandConfirmation: boolean;
   MobileCMDEvents: Record<MobileCMDEvent, string>;
   plusLongpress?: string;
   pluspress?: string;
   homeFolder: string;
-  toolbarCommands: string[]; // Deprecated - kept for backward compatibility
   toolbars: ToolbarConfig[];
   contextBindings: ContextBinding[];
   useIcons: boolean;
@@ -87,6 +87,7 @@ export interface MobilePluginSettings {
   enableHapticFeedback: boolean;
   gestureCommands: GestureCommand[];
   showBuiltInToolbar: boolean;
+  showTabsInSearchView: boolean;
 }
 
 export const DEFAULT_SETTINGS: MobilePluginSettings = {
@@ -100,11 +101,6 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
   homeFolder: '',
   showToolbars: true,
   showFAB: true,
-  toolbarCommands: [
-    'editor:toggle-bold',
-    'editor:toggle-italics',
-    'editor:insert-link',
-  ],
   gestureCommands: [],
   toolbars: [
     {
@@ -246,6 +242,8 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
   },
   enableHapticFeedback: true,
   showBuiltInToolbar: false,
+  showTabsInSearchView: true,
+  enableTabReordering: true,
 };
 
 /**
@@ -535,6 +533,22 @@ export class MobileSettingsView {
           this.renderGeneralSettings(containerEl);
         }),
     );
+    new Setting(containerEl)
+      .setName('Show tabs in search view')
+      .setDesc('Display open tabs when using the mobile search view')
+      .addToggle(toggle =>
+        toggle
+          .setValue(this.plugin.settings.showTabsInSearchView)
+          .onChange(value => this.sett('showTabsInSearchView', value)),
+      );
+    new Setting(containerEl)
+      .setName('Enable reordering tabs by drag-and-drop')
+      .setDesc('Drag and drop tabs to reorder them in the tab bar')
+      .addToggle(toggle =>
+        toggle
+          .setValue(this.plugin.settings.enableTabReordering)
+          .onChange(value => this.sett('enableTabReordering', value)),
+      );
     new Setting(containerEl)
       .setName('Show toolbars')
       .setDesc('Show context-aware toolbars at the bottom of the screen')

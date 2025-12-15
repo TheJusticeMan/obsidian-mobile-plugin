@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Gestures**: Added mobile tab gestures for swiping to close tabs and drag-and-drop to reorder/merge leaves in the tab switcher.
+- **Search**: Added option to show open tabs in the mobile search view for quick navigation.
 - **Settings**: Added built-in toolbar toggle to settings for enabling/disabling Obsidian's native mobile toolbar.
 - **Styles**: Updated styles to improve toolbar appearance and compatibility with built-in toolbar toggle.
 - **Toolbar**: Significantly expanded context-aware toolbars.

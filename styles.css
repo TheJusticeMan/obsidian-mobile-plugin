@@ -321,11 +321,14 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   padding: 0 8px;
 }
 
+.mobile-search-result-card.is-active {
+  border: 1px solid var(--interactive-accent);
+}
+
 /* Selected card styling */
 .mobile-search-result-card.is-selected {
   border: 2px solid var(--interactive-accent);
   background-color: var(--background-modifier-hover);
-  box-shadow: 0 0 0 2px var(--interactive-accent-hover);
 }
 
 .mobile-search-result-card.is-selected::before {

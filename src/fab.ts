@@ -2,9 +2,10 @@ import {
   App,
   ButtonComponent,
   Command,
-  MarkdownView,
   Modal,
   Setting,
+  View,
+  WorkspaceLeaf,
 } from 'obsidian';
 import { GestureHandler, Offset } from './gesture-handler';
 import MobilePlugin from './main';
@@ -14,7 +15,7 @@ import { CommandSuggestModal } from './settings';
  * Manages FAB placement and lifecycle across editor leaves.
  */
 export class FABManager {
-  private fabElements: Map<MarkdownView, ButtonComponent> = new Map();
+  private fabElements: Map<View, ButtonComponent> = new Map();
   private currentMode: 'default' | 'recording' = 'default';
 
   setMode(mode: 'default' | 'recording'): void {
@@ -36,8 +37,8 @@ export class FABManager {
   ) {
     // Update FAB when workspace layout changes
     this.plugin.registerEvent(
-      this.app.workspace.on('active-leaf-change', () =>
-        this.updateActiveLeaf(),
+      this.app.workspace.on('active-leaf-change', leaf =>
+        this.updateActiveLeaf(leaf || undefined),
       ),
     );
 
@@ -48,17 +49,22 @@ export class FABManager {
   /**
    * Updates FAB for the active leaf
    */
-  updateActiveLeaf(): void {
-    const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-    if (activeView) {
-      this.ensureFABForLeaf(activeView);
-    }
+  updateActiveLeaf(leaf?: WorkspaceLeaf): void {
+    const activeView = leaf?.view;
+    if (activeView) this.ensureFABForLeaf(activeView);
+    else this.ensureAllFABs();
+  }
+
+  private ensureAllFABs(): void {
+    this.app.workspace.iterateAllLeaves(leaf => {
+      this.ensureFABForLeaf(leaf.view);
+    });
   }
 
   /**
    * Ensures a FAB exists for the given leaf
    */
-  private ensureFABForLeaf(view: MarkdownView): void {
+  private ensureFABForLeaf(view: View): void {
     if (!this.plugin.settings.showFAB) {
       return;
     }

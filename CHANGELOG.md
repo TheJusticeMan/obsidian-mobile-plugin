@@ -5,11 +5,12 @@ All notable changes to the Mobile UX plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.3.1] - 2025-12-19
 
 ### Fixed
 
 - **Search**: Fixed search pane opening empty after scrolling and reopening by resetting scroll position to prevent race conditions during initial render.
+- **FAB**: Fixed FAB not appearing on some leaves by ensuring FABs are created for all leaves when no active leaf is provided.
 
 ## [1.3.0] - 2025-12-15
 

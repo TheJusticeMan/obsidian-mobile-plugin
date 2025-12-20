@@ -29,7 +29,14 @@ jobs:
         run: |
           tag="${GITHUB_REF#refs/tags/}"
 
+          # Extract changelog section for this tag
+          sed -n "/^## \[$tag\]/,/^## \[/ { /^## \[$tag\]/b; /^## \[/b; p; }" CHANGELOG.md > "release_notes.md"
+
           gh release create "$tag" \
             --title="$tag" \
-            --draft \
+            --fail-on-no-commits \
+            --notes-file "release_notes.md" \
             main.js manifest.json styles.css
+
+          # Remove release notes file
+          rm "release_notes.md"

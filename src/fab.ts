@@ -56,7 +56,7 @@ export class FABManager {
   }
 
   private ensureAllFABs(): void {
-    this.app.workspace.iterateAllLeaves(leaf => {
+    this.app.workspace.iterateRootLeaves(leaf => {
       this.ensureFABForLeaf(leaf.view);
     });
   }

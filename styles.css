@@ -165,6 +165,10 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   overflow: hidden;
 }
 
+.workspace-leaf-content .mobile-search-view {
+  padding: 0;
+}
+
 .mobile-search-input-container {
   position: sticky;
   top: 0;

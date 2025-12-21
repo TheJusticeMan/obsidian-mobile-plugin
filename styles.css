@@ -45,16 +45,9 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   flex-wrap: nowrap;
   gap: 8px;
   padding: 8px;
-  background-color: var(--background-primary);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  position: absolute;
-  bottom: calc(10px + env(safe-area-inset-bottom));
-  left: 10px;
-  /* Prevent overlap with FAB by adding padding on right */
-  right: 86px; /* 56px FAB width + 20px FAB right margin + 10px gap */
-  max-width: calc(100% - 96px); /* 86px right + 10px left */
+  /* background-color: var(--background-primary); */
+  border-top: 1px solid var(--background-modifier-border);
+  padding-right: 76px;
   overflow-x: auto;
   overflow-y: hidden;
   /* Hide scrollbar for cleaner look while still allowing scroll */
@@ -66,7 +59,6 @@ Includes FAB and selection toolbar styles with mobile-friendly design
     flex-wrap 0.3s ease,
     right 0.3s ease,
     max-width 0.3s ease;
-  /* z-index: 1000; */
 }
 
 .hidden-mobile-toolbar .mobile-toolbar,
@@ -76,25 +68,18 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 
 /* Expand toolbar when FAB is hidden */
 .workspace-leaf-content:not(:has(.mobile-fab)) .mobile-plugin-toolbar {
-  right: 10px;
-  max-width: calc(100% - 20px);
+  padding-right: 12px;
 }
 
 /* Expanded toolbar state - allows wrapping to show more rows */
 .mobile-plugin-toolbar.is-expanded {
   flex-wrap: wrap;
-  max-height: 200px;
+  flex: none;
   overflow-y: auto;
 }
 
 .mobile-plugin-toolbar::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
-}
-
-/* Prevent toolbar buttons from shrinking */
-.mobile-plugin-toolbar > button,
-.mobile-plugin-toolbar > .clickable-icon {
-  flex-shrink: 0;
 }
 
 .mobile-fab-dragline {
@@ -182,27 +167,6 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   display: none;
 }
 
-.mobile-search-input {
-  width: 100%;
-  padding: 10px 12px;
-  /* 16px font-size prevents iOS zoom on focus */
-  font-size: 16px;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 8px;
-  background-color: var(--background-secondary);
-  color: var(--text-normal);
-  outline: none;
-}
-
-.mobile-search-input:focus {
-  border-color: var(--interactive-accent);
-  box-shadow: 0 0 0 2px var(--interactive-accent-hover);
-}
-
-.mobile-search-input::placeholder {
-  color: var(--text-muted);
-}
-
 .mobile-search-results-container {
   flex: 1;
   overflow-y: auto;
@@ -251,24 +215,6 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   text-overflow: ellipsis;
 }
 
-/* Hide markdown block elements in preview */
-.mobile-search-result-preview p {
-  margin: 0;
-  display: inline;
-}
-
-.mobile-search-result-preview h1,
-.mobile-search-result-preview h2,
-.mobile-search-result-preview h3,
-.mobile-search-result-preview h4,
-.mobile-search-result-preview h5,
-.mobile-search-result-preview h6 {
-  font-size: inherit;
-  font-weight: normal;
-  margin: 0;
-  display: inline;
-}
-
 .mobile-search-no-results,
 .mobile-search-more-results {
   text-align: center;
@@ -310,20 +256,19 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.mobile-search-selection-bar > button.hide {
+  display: none;
 }
 
 .mobile-search-selection-bar.show {
   display: flex;
 }
 
-/* Style for ButtonComponent buttons in selection bar */
-.mobile-search-selection-bar > button {
-  flex-shrink: 0;
-}
-
 /* Style for ExtraButtonComponent (more actions menu) */
-.mobile-search-selection-bar > .clickable-icon {
-  flex-shrink: 0;
+.mobile-search-selection-bar > .clickable-icon:last-of-type {
   margin-left: auto;
 }
 

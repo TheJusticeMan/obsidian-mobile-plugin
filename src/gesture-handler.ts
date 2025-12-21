@@ -1,5 +1,4 @@
 import { App } from 'obsidian';
-import { CommandManager } from './main';
 
 /**
  * Represents a command that can be triggered by a gesture.
@@ -179,15 +178,12 @@ export class GestureHandler {
           this.element.removeClass('gesture-success');
         });
       });
-      this.commandManager?.executeCommandById?.(bestMatch.commandId);
+      this.app.commands?.executeCommandById?.(bestMatch.commandId);
     } else {
       // Draw the gesture for user feedback
       this.drawGesture(normalizedInput);
       this.onUnknown(normalizedInput);
     }
-  }
-  get commandManager(): CommandManager | undefined {
-    return (this.app as { commands?: CommandManager }).commands;
   }
 
   normalizeLine(line: Offset[]): Offset[] {

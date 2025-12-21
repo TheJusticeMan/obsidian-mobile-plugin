@@ -12,7 +12,7 @@ import {
   ExtraButtonComponent,
   MarkdownView,
 } from 'obsidian';
-import MobilePlugin, { CommandManager } from './main';
+import MobilePlugin from './main';
 import { ContextType, ToolbarConfig, ToolbarEditor } from './settings';
 
 /**
@@ -37,9 +37,6 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         // Find the editor container to anchor the toolbar
 
         this.updateTooltip(view);
-      }
-      get commandManager(): CommandManager | undefined {
-        return (this.app as { commands?: CommandManager }).commands;
       }
 
       hapticFeedback(duration = 10): void {
@@ -167,7 +164,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
        * Check if a command is available in the current context
        */
       isCommandAvailable(commandId: string, view: EditorView): boolean {
-        const command = this.commandManager?.findCommand?.(commandId);
+        const command = this.app.commands?.findCommand?.(commandId);
 
         if (!command) {
           return false;
@@ -328,7 +325,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         if (this.tooltip) this.addSwipeToExpandListener(this.tooltip);
 
         // Get all available commands
-        const commands = this.commandManager?.commands || {};
+        const commands = this.app.commands?.commands || {};
 
         // Add command buttons (only show available commands)
         activeToolbar.commands.forEach(commandId => {
@@ -348,7 +345,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                   // Haptic feedback on button click
                   this.hapticFeedback(10);
                   // Execute the command
-                  this.commandManager?.executeCommandById?.(commandId);
+                  this.app.commands?.executeCommandById?.(commandId);
                   // Refocus editor to prevent focus loss
                   view.focus();
                 });
@@ -361,7 +358,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                   // Haptic feedback on button click
                   this.hapticFeedback(10);
                   // Execute the command
-                  this.commandManager?.executeCommandById?.(commandId);
+                  this.app.commands?.executeCommandById?.(commandId);
                   // Refocus editor to prevent focus loss
                   view.focus();
                 });

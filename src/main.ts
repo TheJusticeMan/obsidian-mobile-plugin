@@ -1,6 +1,5 @@
 import {
   App,
-  Command,
   Component,
   MarkdownView,
   Notice,
@@ -10,10 +9,7 @@ import {
 } from 'obsidian';
 import { FABManager } from './fab';
 import { MobileSearchLeaf, VIEW_TYPE_MOBILE_SEARCH } from './MobileSearchLeaf';
-import {
-  AppWithMobileTabSwitcher,
-  updateMobileTabGestures,
-} from './MobileTabGestures';
+import { updateMobileTabGestures } from './MobileTabGestures';
 import {
   DEFAULT_SETTINGS,
   MobileCMDEvent,
@@ -21,8 +17,8 @@ import {
   MobileSettingTab,
   mySettingsModel,
 } from './settings';
-import { createToolbarExtension } from './toolbar-extension';
 import { TabsLeaf, VIEW_TYPE_TABS } from './TabsLeaf';
+import { createToolbarExtension } from './toolbar-extension';
 
 // WakeLock API types (not in standard TS lib)
 interface WakeLockSentinel {
@@ -36,16 +32,6 @@ interface WakeLockNavigator {
   };
 }
 
-export interface CommandsMap {
-  [key: string]: Command;
-}
-
-export interface CommandManager {
-  commands: CommandsMap;
-  findCommand?: (id: string) => Command | undefined;
-  executeCommandById: (id: string) => void;
-}
-
 export default class MobilePlugin extends Plugin {
   settings: MobilePluginSettings;
   fabManager: FABManager | null = null;
@@ -53,9 +39,11 @@ export default class MobilePlugin extends Plugin {
   kkep: keepInTabletMode;
   isTabSwitcherOpened: boolean = false;
   leafDragging: WorkspaceLeaf | null = null;
+  app: App;
 
   async onload() {
     await this.loadSettings();
+
     document.body.toggleClass(
       'hidden-mobile-toolbar',
       !this.settings.showBuiltInToolbar,
@@ -90,8 +78,7 @@ export default class MobilePlugin extends Plugin {
       this.registerInterval(
         window.setInterval(() => {
           const isopen =
-            (this.app as unknown as AppWithMobileTabSwitcher)?.mobileTabSwitcher
-              ?.containerEl?.parentNode != null;
+            this.app.mobileTabSwitcher?.containerEl?.parentNode != null;
           if (!isopen) {
             this.isTabSwitcherOpened = false;
             return;
@@ -620,10 +607,10 @@ export default class MobilePlugin extends Plugin {
 
     // if there is PureChutLLM plugin, and a recorder command, add a command to trigger it
     const hasAudioRecorder =
-      this.commandManager?.commands['audio-recorder:start'] &&
-      this.commandManager?.commands['audio-recorder:stop'];
+      this.app.commands?.commands['audio-recorder:start'] &&
+      this.app.commands?.commands['audio-recorder:stop'];
     const hasPureChatLLM =
-      this.commandManager?.commands['pure-chat-llm:complete-chat-response'];
+      this.app.commands?.commands['pure-chat-llm:complete-chat-response'];
     if (hasAudioRecorder && hasPureChatLLM) {
       this.addCommand({
         id: 'quick-audio-notes',
@@ -645,11 +632,11 @@ export default class MobilePlugin extends Plugin {
         name: 'End recording and transcribe',
         icon: 'microphone-off',
         callback: () => {
-          this.commandManager?.executeCommandById('file-explorer:new-file');
+          this.app.commands?.executeCommandById('file-explorer:new-file');
 
           const end = () => {
             // First stop the recording
-            this.commandManager?.executeCommandById('audio-recorder:stop');
+            this.app.commands?.executeCommandById('audio-recorder:stop');
             // Then trigger PureChatLLM transcription
             // move the cursor into the new note after a short delay
             const view = this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -661,7 +648,7 @@ export default class MobilePlugin extends Plugin {
                   `\n# role: User\nTranscribe the content of this audio file into a structured markdown note\n${view.editor.getValue()}\n`,
                 );
               }
-              this.commandManager?.executeCommandById(
+              this.app.commands?.executeCommandById(
                 'pure-chat-llm:complete-chat-response',
               );
             }, 500);
@@ -681,10 +668,6 @@ export default class MobilePlugin extends Plugin {
         void this.activateMobileSearchView();
       },
     });
-  }
-
-  get commandManager(): CommandManager | undefined {
-    return (this.app as { commands?: CommandManager }).commands;
   }
 
   /**
@@ -736,7 +719,7 @@ export default class MobilePlugin extends Plugin {
 
   createNewNote(): void {
     // Using the internal commands API to execute file creation
-    this.commandManager?.executeCommandById('file-explorer:new-file');
+    this.app.commands?.executeCommandById('file-explorer:new-file');
   }
 
   getBinds(toolbarId: string): string[] {
@@ -752,7 +735,7 @@ export default class MobilePlugin extends Plugin {
   triggerCMDEvent(eventType: MobileCMDEvent): void {
     const cmdId = this.settings.MobileCMDEvents[eventType];
 
-    this.commandManager?.executeCommandById(cmdId);
+    this.app.commands?.executeCommandById(cmdId);
   }
 
   async toggleWakeLock(): Promise<void> {

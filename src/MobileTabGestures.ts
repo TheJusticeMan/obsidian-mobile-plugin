@@ -120,14 +120,6 @@ class MobileTabGestures {
   }
 }
 
-export interface AppWithMobileTabSwitcher extends App {
-  mobileTabSwitcher?: {
-    containerEl: HTMLDivElement;
-    tabPreviewLookup: WeakMap<WorkspaceLeaf, { containerEl: HTMLDivElement }>;
-    onLayoutChange: () => void;
-  };
-}
-
 export function updateMobileTabGestures(plugin: MobilePlugin) {
   const { app } = plugin;
   for (const mtg of mobileTabGestures) {
@@ -136,8 +128,11 @@ export function updateMobileTabGestures(plugin: MobilePlugin) {
   mobileTabGestures = [];
   app.workspace.iterateRootLeaves(leaf => {
     const el = (
-      app as unknown as AppWithMobileTabSwitcher
-    )?.mobileTabSwitcher?.tabPreviewLookup.get(leaf)?.containerEl;
+      app?.mobileTabSwitcher?.tabPreviewLookup as WeakMap<
+        WorkspaceLeaf,
+        { containerEl: HTMLElement }
+      >
+    )?.get(leaf)?.containerEl;
     if (!el) return;
     mobileTabGestures.push(new MobileTabGestures(plugin, el, leaf));
   });
@@ -154,6 +149,9 @@ function putLeafOnLeaf(
   leaf: WorkspaceLeaf,
   targetLeaf: WorkspaceLeaf,
 ) {
+  app.workspace.iterateRootLeaves(leaf => {
+    leaf.detach();
+  });
   if (leaf === targetLeaf) return;
 
   const targetParent = (targetLeaf as unknown as leafWithParent)?.parent;
@@ -182,9 +180,7 @@ function putLeafOnLeaf(
 
   // Force a UI refresh so it re-renders the tab headers.
   app.workspace.requestSaveLayout();
-  (
-    app as unknown as AppWithMobileTabSwitcher
-  ).mobileTabSwitcher?.onLayoutChange();
+  app.mobileTabSwitcher?.onLayoutChange();
 
   // Alternatively, if the UI doesn't snap, you might need to trigger a resize
   // or re-focus the leaf to force a DOM update:

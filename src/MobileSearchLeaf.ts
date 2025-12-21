@@ -265,12 +265,10 @@ class SelectionCommandBar extends Component {
 
   update() {
     this.toggleSelectionCommandBar(this.selectedFiles.size > 0);
-    this.selectAllButton.buttonEl.setCssProps({
-      display:
-        this.selectedFiles.size === this.leaf.filesInSearch.length
-          ? 'none'
-          : 'block',
-    });
+    this.selectAllButton.buttonEl.classList.toggle(
+      'hide',
+      this.selectedFiles.size === this.leaf.filesInSearch.length,
+    );
     this.countLabel.textContent = `${this.selectedFiles.size} selected`;
   }
 
@@ -445,10 +443,7 @@ class SelectionCommandBar extends Component {
           .setIcon('pencil')
           .setSection('danger')
           .onClick(
-            () =>
-              void (
-                this.leaf.app.fileManager as FileManagerAPI
-              ).promptForFileRename?.(file),
+            () => void this.leaf.app.fileManager.promptForFileRename?.(file),
           ),
       )
       .addItem(item =>
@@ -777,10 +772,6 @@ class ResultItem extends Component {
       year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
     });
   }
-}
-// Type for Obsidian's internal FileManager API (not in public API)
-interface FileManagerAPI {
-  promptForFileRename?: (file: TFile) => unknown;
 }
 
 class ConfirmModal extends Modal {

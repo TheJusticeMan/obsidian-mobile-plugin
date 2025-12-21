@@ -1,12 +1,4 @@
-import {
-  App,
-  ButtonComponent,
-  Command,
-  Modal,
-  Setting,
-  View,
-  WorkspaceLeaf,
-} from 'obsidian';
+import { App, ButtonComponent, Command, Modal, Setting, View } from 'obsidian';
 import { GestureHandler, Offset } from './gesture-handler';
 import MobilePlugin from './main';
 import { CommandSuggestModal } from './settings';
@@ -37,45 +29,27 @@ export class FABManager {
   ) {
     // Update FAB when workspace layout changes
     this.plugin.registerEvent(
-      this.app.workspace.on('active-leaf-change', leaf =>
-        this.updateActiveLeaf(leaf || undefined),
-      ),
+      this.app.workspace.on('active-leaf-change', leaf => this.ensureAllFABs()),
     );
 
     // Initial FAB setup
-    this.app.workspace.onLayoutReady(() => this.updateActiveLeaf());
-  }
-
-  /**
-   * Updates FAB for the active leaf
-   */
-  updateActiveLeaf(leaf?: WorkspaceLeaf): void {
-    const activeView = leaf?.view;
-    if (activeView) this.ensureFABForLeaf(activeView);
-    else this.ensureAllFABs();
+    this.app.workspace.onLayoutReady(() => this.ensureAllFABs());
   }
 
   private ensureAllFABs(): void {
-    this.app.workspace.iterateRootLeaves(leaf => {
-      this.ensureFABForLeaf(leaf.view);
-    });
-  }
-
-  /**
-   * Ensures a FAB exists for the given leaf
-   */
-  private ensureFABForLeaf(view: View): void {
     if (!this.plugin.settings.showFAB) {
       return;
     }
-    // Don't create duplicate FABs
-    if (!this.fabElements.has(view)) {
-      // Create and mount FAB
-      this.fabElements.set(
-        view,
-        new MobileFAB(this.app, this.plugin, view.containerEl),
-      );
-    }
+    this.app.workspace.iterateRootLeaves(leaf => {
+      // Don't create duplicate FABs
+      if (!this.fabElements.has(leaf.view)) {
+        // Create and mount FAB
+        this.fabElements.set(
+          leaf.view,
+          new MobileFAB(this.app, this.plugin, leaf.view.containerEl),
+        );
+      }
+    });
   }
 
   /**
@@ -85,7 +59,7 @@ export class FABManager {
     if (!this.plugin.settings.showFAB) {
       this.destroy();
     } else {
-      this.updateActiveLeaf();
+      this.ensureAllFABs();
     }
   }
 

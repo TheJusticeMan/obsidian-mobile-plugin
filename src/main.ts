@@ -9,10 +9,7 @@ import {
   WorkspaceLeaf,
 } from 'obsidian';
 import { FABManager } from './fab';
-import {
-  MobileSearchLeaf,
-  VIEW_TYPE_MOBILE_SEARCH,
-} from './mobile-search-leaf';
+import { MobileSearchLeaf, VIEW_TYPE_MOBILE_SEARCH } from './MobileSearchLeaf';
 import {
   AppWithMobileTabSwitcher,
   updateMobileTabGestures,
@@ -25,6 +22,7 @@ import {
   mySettingsModel,
 } from './settings';
 import { createToolbarExtension } from './toolbar-extension';
+import { TabsLeaf, VIEW_TYPE_TABS } from './TabsLeaf';
 
 // WakeLock API types (not in standard TS lib)
 interface WakeLockSentinel {
@@ -77,6 +75,9 @@ export default class MobilePlugin extends Plugin {
       leaf => new MobileSearchLeaf(leaf, this),
     );
 
+    // Register the Tabs view
+    this.registerView(VIEW_TYPE_TABS, leaf => new TabsLeaf(leaf));
+
     // Register the CodeMirror 6 toolbar extension with multiple context-aware toolbars
     this.registerEditorExtension(createToolbarExtension(this.app, this));
     // add ribbon icon
@@ -112,6 +113,15 @@ export default class MobilePlugin extends Plugin {
   }
 
   private registerCommands() {
+    this.addCommand({
+      id: 'open-tabs',
+      name: 'Open tabs',
+      icon: 'tabs',
+      callback: () => {
+        void this.activateTabsView();
+      },
+    });
+
     this.addCommand({
       id: 'toggle-wake-lock',
       name: 'Toggle wake lock',
@@ -691,6 +701,28 @@ export default class MobilePlugin extends Plugin {
       if (leftLeaf) {
         await leftLeaf.setViewState({
           type: VIEW_TYPE_MOBILE_SEARCH,
+          active: true,
+        });
+        leaf = leftLeaf;
+      }
+    }
+
+    if (leaf) {
+      void workspace.revealLeaf(leaf);
+    }
+  }
+
+  activateTabsView(): void {
+    const { workspace } = this.app;
+
+    let leaf = workspace.getLeavesOfType(VIEW_TYPE_TABS)[0];
+
+    if (!leaf) {
+      // Create the view in the left sidebar
+      const leftLeaf = workspace.getRightLeaf(false);
+      if (leftLeaf) {
+        void leftLeaf.setViewState({
+          type: VIEW_TYPE_TABS,
           active: true,
         });
         leaf = leftLeaf;

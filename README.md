@@ -80,6 +80,14 @@ A dedicated search view optimized for mobile devices:
   - **Auto-exit**: Selection mode automatically exits when no files are selected
   - **Lazy-load support**: Selected files show proper UI even when rendered later during scrolling
 - **Open Tabs**: Option to display your currently open tabs for quick navigation.
+- **Folder selection mode**: Press Backspace on an empty search input to toggle between file and folder selection modes. Exiting folder mode with backspace clears the current folder filter.
+
+### Tabs View
+
+A dedicated view to manage your open tabs:
+
+- **List view**: Displays a list of all open tabs for quick navigation.
+- **Quick access**: Use the "Open tabs" command to instantly open the view.
 
 ### Tab gestures
 

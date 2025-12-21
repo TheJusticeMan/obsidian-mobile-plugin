@@ -174,6 +174,10 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   z-index: 10;
 }
 
+.mobile-search-input-container.hide {
+  display: none;
+}
+
 .mobile-search-input {
   width: 100%;
   padding: 10px 12px;
@@ -291,17 +295,21 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 
 /* Selection Mode Styles */
 .mobile-search-selection-bar {
+  display: none;
   position: sticky;
   top: 0;
   padding: 12px;
   background-color: var(--background-secondary);
   border-bottom: 1px solid var(--background-modifier-border);
   z-index: 10;
-  display: none;
   flex-direction: row;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.mobile-search-selection-bar.show {
+  display: flex;
 }
 
 /* Style for ButtonComponent buttons in selection bar */
@@ -326,12 +334,14 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 }
 
 /* Selected card styling */
-.mobile-search-result-card.is-selected {
+.mobile-search-result-card.is-selected,
+.mobile-search-result-card.selected {
   border: 2px solid var(--interactive-accent);
   background-color: var(--background-modifier-hover);
 }
 
-.mobile-search-result-card.is-selected::before {
+.mobile-search-result-card.is-selected::before,
+.mobile-search-result-card.selected::before {
   content: '✓';
   position: absolute;
   top: 8px;

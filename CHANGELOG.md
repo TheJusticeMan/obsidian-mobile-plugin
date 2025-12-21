@@ -5,6 +5,25 @@ All notable changes to the Mobile UX plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-12-20
+
+### Added
+
+- **Tabs**: Added a new "Tabs" view that displays a list of open tabs for quick navigation.
+- **Tabs**: Added "Open tabs" command to open the new Tabs view.
+- **Search**: Added folder selection mode. Pressing Backspace on an empty search input toggles between file and folder selection modes. Exiting folder mode with backspace clears the current folder filter.
+- **Search**: Added confirmation dialog when deleting multiple files to prevent accidental deletions.
+
+### Fixed
+
+- **FAB**: Fixed an issue where the Floating Action Button would not appear on some leaves by ensuring it is initialized for all root leaves.
+- **Gestures**: Updated tab gestures to only iterate over root leaves, improving performance and correctness.
+
+### Changed
+
+- **Internal**: Renamed `mobile-search-leaf.ts` to `MobileSearchLeaf.ts` for consistency.
+- **Internal**: Removed `throttleWithInterval.ts` utility and replaced it with the `apocalypse-throttle` package.
+
 ## [1.3.2] - 2025-12-20
 
 ### Fixed

@@ -134,7 +134,7 @@ export function updateMobileTabGestures(plugin: MobilePlugin) {
     mtg.destroy();
   }
   mobileTabGestures = [];
-  app.workspace.iterateAllLeaves(leaf => {
+  app.workspace.iterateRootLeaves(leaf => {
     const el = (
       app as unknown as AppWithMobileTabSwitcher
     )?.mobileTabSwitcher?.tabPreviewLookup.get(leaf)?.containerEl;

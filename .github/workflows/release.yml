@@ -34,7 +34,6 @@ jobs:
 
           gh release create "$tag" \
             --title="$tag" \
-            --fail-on-no-commits \
             --notes-file "release_notes.md" \
             main.js manifest.json styles.css
 

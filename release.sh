@@ -4,8 +4,8 @@ set -e
 echo "Retrieving the current version..."
 version=$(npm pkg get version | tr -d '"')
 
-echo "Updating all npm packages..."
-npm update --legacy-peer-deps
+# echo "Updating all npm packages..."
+# npm update --legacy-peer-deps
 
 echo "Executing the npm version script..."
 npm run version

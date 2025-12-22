@@ -3,6 +3,17 @@ import { Offset } from './gesture-handler';
 import MobilePlugin from './main';
 let mobileTabGestures: MobileTabGestures[] = [];
 
+/**
+ * Handles touch gestures for tab manipulation in the mobile tab switcher.
+ *
+ * Provides swipe-to-close and drag-to-reorder functionality for tabs
+ * in the mobile tab switcher interface. Supports two gesture modes:
+ * - Horizontal swipe: Closes the tab
+ * - Vertical drag: Reorders tabs by dragging to new position
+ *
+ * The gesture detection uses a threshold to determine which mode to use
+ * based on the initial drag direction.
+ */
 class MobileTabGestures {
   private start: Offset = new Offset(0, 0);
   mode: 'swipe' | 'drag' | 'none' = 'none';

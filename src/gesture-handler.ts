@@ -13,6 +13,17 @@ export interface GestureCommand {
   gesturePath: string;
 }
 
+/**
+ * Represents a 2D coordinate offset or vector.
+ *
+ * Used throughout gesture handling for:
+ * - Touch/mouse positions
+ * - Gesture path points
+ * - Vector calculations and transformations
+ *
+ * Provides utility methods for common vector operations like
+ * addition, subtraction, distance calculation, and dampening.
+ */
 export class Offset {
   x: number;
   y: number;
@@ -47,6 +58,24 @@ function setCssProps(el: HTMLElement, props: Record<string, string>): void {
   Object.assign(el.style, props);
 }
 
+/**
+ * Handles gesture recognition and command execution for drawn gestures.
+ *
+ * Captures mouse/touch drag events on an element and analyzes the drawn
+ * path to match against known gesture patterns. Features include:
+ * - Path recording and normalization
+ * - Gesture pattern matching using angular difference
+ * - Visual feedback with temporary trail lines
+ * - Success/failure animations
+ * - Callback for unrecognized gestures
+ *
+ * The recognition algorithm:
+ * 1. Records touch/mouse positions during drag
+ * 2. Normalizes the path (translate to origin, resample to fixed points)
+ * 3. Compares angular vectors against stored gesture patterns
+ * 4. Matches if difference is below threshold
+ * 5. Executes associated command or triggers unknown gesture callback
+ */
 export class GestureHandler {
   private start: Offset = new Offset(0, 0);
   private last: Offset = new Offset(0, 0);

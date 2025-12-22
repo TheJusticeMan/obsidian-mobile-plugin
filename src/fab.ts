@@ -4,7 +4,12 @@ import MobilePlugin from './main';
 import { CommandSuggestModal } from './settings';
 
 /**
- * Manages FAB placement and lifecycle across editor leaves.
+ * Manages FAB (Floating Action Button) placement and lifecycle across editor leaves.
+ *
+ * Responsible for creating, updating, and destroying FAB instances for each
+ * workspace view. Handles mode switching between default and recording modes.
+ * Automatically creates FABs when new leaves are opened and cleans them up
+ * when the plugin is disabled or unloaded.
  */
 export class FABManager {
   private fabElements: Map<View, ButtonComponent> = new Map();
@@ -77,6 +82,19 @@ export class FABManager {
   }
 }
 
+/**
+ * Mobile FAB (Floating Action Button) component.
+ *
+ * A persistent button that floats at the bottom-right of the editor view,
+ * providing quick access to common actions. Features include:
+ * - Press: Execute configured command
+ * - Long press: Execute alternative command (e.g., command palette)
+ * - Gesture drawing: Draw gestures from the FAB to trigger custom commands
+ * - Recording mode: Hold to record audio (when audio recorder plugin is available)
+ * - Haptic feedback: Vibration feedback on touch devices
+ *
+ * @extends ButtonComponent
+ */
 class MobileFAB extends ButtonComponent {
   private gestureHandler: GestureHandler;
   private mode: 'default' | 'recording' = 'default';
@@ -183,6 +201,17 @@ class MobileFAB extends ButtonComponent {
   }
 }
 
+/**
+ * Modal dialog for assigning commands to newly drawn gestures.
+ *
+ * Appears when a user draws an unrecognized gesture from the FAB,
+ * allowing them to:
+ * - Assign a command to the gesture
+ * - Skip the confirmation dialog in future
+ * - Cancel and discard the gesture
+ *
+ * @extends Modal
+ */
 class NewGesture extends Modal {
   constructor(
     app: App,

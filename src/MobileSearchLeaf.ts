@@ -22,6 +22,19 @@ export const VIEW_TYPE_MOBILE_SEARCH = 'mobile-search-view';
 
 const PREVIEW_LENGTH = 200;
 
+/**
+ * Custom view for mobile-optimized file search and navigation.
+ *
+ * Provides a fast, touch-friendly interface for searching and opening files
+ * with features including:
+ * - Instant search with fuzzy matching
+ * - File previews with lazy loading
+ * - Batch selection and operations
+ * - Folder filtering
+ * - Context menus for file actions
+ *
+ * @extends ItemView
+ */
 export class MobileSearchLeaf extends ItemView {
   private filesCache: FilesCache;
   files: TFile[] = [];
@@ -210,6 +223,17 @@ export class MobileSearchLeaf extends ItemView {
   }
 }
 
+/**
+ * Command bar for managing file selection operations in the mobile search view.
+ *
+ * Provides a toolbar with actions for selected files including:
+ * - Select all/deselect all toggle
+ * - Selection count display
+ * - Batch operations menu (open, delete, etc.)
+ * - Individual file context menus
+ *
+ * @extends Component
+ */
 class SelectionCommandBar extends Component {
   private selectionCommandBar: HTMLDivElement;
   selectAllButton: ButtonComponent;
@@ -471,6 +495,15 @@ class SelectionCommandBar extends Component {
   }
 }
 
+/**
+ * Manages file and folder caching for the mobile search view.
+ *
+ * Maintains an up-to-date list of files and folders in the vault,
+ * sorted by modification time, with cached file previews for performance.
+ * Automatically updates when vault changes occur (create, delete, rename, modify).
+ *
+ * @extends Component
+ */
 class FilesCache extends Component {
   private _folder: TFolder | null = null;
   public get folder(): TFolder | null {
@@ -582,6 +615,14 @@ class FilesCache extends Component {
   }
 }
 
+/**
+ * Enhanced search input component with focus/blur event handling.
+ *
+ * Wraps the Obsidian SearchComponent with additional functionality
+ * for managing search state and responding to focus changes.
+ *
+ * @extends SearchComponent
+ */
 class SearchBar extends SearchComponent {
   public folder: TFolder;
   public query: string;
@@ -614,6 +655,15 @@ class SearchBar extends SearchComponent {
   }
 }
 
+/**
+ * Container component for managing search result items.
+ *
+ * Handles rendering and lifecycle of file result items,
+ * with support for infinite scrolling and touch interactions.
+ * Manages selection state updates across all result items.
+ *
+ * @extends Component
+ */
 class ResultsCtr extends Component {
   resultsEl: HTMLElement;
   private onTouchMoveCallback: () => void = () => {};
@@ -663,6 +713,18 @@ class ResultsCtr extends Component {
   }
 }
 
+/**
+ * Individual search result item component.
+ *
+ * Represents a single file in the search results with:
+ * - File name and path display
+ * - Markdown preview rendering
+ * - Last modified date
+ * - Selection state management
+ * - Click and context menu handlers
+ *
+ * @extends Component
+ */
 class ResultItem extends Component {
   private resultEl: HTMLElement;
   private previewWrapper: HTMLDivElement;
@@ -776,6 +838,14 @@ class ResultItem extends Component {
   }
 }
 
+/**
+ * Simple confirmation dialog modal.
+ *
+ * Displays a message with Cancel and Delete buttons,
+ * executing a callback when deletion is confirmed.
+ *
+ * @extends Modal
+ */
 class ConfirmModal extends Modal {
   onConfirmCallback: () => void;
 

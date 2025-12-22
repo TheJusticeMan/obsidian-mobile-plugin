@@ -290,6 +290,14 @@ export class FolderSuggest extends FuzzySuggestModal<TFolder> {
   }
 }
 
+/**
+ * Modal for selecting an icon from available Lucide icons in Obsidian.
+ *
+ * Provides a searchable list of all available icon IDs with visual preview.
+ * Used for customizing command icons in toolbar configurations.
+ *
+ * @extends SuggestModal
+ */
 export class IconSuggestModal extends SuggestModal<string> {
   onSubmit: (result: string) => void;
   icons: string[];
@@ -331,6 +339,15 @@ export class IconSuggestModal extends SuggestModal<string> {
   }
 }
 
+/**
+ * Modal for selecting a command from all available Obsidian commands.
+ *
+ * Provides fuzzy search over all registered commands in the application,
+ * displaying command names and allowing quick selection. Used throughout
+ * the plugin for assigning commands to various triggers (FAB, gestures, etc.).
+ *
+ * @extends FuzzySuggestModal
+ */
 export class CommandSuggestModal extends FuzzySuggestModal<Command> {
   onSubmit: (result: Command) => void;
   commands: Command[];
@@ -357,6 +374,14 @@ export class CommandSuggestModal extends FuzzySuggestModal<Command> {
   }
 }
 
+/**
+ * Plugin settings tab for configuring mobile plugin options.
+ *
+ * Provides the main entry point for plugin settings in Obsidian's
+ * settings panel. Delegates rendering to MobileSettingsView.
+ *
+ * @extends PluginSettingTab
+ */
 export class MobileSettingTab extends PluginSettingTab {
   constructor(
     public app: App,
@@ -370,6 +395,19 @@ export class MobileSettingTab extends PluginSettingTab {
   }
 }
 
+/**
+ * Main settings view component for the mobile plugin.
+ *
+ * Renders all plugin configuration options including:
+ * - General settings (FAB, toolbars, haptic feedback)
+ * - Context bindings (which toolbar appears in which context)
+ * - Toolbar editor (manage toolbar commands and icons)
+ * - FAB event commands
+ * - Gesture commands
+ *
+ * Provides a tabbed/sectioned interface for organizing different
+ * configuration areas.
+ */
 export class MobileSettingsView {
   constructor(
     public app: App,
@@ -696,6 +734,15 @@ export class MobileSettingsView {
   }
 }
 
+/**
+ * Modal wrapper for the mobile plugin settings view.
+ *
+ * Allows accessing plugin settings from anywhere in the app
+ * via a modal dialog, rather than only through Obsidian's
+ * settings panel.
+ *
+ * @extends Modal
+ */
 export class mySettingsModel extends Modal {
   constructor(
     app: App,
@@ -709,6 +756,14 @@ export class mySettingsModel extends Modal {
   }
 }
 
+/**
+ * Modal for selecting a context type when creating context bindings.
+ *
+ * Displays all available context types (selection, list, task, heading, etc.)
+ * for binding to a toolbar. Used when adding new context bindings.
+ *
+ * @extends FuzzySuggestModal
+ */
 export class ContextSelectionModal extends FuzzySuggestModal<ContextBinding> {
   onSubmit: (result: ContextBinding) => void;
   bindings: ContextBinding[];
@@ -739,6 +794,14 @@ export class ContextSelectionModal extends FuzzySuggestModal<ContextBinding> {
   }
 }
 
+/**
+ * Modal for selecting a toolbar when creating context bindings.
+ *
+ * Displays all available toolbars for selection when binding
+ * a context type to a toolbar configuration.
+ *
+ * @extends FuzzySuggestModal
+ */
 export class ContextBindingChooser extends FuzzySuggestModal<ToolbarConfig> {
   onSubmit: (result: ToolbarConfig) => void;
 
@@ -764,6 +827,21 @@ export class ContextBindingChooser extends FuzzySuggestModal<ToolbarConfig> {
   }
 }
 
+/**
+ * Modal editor for managing toolbar configurations.
+ *
+ * Provides a full-featured interface for:
+ * - Editing toolbar name
+ * - Adding/removing commands
+ * - Reordering commands via drag-and-drop
+ * - Customizing command icons
+ * - Managing context bindings
+ * - Deleting toolbars
+ *
+ * Changes are saved automatically as they're made.
+ *
+ * @extends Modal
+ */
 export class ToolbarEditor extends Modal {
   deleteCallback: () => void;
   onDelete(deleteCallback: () => void) {

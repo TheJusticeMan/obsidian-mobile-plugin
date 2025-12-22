@@ -55,7 +55,7 @@ export class MobileSearchLeaf extends ItemView {
     return 'search';
   }
 
-  protected async onOpen() {
+  protected onOpen(): Promise<void> {
     const { contentEl } = this;
 
     contentEl.empty();
@@ -100,10 +100,12 @@ export class MobileSearchLeaf extends ItemView {
     this.setupIntersectionObserver();
 
     void this.update();
+    return Promise.resolve();
   }
 
-  protected async onClose() {
+  protected onClose(): Promise<void> {
     this.removeChild(this.filesCache);
+    return Promise.resolve();
   }
 
   update = apocalypseThrottle((query: string = '') => {

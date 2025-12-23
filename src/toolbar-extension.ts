@@ -37,10 +37,6 @@ import { ContextType, ToolbarConfig, ToolbarEditor } from './settings';
  * @param plugin - The mobile plugin instance
  * @returns A CodeMirror ViewPlugin for the toolbar
  */
-// Store toolbar elements by editor view to prevent duplicate toolbars
-// and ensure proper cleanup
-const toolbarMap = new WeakMap<EditorView, HTMLElement>();
-
 export function createToolbarExtension(app: App, plugin: MobilePlugin) {
   return ViewPlugin.fromClass(
     /**
@@ -57,13 +53,11 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
       plugin: MobilePlugin;
       mainToolbar: ToolbarConfig | null = null;
       currentToolbar: ToolbarConfig | null = null;
-      view: EditorView;
 
       constructor(view: EditorView) {
         this.decorations = Decoration.none;
         this.app = app;
         this.plugin = plugin;
-        this.view = view;
 
         // Find the editor container to anchor the toolbar
 
@@ -355,18 +349,10 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
           return;
         }
 
-        // Get the workspace-leaf-content container from the active view
-        let container = activeView.containerEl.querySelector(
-          '.workspace-leaf-content',
-        );
-
-        // Fallback to view.dom's closest container if we can't find one
+        // Use activeView.containerEl which always points to the right element
+        const container = activeView.containerEl;
         if (!container) {
-          const fallbackContainer = view.dom.closest('.workspace-leaf-content');
-          if (!fallbackContainer) {
-            return;
-          }
-          container = fallbackContainer;
+          return;
         }
 
         // Create toolbar in the proper container
@@ -375,7 +361,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         // Store the toolbar in the map for this view for proper cleanup
         // The WeakMap ensures automatic garbage collection when the view is destroyed
         if (this.tooltip) {
-          toolbarMap.set(this.view, this.tooltip);
+          this.plugin.toolbarMap.set(activeView, this.tooltip);
           this.addSwipeToExpandListener(this.tooltip);
         }
 
@@ -438,9 +424,10 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         if (this.tooltip) {
           this.tooltip.remove();
           this.tooltip = null;
-          // Clean up the map entry for this view
-          if (toolbarMap.has(this.view)) {
-            toolbarMap.delete(this.view);
+          // Clean up the map entry for the active view
+          const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+          if (activeView && this.plugin.toolbarMap.has(activeView)) {
+            this.plugin.toolbarMap.delete(activeView);
           }
         }
       }

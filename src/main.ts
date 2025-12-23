@@ -1,6 +1,7 @@
 import {
   App,
   Component,
+  MarkdownFileInfo,
   MarkdownView,
   Notice,
   Platform,
@@ -52,8 +53,8 @@ export default class MobilePlugin extends Plugin {
   isTabSwitcherOpened: boolean = false;
   leafDragging: WorkspaceLeaf | null = null;
   app: App;
-  // Map to track toolbar elements by active editor (MarkdownView)
-  toolbarMap: WeakMap<MarkdownView, HTMLElement> = new WeakMap();
+  // Map to track toolbar elements by active editor (MarkdownFileInfo)
+  toolbarMap: WeakMap<MarkdownFileInfo, HTMLElement> = new WeakMap();
 
   async onload() {
     await this.loadSettings();

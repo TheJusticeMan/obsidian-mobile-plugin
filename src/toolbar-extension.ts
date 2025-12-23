@@ -10,6 +10,7 @@ import {
   App,
   ButtonComponent,
   ExtraButtonComponent,
+  MarkdownFileInfo,
   MarkdownView,
 } from 'obsidian';
 import MobilePlugin from './main';
@@ -53,6 +54,8 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
       plugin: MobilePlugin;
       mainToolbar: ToolbarConfig | null = null;
       currentToolbar: ToolbarConfig | null = null;
+      // Store reference to the MarkdownFileInfo that owns the current toolbar
+      toolbarOwner: MarkdownFileInfo | null = null;
 
       constructor(view: EditorView) {
         this.decorations = Decoration.none;
@@ -340,28 +343,24 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
 
         this.removeTooltipIfExists();
 
-        // Get the proper container for the toolbar using the active MarkdownView
+        // Get the proper container for the toolbar using activeEditor
         // This ensures the toolbar appears at the workspace-leaf-content level,
         // not inside table cells or other nested elements
-        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-        if (!activeView) {
-          // No active markdown view, cannot render toolbar
-          return;
-        }
-
-        // Use activeView.containerEl which always points to the right element
-        const container = activeView.containerEl;
+        const container = this.app.workspace.activeEditor?.editor?.containerEl;
         if (!container) {
+          // No active editor or container, cannot render toolbar
           return;
         }
 
         // Create toolbar in the proper container
         this.tooltip = container.createDiv({ cls: 'mobile-plugin-toolbar' });
 
-        // Store the toolbar in the map for this view for proper cleanup
-        // The WeakMap ensures automatic garbage collection when the view is destroyed
-        if (this.tooltip) {
-          this.plugin.toolbarMap.set(activeView, this.tooltip);
+        // Store the toolbar in the map for this editor for proper cleanup
+        // The WeakMap ensures automatic garbage collection when the editor is destroyed
+        const activeEditor = this.app.workspace.activeEditor;
+        if (this.tooltip && activeEditor) {
+          this.toolbarOwner = activeEditor;
+          this.plugin.toolbarMap.set(activeEditor, this.tooltip);
           this.addSwipeToExpandListener(this.tooltip);
         }
 
@@ -424,11 +423,11 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         if (this.tooltip) {
           this.tooltip.remove();
           this.tooltip = null;
-          // Clean up the map entry for the active view
-          const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-          if (activeView && this.plugin.toolbarMap.has(activeView)) {
-            this.plugin.toolbarMap.delete(activeView);
+          // Clean up the map entry for the owner of this toolbar
+          if (this.toolbarOwner && this.plugin.toolbarMap.has(this.toolbarOwner)) {
+            this.plugin.toolbarMap.delete(this.toolbarOwner);
           }
+          this.toolbarOwner = null;
         }
       }
 

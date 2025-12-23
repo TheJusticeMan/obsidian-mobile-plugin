@@ -37,6 +37,10 @@ import { ContextType, ToolbarConfig, ToolbarEditor } from './settings';
  * @param plugin - The mobile plugin instance
  * @returns A CodeMirror ViewPlugin for the toolbar
  */
+// Store toolbar elements by editor view to prevent duplicate toolbars
+// and ensure proper cleanup
+const toolbarMap = new WeakMap<EditorView, HTMLElement>();
+
 export function createToolbarExtension(app: App, plugin: MobilePlugin) {
   return ViewPlugin.fromClass(
     /**
@@ -53,11 +57,13 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
       plugin: MobilePlugin;
       mainToolbar: ToolbarConfig | null = null;
       currentToolbar: ToolbarConfig | null = null;
+      view: EditorView;
 
       constructor(view: EditorView) {
         this.decorations = Decoration.none;
         this.app = app;
         this.plugin = plugin;
+        this.view = view;
 
         // Find the editor container to anchor the toolbar
 
@@ -340,14 +346,38 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
 
         this.removeTooltipIfExists();
 
-        // Find the workspace-leaf-content container to anchor the toolbar
-        // This ensures the toolbar appears at the bottom of the editor container,
+        // Get the proper container for the toolbar using the active MarkdownView
+        // This ensures the toolbar appears at the workspace-leaf-content level,
         // not inside table cells or other nested elements
-        this.tooltip = (
-          view.dom.closest('.workspace-leaf-content') || view.dom
-        ).createDiv({ cls: 'mobile-plugin-toolbar' });
-        // Add swipe-to-expand functionality
-        if (this.tooltip) this.addSwipeToExpandListener(this.tooltip);
+        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (!activeView) {
+          // No active markdown view, cannot render toolbar
+          return;
+        }
+
+        // Get the workspace-leaf-content container from the active view
+        const container = activeView.containerEl.querySelector(
+          '.workspace-leaf-content',
+        );
+        if (!container) {
+          // Fallback to view.dom's closest container if we can't find one
+          const fallbackContainer = view.dom.closest('.workspace-leaf-content');
+          if (!fallbackContainer) {
+            return;
+          }
+          this.tooltip = fallbackContainer.createDiv({
+            cls: 'mobile-plugin-toolbar',
+          });
+        } else {
+          // Create toolbar in the proper container
+          this.tooltip = container.createDiv({ cls: 'mobile-plugin-toolbar' });
+        }
+
+        // Store the toolbar in the map for this view
+        if (this.tooltip) {
+          toolbarMap.set(this.view, this.tooltip);
+          this.addSwipeToExpandListener(this.tooltip);
+        }
 
         // Get all available commands
         const commands = this.app.commands?.commands || {};
@@ -408,6 +438,10 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         if (this.tooltip) {
           this.tooltip.remove();
           this.tooltip = null;
+        }
+        // Clean up the map entry for this view
+        if (toolbarMap.has(this.view)) {
+          toolbarMap.delete(this.view);
         }
       }
 

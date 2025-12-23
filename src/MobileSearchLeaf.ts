@@ -18,7 +18,7 @@ import {
 } from 'obsidian';
 import MobilePlugin from './main';
 
-export const VIEW_TYPE_MOBILE_SEARCH = 'mobile-search-view';
+export const VIEW_TYPE_SEARCH = 'mobile-search-view';
 
 const PREVIEW_LENGTH = 200;
 
@@ -35,7 +35,7 @@ const PREVIEW_LENGTH = 200;
  *
  * @extends ItemView
  */
-export class MobileSearchLeaf extends ItemView {
+export class SearchLeaf extends ItemView {
   private filesCache: FilesCache;
   files: TFile[] = [];
   searchInput: SearchBar;
@@ -57,7 +57,7 @@ export class MobileSearchLeaf extends ItemView {
   }
 
   getViewType(): string {
-    return VIEW_TYPE_MOBILE_SEARCH;
+    return VIEW_TYPE_SEARCH;
   }
 
   getDisplayText(): string {
@@ -245,7 +245,7 @@ class SelectionCommandBar extends Component {
   }
 
   constructor(
-    public leaf: MobileSearchLeaf,
+    public leaf: SearchLeaf,
     parent: HTMLElement,
   ) {
     super();
@@ -518,7 +518,7 @@ class FilesCache extends Component {
   private _previewCache: Map<TFile, string>;
   private updateCallback: () => void = () => {};
 
-  constructor(public leaf: MobileSearchLeaf) {
+  constructor(public leaf: SearchLeaf) {
     super();
     this._files = [];
     this._folders = [];
@@ -671,7 +671,7 @@ class ResultsCtr extends Component {
   results: ResultItem[] = [];
 
   constructor(
-    public leaf: MobileSearchLeaf,
+    public leaf: SearchLeaf,
     public containerEl: HTMLElement,
     public filesCache: FilesCache,
   ) {
@@ -731,7 +731,7 @@ class ResultItem extends Component {
   private previewEl: HTMLDivElement;
 
   constructor(
-    public leaf: MobileSearchLeaf,
+    public leaf: SearchLeaf,
     public container: ResultsCtr,
     public file: TFile,
   ) {

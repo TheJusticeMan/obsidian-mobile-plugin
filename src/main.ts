@@ -8,7 +8,7 @@ import {
   WorkspaceLeaf,
 } from 'obsidian';
 import { FABManager } from './fab';
-import { MobileSearchLeaf, VIEW_TYPE_MOBILE_SEARCH } from './MobileSearchLeaf';
+import { SearchLeaf, VIEW_TYPE_SEARCH } from './MobileSearchLeaf';
 import { updateMobileTabGestures } from './MobileTabGestures';
 import {
   DEFAULT_SETTINGS,
@@ -70,10 +70,7 @@ export default class MobilePlugin extends Plugin {
     this.fabManager = new FABManager(this.app, this);
 
     // Register the Mobile Search view
-    this.registerView(
-      VIEW_TYPE_MOBILE_SEARCH,
-      leaf => new MobileSearchLeaf(leaf, this),
-    );
+    this.registerView(VIEW_TYPE_SEARCH, leaf => new SearchLeaf(leaf, this));
 
     // Register the Tabs view
     this.registerView(VIEW_TYPE_TABS, leaf => new TabsLeaf(leaf));
@@ -688,14 +685,14 @@ export default class MobilePlugin extends Plugin {
   async activateMobileSearchView(): Promise<void> {
     const { workspace } = this.app;
 
-    let leaf = workspace.getLeavesOfType(VIEW_TYPE_MOBILE_SEARCH)[0];
+    let leaf = workspace.getLeavesOfType(VIEW_TYPE_SEARCH)[0];
 
     if (!leaf) {
       // Create the view in the left sidebar
       const leftLeaf = workspace.getLeftLeaf(false);
       if (leftLeaf) {
         await leftLeaf.setViewState({
-          type: VIEW_TYPE_MOBILE_SEARCH,
+          type: VIEW_TYPE_SEARCH,
           active: true,
         });
         leaf = leftLeaf;
@@ -781,6 +778,7 @@ export default class MobilePlugin extends Plugin {
 
   onUserEnable() {
     void this.activateMobileSearchView();
+    void this.activateTabsView();
   }
 
   onunload(): void {

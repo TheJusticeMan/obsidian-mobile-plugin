@@ -356,24 +356,24 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         }
 
         // Get the workspace-leaf-content container from the active view
-        const container = activeView.containerEl.querySelector(
+        let container = activeView.containerEl.querySelector(
           '.workspace-leaf-content',
         );
+
+        // Fallback to view.dom's closest container if we can't find one
         if (!container) {
-          // Fallback to view.dom's closest container if we can't find one
           const fallbackContainer = view.dom.closest('.workspace-leaf-content');
           if (!fallbackContainer) {
             return;
           }
-          this.tooltip = fallbackContainer.createDiv({
-            cls: 'mobile-plugin-toolbar',
-          });
-        } else {
-          // Create toolbar in the proper container
-          this.tooltip = container.createDiv({ cls: 'mobile-plugin-toolbar' });
+          container = fallbackContainer;
         }
 
-        // Store the toolbar in the map for this view
+        // Create toolbar in the proper container
+        this.tooltip = container.createDiv({ cls: 'mobile-plugin-toolbar' });
+
+        // Store the toolbar in the map for this view for proper cleanup
+        // The WeakMap ensures automatic garbage collection when the view is destroyed
         if (this.tooltip) {
           toolbarMap.set(this.view, this.tooltip);
           this.addSwipeToExpandListener(this.tooltip);
@@ -438,10 +438,10 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         if (this.tooltip) {
           this.tooltip.remove();
           this.tooltip = null;
-        }
-        // Clean up the map entry for this view
-        if (toolbarMap.has(this.view)) {
-          toolbarMap.delete(this.view);
+          // Clean up the map entry for this view
+          if (toolbarMap.has(this.view)) {
+            toolbarMap.delete(this.view);
+          }
         }
       }
 

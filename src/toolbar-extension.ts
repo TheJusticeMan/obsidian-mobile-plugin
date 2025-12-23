@@ -346,8 +346,9 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         // Get the proper container for the toolbar using activeEditor
         // This ensures the toolbar appears at the workspace-leaf-content level,
         // not inside table cells or other nested elements
-        const container = this.app.workspace.activeEditor?.editor?.containerEl;
-        if (!container) {
+        const activeEditor = this.app.workspace.activeEditor;
+        const container = activeEditor?.editor?.containerEl;
+        if (!container || !activeEditor) {
           // No active editor or container, cannot render toolbar
           return;
         }
@@ -357,8 +358,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
 
         // Store the toolbar in the map for this editor for proper cleanup
         // The WeakMap ensures automatic garbage collection when the editor is destroyed
-        const activeEditor = this.app.workspace.activeEditor;
-        if (this.tooltip && activeEditor) {
+        if (this.tooltip) {
           this.toolbarOwner = activeEditor;
           this.plugin.toolbarMap.set(activeEditor, this.tooltip);
           this.addSwipeToExpandListener(this.tooltip);
@@ -424,7 +424,10 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
           this.tooltip.remove();
           this.tooltip = null;
           // Clean up the map entry for the owner of this toolbar
-          if (this.toolbarOwner && this.plugin.toolbarMap.has(this.toolbarOwner)) {
+          if (
+            this.toolbarOwner &&
+            this.plugin.toolbarMap.has(this.toolbarOwner)
+          ) {
             this.plugin.toolbarMap.delete(this.toolbarOwner);
           }
           this.toolbarOwner = null;

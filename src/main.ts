@@ -32,6 +32,18 @@ interface WakeLockNavigator {
   };
 }
 
+/**
+ * Main plugin class for the Obsidian Mobile Plugin.
+ *
+ * Provides mobile-optimized UX enhancements including:
+ * - Floating action button (FAB) for quick actions
+ * - Context-aware toolbars for editing
+ * - Tab gesture support
+ * - Wake lock functionality
+ * - Custom commands for mobile navigation and selection
+ *
+ * @extends Plugin
+ */
 export default class MobilePlugin extends Plugin {
   settings: MobilePluginSettings;
   fabManager: FABManager | null = null;
@@ -807,6 +819,15 @@ export default class MobilePlugin extends Plugin {
   }
 }
 
+/**
+ * Component that forces tablet mode on phone devices.
+ *
+ * When loaded, this component overrides the phone detection and
+ * sets the platform to tablet mode, providing a desktop-like experience
+ * on mobile devices. The original state is restored when unloaded.
+ *
+ * @extends Component
+ */
 export class keepInTabletMode extends Component {
   isloaded = false;
   wasPhone = false;

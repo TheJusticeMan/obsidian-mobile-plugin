@@ -2,6 +2,15 @@ import { IconName, ItemView } from 'obsidian';
 
 export const VIEW_TYPE_TABS = 'tabs-leaf';
 
+/**
+ * View component that displays a list of open tabs.
+ *
+ * Provides a simple list view of all root workspace leaves (tabs),
+ * highlighting the active tab and allowing users to switch between tabs
+ * by clicking on them. Updates automatically when the layout changes.
+ *
+ * @extends ItemView
+ */
 export class TabsLeaf extends ItemView {
   getViewType(): string {
     return VIEW_TYPE_TABS;

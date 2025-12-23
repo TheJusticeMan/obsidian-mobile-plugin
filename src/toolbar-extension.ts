@@ -18,9 +18,34 @@ import { ContextType, ToolbarConfig, ToolbarEditor } from './settings';
 /**
  * Creates a CodeMirror 6 ViewPlugin that displays a context-aware toolbar at the bottom
  * when text is selected or cursor is in a specific context.
+ *
+ * The toolbar adapts its available commands based on the current editor context:
+ * - Selection context: Copy, cut, formatting commands
+ * - List context: Indent, bullet/numbered list toggles
+ * - Table context: Row/column operations
+ * - Code block context: Code formatting commands
+ * - And more...
+ *
+ * Features:
+ * - Context detection using CodeMirror syntax tree
+ * - Command availability checking
+ * - Swipe-to-expand gesture for more commands
+ * - Haptic feedback on button presses
+ * - Icon or text button display modes
+ *
+ * @param app - The Obsidian application instance
+ * @param plugin - The mobile plugin instance
+ * @returns A CodeMirror ViewPlugin for the toolbar
  */
 export function createToolbarExtension(app: App, plugin: MobilePlugin) {
   return ViewPlugin.fromClass(
+    /**
+     * Anonymous ViewPlugin class for context-aware toolbar management.
+     *
+     * Monitors editor state changes (selection, viewport, document)
+     * and updates the toolbar accordingly. Handles toolbar rendering,
+     * context detection, and command execution.
+     */
     class {
       decorations: DecorationSet;
       tooltip: HTMLElement | null = null;

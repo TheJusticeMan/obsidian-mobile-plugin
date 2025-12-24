@@ -9,6 +9,7 @@ import {
 import {
   App,
   ButtonComponent,
+  Editor,
   ExtraButtonComponent,
   MarkdownView,
 } from 'obsidian';
@@ -48,11 +49,11 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
      */
     class {
       decorations: DecorationSet;
-      tooltip: HTMLElement | null = null;
       app: App;
       plugin: MobilePlugin;
       mainToolbar: ToolbarConfig | null = null;
       currentToolbar: ToolbarConfig | null = null;
+      view: EditorView;
 
       constructor(view: EditorView) {
         this.decorations = Decoration.none;
@@ -112,6 +113,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
           update.viewportChanged ||
           update.docChanged
         ) {
+          this.view = update.view;
           // Defer tooltip update to avoid reading layout during update
           requestAnimationFrame(() => {
             this.updateTooltip(update.view);
@@ -308,7 +310,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         // Helper to remove existing tooltip
 
         if (!this.plugin.settings.showToolbars) {
-          this.removeTooltipIfExists();
+          this.emptyElement();
           return;
         }
 
@@ -318,7 +320,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         const activeToolbar = this.getActiveToolbar(view, selection.from);
 
         if (!activeToolbar || activeToolbar.commands.length === 0) {
-          this.removeTooltipIfExists();
+          this.emptyElement();
           return;
         }
 
@@ -338,16 +340,14 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
 
         this.currentToolbar = activeToolbar;
 
-        this.removeTooltipIfExists();
-
         // Find the workspace-leaf-content container to anchor the toolbar
         // This ensures the toolbar appears at the bottom of the editor container,
         // not inside table cells or other nested elements
-        this.tooltip = (
-          view.dom.closest('.workspace-leaf-content') || view.dom
-        ).createDiv({ cls: 'mobile-plugin-toolbar' });
+        const tooltip = this.Element;
+        if (!tooltip) return;
+        tooltip.empty();
         // Add swipe-to-expand functionality
-        if (this.tooltip) this.addSwipeToExpandListener(this.tooltip);
+        this.addSwipeToExpandListener(tooltip);
 
         // Get all available commands
         const commands = this.app.commands?.commands || {};
@@ -361,9 +361,9 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
             'question-mark-glyph';
 
           // Check if command is available in current context
-          if (command && this.tooltip) {
+          if (command && tooltip) {
             if (this.plugin.settings.useIcons && iconToUse) {
-              new ExtraButtonComponent(this.tooltip)
+              new ExtraButtonComponent(tooltip)
                 .setIcon(iconToUse)
                 .setTooltip(command?.name || commandId)
                 .onClick(() => {
@@ -375,7 +375,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                   view.focus();
                 });
             } else {
-              new ButtonComponent(this.tooltip)
+              new ButtonComponent(tooltip)
                 .setButtonText(command?.name || commandId)
                 .setTooltip(command?.name || commandId)
                 .onClick(e => {
@@ -390,8 +390,8 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
             }
           }
         });
-        if (this.tooltip)
-          new ExtraButtonComponent(this.tooltip)
+        if (tooltip)
+          new ExtraButtonComponent(tooltip)
             .setIcon('pencil')
             .setTooltip('Edit toolbar')
             .onClick(() => {
@@ -405,10 +405,39 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
       }
 
       private removeTooltipIfExists() {
-        if (this.tooltip) {
-          this.tooltip.remove();
-          this.tooltip = null;
-        }
+        const editor = this.editorOuter;
+        if (!editor) return;
+        if (this.plugin.toolbarMap.get(editor)?.view !== this.view) return;
+        this.plugin.toolbarMap.get(editor)?.el.remove();
+        this.plugin.toolbarMap.delete(editor);
+      }
+
+      emptyElement() {
+        const editor = this.editorOuter;
+        if (!editor) return;
+        this.plugin.toolbarMap.get(editor)?.el.empty();
+      }
+
+      get editorOuter(): Editor | undefined {
+        const mdView = this.app.workspace.activeEditor?.editor;
+        return mdView;
+      }
+
+      get Element(): HTMLElement | null {
+        const editor = this.editorOuter;
+        if (!editor) return null;
+
+        return this.plugin.toolbarMap.get(editor)?.el || this.newElement;
+      }
+
+      get newElement(): HTMLElement | null {
+        const editor = this.editorOuter;
+        if (!editor) return null;
+        const newToolbar = editor.containerEl.createDiv({
+          cls: 'mobile-plugin-toolbar',
+        });
+        this.plugin.toolbarMap.set(editor, { el: newToolbar, view: this.view });
+        return newToolbar;
       }
 
       destroy() {

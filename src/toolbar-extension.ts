@@ -354,11 +354,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         }
 
         // If the new activeEditor already has a toolbar in the map, remove it first
-        if (this.plugin.toolbarMap.has(activeEditor)) {
-          const oldToolbar = this.plugin.toolbarMap.get(activeEditor);
-          oldToolbar?.remove();
-          this.plugin.toolbarMap.delete(activeEditor);
-        }
+        this.removeToolbarFromMap(activeEditor);
 
         // Create toolbar in the proper container
         this.tooltip = container.createDiv({ cls: 'mobile-plugin-toolbar' });
@@ -426,18 +422,27 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
             });
       }
 
+      /**
+       * Helper method to remove a toolbar from the map for a given editor
+       */
+      private removeToolbarFromMap(editor: MarkdownFileInfo) {
+        if (this.plugin.toolbarMap.has(editor)) {
+          const oldToolbar = this.plugin.toolbarMap.get(editor);
+          oldToolbar?.remove();
+          this.plugin.toolbarMap.delete(editor);
+        }
+      }
+
       private removeTooltipIfExists() {
         // Remove the toolbar element tracked by this.toolbarOwner from the map
-        if (
-          this.toolbarOwner &&
-          this.plugin.toolbarMap.has(this.toolbarOwner)
-        ) {
-          const mappedToolbar = this.plugin.toolbarMap.get(this.toolbarOwner);
-          mappedToolbar?.remove();
-          this.plugin.toolbarMap.delete(this.toolbarOwner);
+        // This is the authoritative source for the toolbar element
+        if (this.toolbarOwner) {
+          this.removeToolbarFromMap(this.toolbarOwner);
         }
 
         // Also ensure this.tooltip is removed if it exists
+        // In normal cases, this.tooltip should be the same as the mapped toolbar,
+        // but we remove it here as a safety measure in case of any inconsistency
         if (this.tooltip) {
           this.tooltip.remove();
           this.tooltip = null;

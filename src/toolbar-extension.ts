@@ -9,8 +9,8 @@ import {
 import {
   App,
   ButtonComponent,
+  Editor,
   ExtraButtonComponent,
-  MarkdownFileInfo,
   MarkdownView,
 } from 'obsidian';
 import MobilePlugin from './main';
@@ -49,13 +49,11 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
      */
     class {
       decorations: DecorationSet;
-      tooltip: HTMLElement | null = null;
       app: App;
       plugin: MobilePlugin;
       mainToolbar: ToolbarConfig | null = null;
       currentToolbar: ToolbarConfig | null = null;
-      // Store reference to the MarkdownFileInfo that owns the current toolbar
-      toolbarOwner: MarkdownFileInfo | null = null;
+      view: EditorView;
 
       constructor(view: EditorView) {
         this.decorations = Decoration.none;
@@ -115,6 +113,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
           update.viewportChanged ||
           update.docChanged
         ) {
+          this.view = update.view;
           // Defer tooltip update to avoid reading layout during update
           requestAnimationFrame(() => {
             this.updateTooltip(update.view);
@@ -311,7 +310,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         // Helper to remove existing tooltip
 
         if (!this.plugin.settings.showToolbars) {
-          this.removeTooltipIfExists();
+          this.emptyElement();
           return;
         }
 
@@ -321,7 +320,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         const activeToolbar = this.getActiveToolbar(view, selection.from);
 
         if (!activeToolbar || activeToolbar.commands.length === 0) {
-          this.removeTooltipIfExists();
+          this.emptyElement();
           return;
         }
 
@@ -341,31 +340,14 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
 
         this.currentToolbar = activeToolbar;
 
-        this.removeTooltipIfExists();
-
-        // Get the proper container for the toolbar using activeEditor
-        // This ensures the toolbar appears at the workspace-leaf-content level,
+        // Find the workspace-leaf-content container to anchor the toolbar
+        // This ensures the toolbar appears at the bottom of the editor container,
         // not inside table cells or other nested elements
-        const activeEditor = this.app.workspace.activeEditor;
-        const container = activeEditor?.editor?.containerEl;
-        if (!container || !activeEditor) {
-          // No active editor or container, cannot render toolbar
-          return;
-        }
-
-        // If the new activeEditor already has a toolbar in the map, remove it first
-        this.removeToolbarFromMap(activeEditor);
-
-        // Create toolbar in the proper container
-        this.tooltip = container.createDiv({ cls: 'mobile-plugin-toolbar' });
-
-        // Store the toolbar in the map for this editor for proper cleanup
-        // The WeakMap ensures automatic garbage collection when the editor is destroyed
-        if (this.tooltip) {
-          this.toolbarOwner = activeEditor;
-          this.plugin.toolbarMap.set(activeEditor, this.tooltip);
-          this.addSwipeToExpandListener(this.tooltip);
-        }
+        const tooltip = this.Element;
+        if (!tooltip) return;
+        tooltip.empty();
+        // Add swipe-to-expand functionality
+        this.addSwipeToExpandListener(tooltip);
 
         // Get all available commands
         const commands = this.app.commands?.commands || {};
@@ -379,9 +361,9 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
             'question-mark-glyph';
 
           // Check if command is available in current context
-          if (command && this.tooltip) {
+          if (command && tooltip) {
             if (this.plugin.settings.useIcons && iconToUse) {
-              new ExtraButtonComponent(this.tooltip)
+              new ExtraButtonComponent(tooltip)
                 .setIcon(iconToUse)
                 .setTooltip(command?.name || commandId)
                 .onClick(() => {
@@ -393,7 +375,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                   view.focus();
                 });
             } else {
-              new ButtonComponent(this.tooltip)
+              new ButtonComponent(tooltip)
                 .setButtonText(command?.name || commandId)
                 .setTooltip(command?.name || commandId)
                 .onClick(e => {
@@ -408,8 +390,8 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
             }
           }
         });
-        if (this.tooltip)
-          new ExtraButtonComponent(this.tooltip)
+        if (tooltip)
+          new ExtraButtonComponent(tooltip)
             .setIcon('pencil')
             .setTooltip('Edit toolbar')
             .onClick(() => {
@@ -422,33 +404,40 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
             });
       }
 
-      /**
-       * Helper method to remove a toolbar from the map for a given editor
-       */
-      private removeToolbarFromMap(editor: MarkdownFileInfo) {
-        if (this.plugin.toolbarMap.has(editor)) {
-          const oldToolbar = this.plugin.toolbarMap.get(editor);
-          oldToolbar?.remove();
-          this.plugin.toolbarMap.delete(editor);
-        }
+      private removeTooltipIfExists() {
+        const editor = this.editorOuter;
+        if (!editor) return;
+        if (this.plugin.toolbarMap.get(editor)?.view !== this.view) return;
+        this.plugin.toolbarMap.get(editor)?.el.remove();
+        this.plugin.toolbarMap.delete(editor);
       }
 
-      private removeTooltipIfExists() {
-        // Remove the toolbar element tracked by this.toolbarOwner from the map
-        // This is the authoritative source for the toolbar element
-        if (this.toolbarOwner) {
-          this.removeToolbarFromMap(this.toolbarOwner);
-        }
+      emptyElement() {
+        const editor = this.editorOuter;
+        if (!editor) return;
+        this.plugin.toolbarMap.get(editor)?.el.empty();
+      }
 
-        // Also ensure this.tooltip is removed if it exists
-        // In normal cases, this.tooltip should be the same as the mapped toolbar,
-        // but we remove it here as a safety measure in case of any inconsistency
-        if (this.tooltip) {
-          this.tooltip.remove();
-          this.tooltip = null;
-        }
+      get editorOuter(): Editor | undefined {
+        const mdView = this.app.workspace.activeEditor?.editor;
+        return mdView;
+      }
 
-        this.toolbarOwner = null;
+      get Element(): HTMLElement | null {
+        const editor = this.editorOuter;
+        if (!editor) return null;
+
+        return this.plugin.toolbarMap.get(editor)?.el || this.newElement;
+      }
+
+      get newElement(): HTMLElement | null {
+        const editor = this.editorOuter;
+        if (!editor) return null;
+        const newToolbar = editor.containerEl.createDiv({
+          cls: 'mobile-plugin-toolbar',
+        });
+        this.plugin.toolbarMap.set(editor, { el: newToolbar, view: this.view });
+        return newToolbar;
       }
 
       destroy() {

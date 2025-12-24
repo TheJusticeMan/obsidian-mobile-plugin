@@ -5,6 +5,30 @@ All notable changes to the Mobile UX plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Tabs**: Added automatic activation of tabs view on plugin enable.
+- **Documentation**: Added comprehensive TSDoc comments to all classes in the source code for improved maintainability and developer experience.
+
+### Fixed
+
+- **Toolbar**: Fixed toolbars appearing inside table cells when editing table content. Toolbars now consistently render at the workspace-leaf-content level, outside of nested DOM structures.
+  - Enhanced toolbar lifecycle management with WeakMap tracking by Editor instance
+  - Improved container resolution using `activeEditor.editor.containerEl`
+  - Added proper cleanup logic to prevent duplicate toolbars when switching editors
+  - Extracted helper methods to reduce code duplication and improve maintainability
+- **Search**: Fixed async methods without await expressions in MobileSearchLeaf to prevent potential race conditions.
+
+### Changed
+
+- **Toolbar**: Refactored toolbar management system to use Editor instead of MarkdownView/MarkdownFileInfo for more accurate tracking.
+  - Moved `toolbarMap` to plugin main.ts for centralized management
+  - Changed WeakMap type to `WeakMap<Editor, { el: HTMLElement; view: EditorView }>` for better tracking
+  - Improved cleanup logic to use mapped toolbar elements for removal
+  - Added explicit validation for activeEditor and container existence
+
 ## [1.4.2] - 2025-12-21
 
 ### Changed

@@ -353,6 +353,13 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
           return;
         }
 
+        // If the new activeEditor already has a toolbar in the map, remove it first
+        if (this.plugin.toolbarMap.has(activeEditor)) {
+          const oldToolbar = this.plugin.toolbarMap.get(activeEditor);
+          oldToolbar?.remove();
+          this.plugin.toolbarMap.delete(activeEditor);
+        }
+
         // Create toolbar in the proper container
         this.tooltip = container.createDiv({ cls: 'mobile-plugin-toolbar' });
 
@@ -420,18 +427,23 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
       }
 
       private removeTooltipIfExists() {
+        // Remove the toolbar element tracked by this.toolbarOwner from the map
+        if (
+          this.toolbarOwner &&
+          this.plugin.toolbarMap.has(this.toolbarOwner)
+        ) {
+          const mappedToolbar = this.plugin.toolbarMap.get(this.toolbarOwner);
+          mappedToolbar?.remove();
+          this.plugin.toolbarMap.delete(this.toolbarOwner);
+        }
+
+        // Also ensure this.tooltip is removed if it exists
         if (this.tooltip) {
           this.tooltip.remove();
           this.tooltip = null;
-          // Clean up the map entry for the owner of this toolbar
-          if (
-            this.toolbarOwner &&
-            this.plugin.toolbarMap.has(this.toolbarOwner)
-          ) {
-            this.plugin.toolbarMap.delete(this.toolbarOwner);
-          }
-          this.toolbarOwner = null;
         }
+
+        this.toolbarOwner = null;
       }
 
       destroy() {

@@ -1,6 +1,7 @@
 import {
   App,
   Component,
+  Editor,
   MarkdownView,
   Notice,
   Platform,
@@ -19,6 +20,7 @@ import {
 } from './settings';
 import { TabsLeaf, VIEW_TYPE_TABS } from './TabsLeaf';
 import { createToolbarExtension } from './toolbar-extension';
+import { EditorView } from '@codemirror/view';
 
 // WakeLock API types (not in standard TS lib)
 interface WakeLockSentinel {
@@ -52,6 +54,9 @@ export default class MobilePlugin extends Plugin {
   isTabSwitcherOpened: boolean = false;
   leafDragging: WorkspaceLeaf | null = null;
   app: App;
+  // Map to track toolbar elements by active editor (Editor)
+  toolbarMap: WeakMap<Editor, { el: HTMLElement; view: EditorView }> =
+    new WeakMap();
 
   async onload() {
     await this.loadSettings();

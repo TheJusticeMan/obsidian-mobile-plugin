@@ -3,11 +3,13 @@ import {
   Command,
   FuzzySuggestModal,
   getIconIds,
+  ItemView,
   Modal,
   PluginSettingTab,
   Setting,
   SuggestModal,
   TFolder,
+  WorkspaceLeaf,
 } from 'obsidian';
 
 import { GestureCommand } from './gesture-handler';
@@ -753,6 +755,27 @@ export class mySettingsModel extends Modal {
 
   onOpen() {
     new MobileSettingsView(this.app, this.plugin, this.contentEl);
+  }
+}
+
+export const VIEW_TYPE_SETTINGS = 'mobile-plugin-settings';
+
+export class mySettingsLeaf extends ItemView {
+  constructor(
+    leaf: WorkspaceLeaf,
+    private plugin: MobilePlugin,
+  ) {
+    super(leaf);
+  }
+  getViewType(): string {
+    return VIEW_TYPE_SETTINGS;
+  }
+  getDisplayText(): string {
+    return 'Mobile plugin settings';
+  }
+  protected onOpen(): Promise<void> {
+    new MobileSettingsView(this.app, this.plugin, this.contentEl);
+    return Promise.resolve();
   }
 }
 

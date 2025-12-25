@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Tabs**: Added automatic activation of tabs view on plugin enable.
 - **Documentation**: Added comprehensive TSDoc comments to all classes in the source code for improved maintainability and developer experience.
+- **Settings**: Added a dedicated settings tab for mobile plugin configuration, allowing users to customize toolbar visibility, FAB actions, haptic feedback, and tablet mode directly from the Obsidian editor.
+- **Commands**: Added new command "Open settings editor view" for quick access.
 
 ### Fixed
 

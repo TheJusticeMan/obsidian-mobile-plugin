@@ -16,7 +16,9 @@ import {
   MobileCMDEvent,
   MobilePluginSettings,
   MobileSettingTab,
+  mySettingsLeaf,
   mySettingsModel,
+  VIEW_TYPE_SETTINGS,
 } from './settings';
 import { TabsLeaf, VIEW_TYPE_TABS } from './TabsLeaf';
 import { createToolbarExtension } from './toolbar-extension';
@@ -80,12 +82,18 @@ export default class MobilePlugin extends Plugin {
     // Register the Tabs view
     this.registerView(VIEW_TYPE_TABS, leaf => new TabsLeaf(leaf));
 
+    // Register the settings tab
+    this.registerView(
+      VIEW_TYPE_SETTINGS,
+      leaf => new mySettingsLeaf(leaf, this),
+    );
+
     // Register the CodeMirror 6 toolbar extension with multiple context-aware toolbars
     this.registerEditorExtension(createToolbarExtension(this.app, this));
     // add ribbon icon
     this.addRibbonIcon('plus', 'Create new note', () => this.createNewNote());
     this.addRibbonIcon('search', 'Open search', () => {
-      void this.activateMobileSearchView();
+      this.activateMobileSearchView();
     });
 
     this.app.workspace.onLayoutReady(() => {
@@ -138,6 +146,14 @@ export default class MobilePlugin extends Plugin {
       callback: () => {
         new mySettingsModel(this.app, this).open();
       },
+    });
+
+    this.addCommand({
+      id: 'settings-view',
+      name: 'Open settings editor view',
+      icon: 'settings',
+      callback: async () =>
+        await this.activatearbitraryView(VIEW_TYPE_SETTINGS),
     });
 
     this.addCommand({
@@ -679,7 +695,7 @@ export default class MobilePlugin extends Plugin {
       name: 'Open search',
       icon: 'search',
       callback: () => {
-        void this.activateMobileSearchView();
+        this.activateMobileSearchView();
       },
     });
   }
@@ -687,47 +703,40 @@ export default class MobilePlugin extends Plugin {
   /**
    * Activates the Mobile Search view in the left sidebar.
    */
-  async activateMobileSearchView(): Promise<void> {
-    const { workspace } = this.app;
-
-    let leaf = workspace.getLeavesOfType(VIEW_TYPE_SEARCH)[0];
-
-    if (!leaf) {
-      // Create the view in the left sidebar
-      const leftLeaf = workspace.getLeftLeaf(false);
-      if (leftLeaf) {
-        await leftLeaf.setViewState({
-          type: VIEW_TYPE_SEARCH,
-          active: true,
-        });
-        leaf = leftLeaf;
-      }
-    }
-
-    if (leaf) {
-      void workspace.revealLeaf(leaf);
-    }
+  activateMobileSearchView() {
+    void this.activatearbitraryView(VIEW_TYPE_SEARCH, 'left');
   }
 
   activateTabsView(): void {
+    void this.activatearbitraryView(VIEW_TYPE_TABS, 'right');
+  }
+
+  async activatearbitraryView(
+    viewType: string,
+    position: 'right' | 'left' | '' = '',
+  ): Promise<void> {
     const { workspace } = this.app;
 
-    let leaf = workspace.getLeavesOfType(VIEW_TYPE_TABS)[0];
+    let leaf = workspace.getLeavesOfType(viewType)[0];
 
     if (!leaf) {
-      // Create the view in the left sidebar
-      const leftLeaf = workspace.getRightLeaf(false);
-      if (leftLeaf) {
-        void leftLeaf.setViewState({
-          type: VIEW_TYPE_TABS,
+      const targetLeaf =
+        position === 'right'
+          ? workspace.getRightLeaf(false)
+          : position === 'left'
+            ? workspace.getLeftLeaf(false)
+            : workspace.getLeaf(false);
+      if (targetLeaf) {
+        void targetLeaf.setViewState({
+          type: viewType,
           active: true,
         });
-        leaf = leftLeaf;
+        leaf = targetLeaf;
       }
     }
 
     if (leaf) {
-      void workspace.revealLeaf(leaf);
+      await workspace.revealLeaf(leaf);
     }
   }
 
@@ -782,8 +791,8 @@ export default class MobilePlugin extends Plugin {
   }
 
   onUserEnable() {
-    void this.activateMobileSearchView();
-    void this.activateTabsView();
+    this.activateMobileSearchView();
+    this.activateTabsView();
   }
 
   onunload(): void {

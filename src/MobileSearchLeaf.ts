@@ -138,8 +138,6 @@ export class SearchLeaf extends ItemView {
     this.searchInput.setPlaceholder(
       `Search ${(this.mode === 'files' && this.filesCache.folder?.path) || this.mode}...`,
     );
-    if (this.plugin.settings.showTabsInSearchView)
-      this.showTabsInSearchView(query);
 
     const lowerCaseQuery = query.toLowerCase();
     if (this.mode === 'folders') {
@@ -161,27 +159,6 @@ export class SearchLeaf extends ItemView {
     this.selectionCommandBar.updateSelectionItems();
     this.resultsShown = 0;
     return this.nextBatch(10);
-  }
-
-  showTabsInSearchView(query: string = ''): void {
-    const activeLeaf = this.app.workspace.getMostRecentLeaf();
-
-    this.app.workspace.iterateRootLeaves(leaf => {
-      const leafText = leaf.getDisplayText();
-      if (leafText.toLowerCase().includes(query.toLowerCase())) {
-        this.resultsCtr.resultsEl
-          .createDiv({
-            cls:
-              leaf === activeLeaf
-                ? 'mobile-search-result-card is-active'
-                : 'mobile-search-result-card',
-            text: leafText,
-          })
-          .addEventListener('mouseup', () =>
-            this.app.workspace.setActiveLeaf(leaf, { focus: true }),
-          );
-      }
-    });
   }
 
   nextBatch(number: number) {
@@ -702,6 +679,7 @@ class ResultsCtr extends Component {
   private onTouchMoveCallback: () => void = () => {};
   private onScrollCallback: () => void = () => {};
   results: ResultItem[] = [];
+  tabsEl: HTMLElement;
 
   constructor(
     public leaf: SearchLeaf,
@@ -715,7 +693,48 @@ class ResultsCtr extends Component {
     this.resultsEl.addEventListener('touchmove', () =>
       this.onTouchMoveCallback(),
     );
+
     this.resultsEl.addEventListener('scroll', () => this.onScrollCallback());
+  }
+
+  onload(): void {
+    this.tabsEl = this.resultsEl.createDiv({});
+    if (this.leaf.plugin.settings.showTabsInSearchView)
+      this.showTabsInSearchView(this.leaf.searchInput.getValue());
+  }
+
+  ud = () => {
+    this.showTabResults(this.leaf.searchInput.getValue());
+  };
+
+  showTabsInSearchView(query: string = ''): void {
+    this.registerEvent(this.leaf.app.workspace.on('layout-change', this.ud));
+    this.registerEvent(
+      this.leaf.app.workspace.on('active-leaf-change', this.ud),
+    );
+    this.showTabResults(query);
+  }
+
+  private showTabResults(query: string) {
+    this.tabsEl.empty();
+    const activeLeaf = this.leaf.app.workspace.getMostRecentLeaf();
+
+    this.leaf.app.workspace.iterateRootLeaves(leaf => {
+      const leafText = leaf.getDisplayText();
+      if (leafText.toLowerCase().includes(query.toLowerCase())) {
+        this.tabsEl
+          .createDiv({
+            cls:
+              leaf === activeLeaf
+                ? 'mobile-search-result-card is-active'
+                : 'mobile-search-result-card',
+            text: leafText,
+          })
+          .addEventListener('mouseup', () =>
+            this.leaf.app.workspace.setActiveLeaf(leaf, { focus: true }),
+          );
+      }
+    });
   }
 
   updateSelectionItems(): void {

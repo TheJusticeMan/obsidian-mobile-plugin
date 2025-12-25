@@ -242,7 +242,7 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
   },
   enableHapticFeedback: true,
   showBuiltInToolbar: false,
-  showTabsInSearchView: true,
+  showTabsInSearchView: false,
   enableTabReordering: true,
 };
 

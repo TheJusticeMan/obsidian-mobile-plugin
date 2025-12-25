@@ -121,6 +121,16 @@ export class SearchLeaf extends ItemView {
     return Promise.resolve();
   }
 
+  /**
+   * Updates the search results based on the current query.
+   *
+   * Filters files and folders according to the search input,
+   * updates the results container, and handles special modes
+   * for folder navigation. Also displays open tabs if enabled
+   * in settings.
+   *
+   * @param query - The current search query string.
+   */
   update = apocalypseThrottle((query: string = '') => {
     this.removeChild(this.resultsCtr);
     this.addChild(this.resultsCtr);
@@ -128,6 +138,8 @@ export class SearchLeaf extends ItemView {
     this.searchInput.setPlaceholder(
       `Search ${(this.mode === 'files' && this.filesCache.folder?.path) || this.mode}...`,
     );
+    if (this.plugin.settings.showTabsInSearchView)
+      this.showTabsInSearchView(query);
 
     const lowerCaseQuery = query.toLowerCase();
     if (this.mode === 'folders') {
@@ -149,6 +161,27 @@ export class SearchLeaf extends ItemView {
     this.selectionCommandBar.updateSelectionItems();
     this.resultsShown = 0;
     return this.nextBatch(10);
+  }
+
+  showTabsInSearchView(query: string = ''): void {
+    const activeLeaf = this.app.workspace.getMostRecentLeaf();
+
+    this.app.workspace.iterateRootLeaves(leaf => {
+      const leafText = leaf.getDisplayText();
+      if (leafText.toLowerCase().includes(query.toLowerCase())) {
+        this.resultsCtr.resultsEl
+          .createDiv({
+            cls:
+              leaf === activeLeaf
+                ? 'mobile-search-result-card is-active'
+                : 'mobile-search-result-card',
+            text: leafText,
+          })
+          .addEventListener('mouseup', () =>
+            this.app.workspace.setActiveLeaf(leaf, { focus: true }),
+          );
+      }
+    });
   }
 
   nextBatch(number: number) {

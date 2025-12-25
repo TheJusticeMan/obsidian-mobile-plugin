@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Extracted helper methods to reduce code duplication and improve maintainability
   - Fixed memory leaks by ensuring toolbar elements are removed on plugin unload
 - **Search**: Fixed async methods without await expressions in MobileSearchLeaf to prevent potential race conditions.
+  - Readded search result update method and toggle for showing tabs in search view
+  - Updated default settings to disable tab visibility in search view
 
 ### Changed
 

@@ -436,6 +436,8 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         const newToolbar = editor.containerEl.createDiv({
           cls: 'mobile-plugin-toolbar',
         });
+
+        this.plugin.registerDomElement(newToolbar);
         this.plugin.toolbarMap.set(editor, { el: newToolbar, view: this.view });
         return newToolbar;
       }

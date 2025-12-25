@@ -801,6 +801,14 @@ export default class MobilePlugin extends Plugin {
     }
   }
 
+  /**
+   * Registers a DOM element to be removed when the plugin unloads.
+   * Use this instead of pushing to domElementsToClean.
+   */
+  registerDomElement(el: HTMLElement) {
+    this.register(() => el.remove());
+  }
+
   async loadSettings() {
     const loadedData =
       (await this.loadData()) as Partial<MobilePluginSettings> | null;

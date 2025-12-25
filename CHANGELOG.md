@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Improved container resolution using `activeEditor.editor.containerEl`
   - Added proper cleanup logic to prevent duplicate toolbars when switching editors
   - Extracted helper methods to reduce code duplication and improve maintainability
+  - Fixed memory leaks by ensuring toolbar elements are removed on plugin unload
 - **Search**: Fixed async methods without await expressions in MobileSearchLeaf to prevent potential race conditions.
 
 ### Changed

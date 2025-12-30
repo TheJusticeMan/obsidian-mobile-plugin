@@ -5,6 +5,25 @@ All notable changes to the Mobile UX plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2025-12-30
+
+### Added
+
+- **Sidebar Navigation**: Added a new "Swipe Past Side Split" gesture.
+  - Allows users to switch between sidebar tabs (e.g., File Explorer, Search, Backlinks) by swiping from the edge of the screen when the sidebar is open.
+  - Shows an overlay with icons and titles for available sidebar tabs.
+- **Tabs View**: Enhanced the Tabs view UI.
+  - Tabs now display icons matching their content.
+  - Added a close button (X) to each tab item for quick closing.
+  - Improved layout and styling for better touch targets.
+
+### Changed
+
+- **Mobile Search**: Improved search input behavior.
+  - The search input now automatically regains focus when scrolling back to the top of the results list.
+- **Internal**: Refactored `keepInTabletMode` component into a dedicated file for better code organization.
+- **Internal**: Refactored `TabsLeaf` to share styling components with the new sidebar navigation feature.
+
 ## [1.5.0] - 2025-12-24
 
 ### Added

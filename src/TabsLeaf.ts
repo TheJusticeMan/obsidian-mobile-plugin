@@ -1,4 +1,4 @@
-import { IconName, ItemView } from 'obsidian';
+import { ExtraButtonComponent, IconName, ItemView } from 'obsidian';
 
 export const VIEW_TYPE_TABS = 'tabs-leaf';
 
@@ -41,17 +41,25 @@ export class TabsLeaf extends ItemView {
     this.contentEl.empty();
     const activeLeaf = this.app.workspace.getMostRecentLeaf();
 
+    // Create a container for the stack to center it properly
+    const stackContainer = this.contentEl.createDiv({
+      cls: 'swipe-past-stack-container',
+    });
+
     this.app.workspace.iterateRootLeaves(leaf => {
-      const tabDiv = this.contentEl.createDiv({
-        cls:
-          leaf === activeLeaf
-            ? 'mobile-search-result-card is-active'
-            : 'mobile-search-result-card',
-        text: leaf.getDisplayText(),
-      });
-      tabDiv.addEventListener('mouseup', () => {
+      const div = stackContainer.createDiv('swipe-past-option');
+      if (leaf === activeLeaf) div.addClass('is-active');
+
+      new ExtraButtonComponent(div).setIcon(leaf.getIcon());
+      div.createSpan({ text: leaf.getDisplayText() });
+      new ExtraButtonComponent(div)
+        .setIcon('cross')
+        .onClick(() => leaf.detach());
+
+      div.onclick = async () => {
         this.app.workspace.setActiveLeaf(leaf, { focus: true });
-      });
+        await this.app.workspace.revealLeaf(leaf);
+      };
     });
   };
 }

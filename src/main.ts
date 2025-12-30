@@ -1,14 +1,14 @@
+import { EditorView } from '@codemirror/view';
 import {
   App,
-  Component,
   Editor,
   MarkdownView,
   Notice,
-  Platform,
   Plugin,
   WorkspaceLeaf,
 } from 'obsidian';
 import { FABManager } from './fab';
+import { keepInTabletMode } from './keepInTabletMode';
 import { SearchLeaf, VIEW_TYPE_SEARCH } from './MobileSearchLeaf';
 import { updateMobileTabGestures } from './MobileTabGestures';
 import {
@@ -20,9 +20,9 @@ import {
   mySettingsModel,
   VIEW_TYPE_SETTINGS,
 } from './settings';
+import { SwipePastSideSplit } from './swipePastSideSplit';
 import { TabsLeaf, VIEW_TYPE_TABS } from './TabsLeaf';
 import { createToolbarExtension } from './toolbar-extension';
-import { EditorView } from '@codemirror/view';
 
 // WakeLock API types (not in standard TS lib)
 interface WakeLockSentinel {
@@ -112,6 +112,8 @@ export default class MobilePlugin extends Plugin {
         }, 100),
       );
     });
+
+    this.addChild(new SwipePastSideSplit(this.app));
 
     this.app.workspace.on('layout-change', () => {
       updateMobileTabGestures(this);
@@ -836,59 +838,5 @@ export default class MobilePlugin extends Plugin {
   async saveSettings() {
     await this.saveData(this.settings);
     this.fabManager?.refresh();
-  }
-}
-
-/**
- * Component that forces tablet mode on phone devices.
- *
- * When loaded, this component overrides the phone detection and
- * sets the platform to tablet mode, providing a desktop-like experience
- * on mobile devices. The original state is restored when unloaded.
- *
- * @extends Component
- */
-export class keepInTabletMode extends Component {
-  isloaded = false;
-  wasPhone = false;
-  constructor(
-    public app: App,
-    public plugin: MobilePlugin,
-  ) {
-    super();
-  }
-  onload(): void {
-    this.isloaded = true;
-    this.wasPhone = Platform.isPhone;
-    if (Platform.isPhone) {
-      this.setTabletMode();
-    }
-    this.registerEvent(
-      this.app.workspace.on('resize', () => {
-        if (Platform.isPhone) {
-          this.wasPhone = true;
-          this.setTabletMode();
-        }
-      }),
-    );
-  }
-
-  private setTabletMode() {
-    Platform.isPhone = false;
-    Platform.isTablet = true;
-    document.body.toggleClass('is-tablet', Platform.isTablet);
-    document.body.toggleClass('is-phone', Platform.isPhone);
-  }
-
-  private resetToPhoneMode() {
-    Platform.isPhone = true;
-    Platform.isTablet = false;
-    document.body.toggleClass('is-tablet', Platform.isTablet);
-    document.body.toggleClass('is-phone', Platform.isPhone);
-  }
-
-  onunload(): void {
-    this.isloaded = false;
-    if (this.wasPhone) this.resetToPhoneMode();
   }
 }

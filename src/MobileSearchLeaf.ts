@@ -102,6 +102,7 @@ export class SearchLeaf extends ItemView {
 
     this.resultsCtr = new ResultsCtr(this, contentEl, this.filesCache)
       .onTouchMove(() => this.searchInput.blur())
+      .onBackAtTop(() => this.searchInput.focus())
       .onScroll(() => void this.checkScroll());
 
     this.filesCache.onUpdate(
@@ -678,6 +679,8 @@ class ResultsCtr extends Component {
   resultsEl: HTMLElement;
   private onTouchMoveCallback: () => void = () => {};
   private onScrollCallback: () => void = () => {};
+  private onBackAtTopCallback: () => void = () => {};
+  backAtToptimedout: NodeJS.Timeout | null = null;
   results: ResultItem[] = [];
   tabsEl: HTMLElement;
 
@@ -690,9 +693,25 @@ class ResultsCtr extends Component {
     this.resultsEl = this.containerEl.createDiv(
       'mobile-search-results-container',
     );
-    this.resultsEl.addEventListener('touchmove', () =>
-      this.onTouchMoveCallback(),
+    this.resultsEl.addEventListener(
+      'touchmove',
+      () => (this.onTouchMoveCallback(), backAtTopThrottler()),
     );
+
+    const backAtTopThrottler = apocalypseThrottle(() => {
+      if (this.resultsEl.scrollTop > 100) {
+        if (this.backAtToptimedout) {
+          clearTimeout(this.backAtToptimedout);
+          this.backAtToptimedout = null;
+        }
+        this.backAtToptimedout = setTimeout(() => {
+          if (this.resultsEl.scrollTop === 0) {
+            this.onBackAtTopCallback();
+            this.backAtToptimedout = null;
+          }
+        }, 300);
+      }
+    }, 300);
 
     this.resultsEl.addEventListener('scroll', () => this.onScrollCallback());
   }
@@ -719,21 +738,25 @@ class ResultsCtr extends Component {
     this.tabsEl.empty();
     const activeLeaf = this.leaf.app.workspace.getMostRecentLeaf();
 
+    // Create a container for the stack to center it properly
+    const stackContainer = this.tabsEl.createDiv({
+      cls: 'swipe-past-stack-container',
+    });
+
     this.leaf.app.workspace.iterateRootLeaves(leaf => {
-      const leafText = leaf.getDisplayText();
-      if (leafText.toLowerCase().includes(query.toLowerCase())) {
-        this.tabsEl
-          .createDiv({
-            cls:
-              leaf === activeLeaf
-                ? 'mobile-search-result-card is-active'
-                : 'mobile-search-result-card',
-            text: leafText,
-          })
-          .addEventListener('mouseup', () =>
-            this.leaf.app.workspace.setActiveLeaf(leaf, { focus: true }),
-          );
-      }
+      const div = stackContainer.createDiv('swipe-past-option');
+      if (leaf === activeLeaf) div.addClass('is-active');
+
+      new ExtraButtonComponent(div).setIcon(leaf.getIcon());
+      div.createSpan({ text: leaf.getDisplayText() });
+      new ExtraButtonComponent(div)
+        .setIcon('cross')
+        .onClick(() => leaf.detach());
+
+      div.onclick = async () => {
+        this.leaf.app.workspace.setActiveLeaf(leaf, { focus: true });
+        await this.leaf.app.workspace.revealLeaf(leaf);
+      };
     });
   }
 
@@ -748,6 +771,11 @@ class ResultsCtr extends Component {
 
   onScroll(callback: () => void): this {
     this.onScrollCallback = callback;
+    return this;
+  }
+
+  onBackAtTop(callback: () => void): this {
+    this.onBackAtTopCallback = callback;
     return this;
   }
 

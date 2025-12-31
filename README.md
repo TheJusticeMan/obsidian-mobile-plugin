@@ -69,6 +69,7 @@ A dedicated search view optimized for mobile devices:
 - **File context menu**: Long-press/right-click on a result card for quick actions (open in new tab, open to the right, delete, copy file path).
 - **Smart keyboard handling**: Automatically dismisses the keyboard when scrolling results.
 - **Auto-focus**: Automatically focuses the search input when the sidebar opens.
+- **Smart focus**: Automatically regains focus when scrolling back to the top of the results list.
 - **Performance optimizations**: File list updates only when drawer is open or focused, with smart file system event listeners (create, delete, rename, modify) to reduce battery usage.
 - **Reliable results**: Race condition fixed to prevent empty search results on initial open or when reopening with text.
 - **Selection mode**: Long-press/right-click on any result card to enter selection mode for bulk operations
@@ -129,6 +130,8 @@ Enhance your tab management in the mobile tab switcher:
 | **Use Icons**              | Toggle between icon and text display in toolbars                    |
 | **FAB long press**         | Select command to execute when the FAB is long-pressed              |
 | **FAB press**              | Select command to execute when the FAB is pressed                   |
+| **FAB record start**       | Select command to execute when FAB is held in recording mode        |
+| **FAB record stop**        | Select command to execute when FAB is released in recording mode    |
 | **Enable haptic feedback** | Vibrate on FAB and toolbar button interactions                      |
 | **Gesture Commands**       | Manage your created gestures (rename, reassign, delete)             |
 | **Reset to default**       | Restore all settings to their original defaults                     |

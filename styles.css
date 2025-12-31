@@ -315,7 +315,25 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 
 /* Swipe Past Side Split Overlay */
 .swipe-past-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5);
   transition: transform 0.1s linear;
+}
+
+.swipe-past-header {
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-bold);
+  color: var(--text-normal);
+  margin-bottom: 1rem;
 }
 
 .swipe-past-overlay.from-left {
@@ -329,6 +347,11 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 .swipe-past-overlay.is-active {
   transform: translateX(0);
   transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.swipe-past-content {
+  width: 90%;
+  max-width: var(--mobile-sidebar-max-width);
 }
 
 /* Swipe Past Side Split Cards */

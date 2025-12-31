@@ -11,7 +11,8 @@
     "build": "npm run format && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
     "version": "node version-bump.mjs && git add manifest.json versions.json",
     "release": "bash release.sh",
-    "verify-release": "bash verify-release.sh"
+    "verify-release": "bash verify-release.sh",
+    "copy-to-mobile-vault": "kioclient5 --overwrite copy styles.css manifest.json main.js \"mtp:/Armor X31 Pro/Internal shared storage/Documents/Obsidian/.obsidian/plugins/obsidian-mobile-plugin/\""
   },
   "keywords": [
     "obsidian",

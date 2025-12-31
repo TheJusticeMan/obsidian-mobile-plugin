@@ -3,12 +3,12 @@ import {
   App,
   Component,
   ExtraButtonComponent,
-  Modal,
   WorkspaceLeaf,
   WorkspaceMobileDrawer,
   WorkspaceSidedock,
 } from 'obsidian';
 import { Offset } from './gesture-handler';
+import { VIEW_TYPE_TABS } from './TabsLeaf';
 
 /**
  * The goal is to make it quick to switch between tabs in the side splits by swiping farther than the edge.
@@ -85,29 +85,45 @@ export class SwipePastSideSplit extends Component {
     this.start = null;
   };
 
-  onunload(): void {}
+  onunload(): void {
+    this.swipeEl.close();
+  }
 }
 
-class SideSplitSwipeElement extends Modal {
+class SideSplitSwipeElement {
   isActive: boolean = false;
   isOpen: boolean = false;
   component: Component = new Component();
   start: Offset | null = null;
+  containerEl: HTMLElement;
+  contentEl: HTMLElement;
 
   constructor(
     public app: App,
     public parent: SwipePastSideSplit,
     public side: 'left' | 'right',
   ) {
-    super(app);
+    this.containerEl = document.body.createDiv({ cls: 'swipe-past-overlay' });
+    this.containerEl.detach();
+    this.containerEl.createEl('h2', {
+      text: `Select ${this.side} sidebar tab`,
+      cls: 'swipe-past-header',
+    });
+    this.contentEl = this.containerEl.createDiv({ cls: 'swipe-past-content' });
   }
 
-  onOpen(): void {
+  open(): void {
+    if (this.isOpen) return;
     this.isOpen = true;
+
     this.parent.addChild(this.component);
-    this.setTitle(`Select ${this.side} sidebar tab`);
+    this.containerEl.addClass(`from-${this.side}`);
+    this.containerEl.removeClass(
+      `from-${this.side === 'left' ? 'right' : 'left'}`,
+    );
+    document.body.appendChild(this.containerEl);
+
     this.contentEl.empty();
-    this.containerEl.addClass('swipe-past-overlay', `from-${this.side}`);
 
     this.component.registerDomEvent(this.containerEl, 'touchstart', e =>
       this.touchStartHandler(e),
@@ -123,10 +139,6 @@ class SideSplitSwipeElement extends Modal {
         ? this.app.workspace.leftSplit
         : this.app.workspace.rightSplit,
     );
-
-    /* setTimeout(() => {
-      if (!this.isActive) this.close();
-    }, 3000); */
   }
 
   touchStartHandler(e: TouchEvent) {
@@ -220,7 +232,6 @@ class SideSplitSwipeElement extends Modal {
       cls: 'swipe-past-stack-container',
     });
 
-    const cards: HTMLElement[] = [];
     sidebarLeaves.forEach(leaf => {
       const div = stackContainer.createDiv('swipe-past-option');
       if (leaf.isVisible()) div.addClass('is-active');
@@ -235,20 +246,43 @@ class SideSplitSwipeElement extends Modal {
         await this.app.workspace.revealLeaf(leaf);
         this.close();
       };
-      cards.push(div);
     });
+    if (this.side === 'left') {
+      const div = stackContainer.createDiv('swipe-past-option');
+      new ExtraButtonComponent(div).setIcon('settings');
+      div.createSpan({ text: 'Settings' });
+
+      div.onclick = async () => {
+        this.app.commands.executeCommandById('app:open-settings');
+        this.close();
+      };
+    } else if (
+      !sidebarLeaves.some(leaf => leaf.view.getViewType() === VIEW_TYPE_TABS)
+    ) {
+      const div = stackContainer.createDiv('swipe-past-option');
+      new ExtraButtonComponent(div).setIcon('tabs');
+      div.createSpan({ text: 'Tabs' });
+
+      div.onclick = async () => {
+        this.app.commands.executeCommandById('mobile:open-tabs');
+        this.close();
+      };
+    }
   }
 
-  onClose(): void {
+  close(): void {
+    if (!this.isOpen) return;
+    this.isOpen = false;
+
     this.containerEl.removeClass('is-active');
     this.containerEl.addClass('is-closing');
     setTimeout(() => {
       this.containerEl.removeClass('is-closing');
+      this.containerEl.detach();
     }, 300);
     // eslint-disable-next-line obsidianmd/no-static-styles-assignment
     this.containerEl.style.transform = '';
     this.parent.start = null;
     this.parent.removeChild(this.component);
-    this.isOpen = false;
   }
 }

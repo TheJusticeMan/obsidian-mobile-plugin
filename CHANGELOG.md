@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The search input now automatically regains focus when scrolling back to the top of the results list.
 - **Internal**: Refactored `keepInTabletMode` component into a dedicated file for better code organization.
 - **Internal**: Refactored `TabsLeaf` to share styling components with the new sidebar navigation feature.
+- **Internal**: Refactored `SideSplitSwipeElement` to remove dependency on Obsidian `Modal` class, using a custom lightweight overlay instead.
 
 ## [1.5.0] - 2025-12-24
 

@@ -87,7 +87,13 @@ A dedicated search view optimized for mobile devices:
 A dedicated view to manage your open tabs:
 
 - **List view**: Displays a list of all open tabs for quick navigation.
+- **Enhanced UI**: Tabs display icons matching their content and include a close button (X) for quick closing.
 - **Quick access**: Use the "Open tabs" command to instantly open the view.
+
+### Sidebar Navigation
+
+- **Swipe Past Side Split**: Switch between sidebar tabs (e.g., File Explorer, Search, Backlinks) by swiping from the edge of the screen when the sidebar is open.
+- **Visual Feedback**: Shows an overlay with icons and titles for available sidebar tabs.
 
 ### Tab gestures
 
@@ -156,6 +162,7 @@ Bind toolbars to editing contexts:
 | `Plus press`                  | Executes the command configured for FAB press      |
 | `Plus long press`             | Executes the command configured for FAB long press |
 | `Open mobile plugin settings` | Opens the settings modal for this plugin           |
+| `Open settings editor view`   | Opens the settings as a dedicated editor view      |
 | `Open Mobile Search`          | Opens the mobile-optimized search view             |
 
 ### Editor Navigation Commands

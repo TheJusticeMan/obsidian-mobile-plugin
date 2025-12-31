@@ -75,8 +75,7 @@ export class SwipePastSideSplit extends Component {
 
   touchEndHandler = (e: TouchEvent) => {
     if (this.start && this.swipeEl.isActive) {
-      // eslint-disable-next-line obsidianmd/no-static-styles-assignment
-      this.swipeEl.containerEl.style.transform = '';
+      this.swipeEl.containerEl.setCssProps({ transform: '' });
       this.swipeEl.containerEl.addClass('is-active');
     } else {
       this.swipeEl.close();
@@ -164,8 +163,7 @@ class SideSplitSwipeElement {
     if (translate) {
       this.containerEl.style.transform = translate;
     } else {
-      // eslint-disable-next-line obsidianmd/no-static-styles-assignment
-      this.containerEl.style.transform = '';
+      this.containerEl.setCssProps({ transform: '' });
     }
   }, 16);
 
@@ -189,8 +187,7 @@ class SideSplitSwipeElement {
     if (shouldClose) {
       this.close();
     } else {
-      // eslint-disable-next-line obsidianmd/no-static-styles-assignment
-      this.containerEl.style.transform = '';
+      this.containerEl.setCssProps({ transform: '' });
     }
     this.start = null;
   }
@@ -252,7 +249,7 @@ class SideSplitSwipeElement {
       new ExtraButtonComponent(div).setIcon('settings');
       div.createSpan({ text: 'Settings' });
 
-      div.onclick = async () => {
+      div.onclick = () => {
         this.app.commands.executeCommandById('app:open-settings');
         this.close();
       };
@@ -263,7 +260,7 @@ class SideSplitSwipeElement {
       new ExtraButtonComponent(div).setIcon('tabs');
       div.createSpan({ text: 'Tabs' });
 
-      div.onclick = async () => {
+      div.onclick = () => {
         this.app.commands.executeCommandById('mobile:open-tabs');
         this.close();
       };
@@ -280,8 +277,7 @@ class SideSplitSwipeElement {
       this.containerEl.removeClass('is-closing');
       this.containerEl.detach();
     }, 300);
-    // eslint-disable-next-line obsidianmd/no-static-styles-assignment
-    this.containerEl.style.transform = '';
+    this.containerEl.setCssProps({ transform: '' });
     this.parent.start = null;
     this.parent.removeChild(this.component);
   }

@@ -1,5 +1,4 @@
-import { Component, App, Platform } from 'obsidian';
-import MobilePlugin from './main';
+import { App, Component, Platform } from 'obsidian';
 
 /**
  * Component that forces tablet mode on phone devices.
@@ -14,44 +13,35 @@ import MobilePlugin from './main';
 export class keepInTabletMode extends Component {
   isloaded = false;
   wasPhone = false;
-  constructor(
-    public app: App,
-    public plugin: MobilePlugin,
-  ) {
+  constructor(public app: App) {
     super();
   }
+
   onload(): void {
     this.isloaded = true;
     this.wasPhone = Platform.isPhone;
     if (Platform.isPhone) {
-      this.setTabletMode();
+      this.toggleTabletMode(true);
     }
     this.registerEvent(
       this.app.workspace.on('resize', () => {
         if (Platform.isPhone) {
           this.wasPhone = true;
-          this.setTabletMode();
+          this.toggleTabletMode(true);
         }
       }),
     );
   }
 
-  private setTabletMode() {
-    Platform.isPhone = false;
-    Platform.isTablet = true;
-    document.body.toggleClass('is-tablet', Platform.isTablet);
-    document.body.toggleClass('is-phone', Platform.isPhone);
-  }
-
-  private resetToPhoneMode() {
-    Platform.isPhone = true;
-    Platform.isTablet = false;
+  private toggleTabletMode(isTablet: boolean) {
+    Platform.isPhone = !isTablet;
+    Platform.isTablet = isTablet;
     document.body.toggleClass('is-tablet', Platform.isTablet);
     document.body.toggleClass('is-phone', Platform.isPhone);
   }
 
   onunload(): void {
     this.isloaded = false;
-    if (this.wasPhone) this.resetToPhoneMode();
+    if (this.wasPhone) this.toggleTabletMode(false);
   }
 }

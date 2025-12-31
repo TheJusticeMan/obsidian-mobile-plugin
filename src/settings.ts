@@ -11,9 +11,9 @@ import {
   TFolder,
   WorkspaceLeaf,
 } from 'obsidian';
-
 import { GestureCommand } from './gesture-handler';
 import MobilePlugin from './main';
+import { SortableList } from './SortableList';
 
 // Type for Obsidian's internal commands API (not in public API)
 
@@ -745,7 +745,7 @@ export class MobileSettingsView {
  *
  * @extends Modal
  */
-export class mySettingsModel extends Modal {
+export class settingsModel extends Modal {
   constructor(
     app: App,
     private plugin: MobilePlugin,
@@ -760,7 +760,7 @@ export class mySettingsModel extends Modal {
 
 export const VIEW_TYPE_SETTINGS = 'mobile-plugin-settings';
 
-export class mySettingsLeaf extends ItemView {
+export class settingsLeaf extends ItemView {
   constructor(
     leaf: WorkspaceLeaf,
     private plugin: MobilePlugin,
@@ -874,36 +874,42 @@ export class ToolbarEditor extends Modal {
   constructor(
     public app: App,
     private plugin: MobilePlugin,
-    private toolbar: ToolbarConfig,
+    private toolbar: ToolbarConfig | ToolbarConfig[],
   ) {
     super(app);
   }
 
   onOpen() {
-    const { contentEl } = this;
     // Further implementation for editing the toolbar can be added here
-    this.render(contentEl);
+    this.render();
   }
 
-  render(container: HTMLElement) {
-    container.empty();
+  render(contentEl: HTMLElement = this.contentEl) {
+    this.contentEl = contentEl;
+    contentEl.empty();
+    (Array.isArray(this.toolbar) ? this.toolbar : [this.toolbar]).forEach(
+      toolbar => {
+        this.renderToolbar(contentEl, toolbar);
+      },
+    );
+    return this;
+  }
+
+  private renderToolbar(container: HTMLElement, toolbar: ToolbarConfig) {
     // Implementation for rendering toolbar editing UI goes here
     new Setting(container)
-      .setName(this.toolbar.name)
-      .setDesc(`${this.plugin.getBinds(this.toolbar.id).join(', ')}`)
+      .setName(toolbar.name)
+      .setDesc(`${this.plugin.getBinds(toolbar.id).join(', ')}`)
       .then(setting =>
-        this.plugin.getBinds(this.toolbar.id).forEach(bind => {
+        this.plugin.getBinds(toolbar.id).forEach(bind => {
           setting.addButton(button =>
             button.setButtonText(bind).onClick(() => {
               this.plugin.settings.contextBindings =
                 this.plugin.settings.contextBindings.filter(
-                  b =>
-                    !(
-                      b.contextType === bind && b.toolbarId === this.toolbar.id
-                    ),
+                  b => !(b.contextType === bind && b.toolbarId === toolbar.id),
                 );
               void this.plugin.saveSettings();
-              this.render(container);
+              this.render();
             }),
           );
         }),
@@ -917,10 +923,10 @@ export class ToolbarEditor extends Modal {
               this.app,
               binding => {
                 void (async () => {
-                  binding.toolbarId = this.toolbar.id;
+                  binding.toolbarId = toolbar.id;
                   this.plugin.settings.contextBindings.push(binding);
                   await this.plugin.saveSettings();
-                  this.render(container);
+                  this.render();
                 })();
               },
               'Create new context binding for this toolbar',
@@ -931,11 +937,11 @@ export class ToolbarEditor extends Modal {
         text =>
           (text
             .setPlaceholder('Toolbar name')
-            .setValue(this.toolbar.name)
+            .setValue(toolbar.name)
             .onChange(async value => {
-              this.toolbar.name = value;
+              toolbar.name = value;
               await this.plugin.saveSettings();
-            }).inputEl.onblur = () => this.render(container)),
+            }).inputEl.onblur = () => this.render()),
       )
       .addExtraButton(btn =>
         btn
@@ -944,12 +950,12 @@ export class ToolbarEditor extends Modal {
           .onClick(async () => {
             // Remove toolbar and any bindings using it
             const toolbarIndex = this.plugin.settings.toolbars.findIndex(
-              t => t.id === this.toolbar.id,
+              t => t.id === toolbar.id,
             );
             this.plugin.settings.toolbars.splice(toolbarIndex, 1);
             this.plugin.settings.contextBindings =
               this.plugin.settings.contextBindings.filter(
-                b => b.toolbarId !== this.toolbar.id,
+                b => b.toolbarId !== toolbar.id,
               );
             await this.plugin.saveSettings();
             container.empty();
@@ -958,123 +964,64 @@ export class ToolbarEditor extends Modal {
           }),
       );
 
-    this.toolbar.commands.forEach((cmdId, index) => {
-      const command = this.app.commands?.findCommand?.(cmdId);
+    new SortableList(container, toolbar.commands).addSetting(
+      (setting, cmdId, index) => {
+        const command = this.app.commands?.findCommand?.(cmdId);
+        setting
+          .setName(command?.name || cmdId)
+          .setDesc(cmdId)
+          .addButton(btn =>
+            btn
+              .setIcon(
+                this.plugin.settings.commandIcons[cmdId] ||
+                  command?.icon ||
+                  'question',
+              )
+              .setTooltip('Change icon')
+              .onClick(() => {
+                new IconSuggestModal(this.app, icon => {
+                  void (async () => {
+                    this.plugin.settings.commandIcons[cmdId] = icon;
+                    await this.plugin.saveSettings();
+                    this.render();
+                  })();
+                }).open();
+              }),
+          )
+          .addExtraButton(btn =>
+            btn
+              .setIcon('pencil')
+              .setTooltip('Change command')
+              .onClick(() => {
+                new CommandSuggestModal(this.app, command => {
+                  void (async () => {
+                    toolbar.commands[index] = command.id;
+                    await this.plugin.saveSettings();
+                    this.render();
+                  })();
+                }).open();
+              }),
+          )
+          .addExtraButton(btn =>
+            btn
+              .setIcon('trash')
+              .setTooltip('Remove command')
+              .onClick(async () => {
+                toolbar.commands.splice(index, 1);
+                await this.plugin.saveSettings();
+                this.render();
+              }),
+          );
+      },
+    );
 
-      const setting = new Setting(container)
-        .setName(command?.name || cmdId)
-        .setDesc(cmdId)
-        .addButton(btn =>
-          btn
-            .setIcon(
-              this.plugin.settings.commandIcons[cmdId] ||
-                command?.icon ||
-                'question',
-            )
-            .setTooltip('Change icon')
-            .onClick(() => {
-              new IconSuggestModal(this.app, icon => {
-                void (async () => {
-                  this.plugin.settings.commandIcons[cmdId] = icon;
-                  await this.plugin.saveSettings();
-                  this.render(container);
-                })();
-              }).open();
-            }),
-        )
-        .addExtraButton(btn =>
-          btn
-            .setIcon('pencil')
-            .setTooltip('Change command')
-            .onClick(() => {
-              new CommandSuggestModal(this.app, command => {
-                void (async () => {
-                  this.toolbar.commands[index] = command.id;
-                  await this.plugin.saveSettings();
-                  this.render(container);
-                })();
-              }).open();
-            }),
-        )
-        .addExtraButton(btn =>
-          btn
-            .setIcon('trash')
-            .setTooltip('Remove command')
-            .onClick(async () => {
-              this.toolbar.commands.splice(index, 1);
-              await this.plugin.saveSettings();
-              this.render(container);
-            }),
-        );
-
-      const el = setting.settingEl;
-      el.draggable = true;
-      el.addClass('mobile-plugin-draggable-item');
-
-      el.ondragstart = event => {
-        event.dataTransfer?.setData('text/plain', index.toString());
-        el.addClass('is-dragging');
-      };
-
-      el.ondragend = () => {
-        el.removeClass('is-dragging');
-      };
-
-      el.ondragover = event => {
-        event.preventDefault();
-        const rect = el.getBoundingClientRect();
-        const midY = rect.top + rect.height / 2;
-
-        el.removeClass('drag-over-top');
-        el.removeClass('drag-over-bottom');
-
-        if (event.clientY < midY) {
-          el.addClass('drag-over-top');
-        } else {
-          el.addClass('drag-over-bottom');
-        }
-      };
-
-      el.ondragleave = () => {
-        el.removeClass('drag-over-top');
-        el.removeClass('drag-over-bottom');
-      };
-
-      el.ondrop = async event => {
-        event.preventDefault();
-        el.removeClass('drag-over-top');
-        el.removeClass('drag-over-bottom');
-        const oldIndex = parseInt(
-          event.dataTransfer?.getData('text/plain') || '-1',
-        );
-
-        if (oldIndex >= 0) {
-          const rect = el.getBoundingClientRect();
-          const midY = rect.top + rect.height / 2;
-          const insertAfter = event.clientY >= midY;
-
-          let targetIndex = index;
-          if (insertAfter) targetIndex++;
-
-          const item = this.toolbar.commands.splice(oldIndex, 1)[0];
-
-          if (oldIndex < targetIndex) {
-            targetIndex--;
-          }
-
-          this.toolbar.commands.splice(targetIndex, 0, item);
-          await this.plugin.saveSettings();
-          this.render(container);
-        }
-      };
-    });
     new Setting(container).addButton(button =>
       button.setButtonText('Add command').onClick(() => {
         new CommandSuggestModal(this.app, command => {
           void (async () => {
-            this.toolbar.commands.push(command.id);
+            toolbar.commands.push(command.id);
             await this.plugin.saveSettings();
-            this.render(container);
+            this.render();
           })();
         }).open();
       }),

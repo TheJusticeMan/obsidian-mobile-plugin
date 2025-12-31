@@ -20,5 +20,8 @@ export default defineConfig([
         NodeJS: 'readonly',
       },
     },
+    rules: {
+      'prefer-const': 'error',
+    },
   },
 ]);

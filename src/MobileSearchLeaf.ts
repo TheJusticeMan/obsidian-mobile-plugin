@@ -37,7 +37,7 @@ const PREVIEW_LENGTH = 200;
  */
 export class SearchLeaf extends ItemView {
   private filesCache: FilesCache;
-  files: TFile[] = [];
+
   searchInput: SearchBar;
   resultsCtr: ResultsCtr;
   app: App;

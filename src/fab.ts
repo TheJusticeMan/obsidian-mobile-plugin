@@ -12,16 +12,12 @@ import { CommandSuggestModal } from './settings';
  * when the plugin is disabled or unloaded.
  */
 export class FABManager {
-  private fabElements: Map<View, ButtonComponent> = new Map();
+  private fabElements: Map<View, MobileFAB> = new Map();
   private currentMode: 'default' | 'recording' = 'default';
 
   setMode(mode: 'default' | 'recording'): void {
     this.currentMode = mode;
-    this.fabElements.forEach(fab => {
-      if (fab instanceof MobileFAB) {
-        fab.setMode(mode);
-      }
-    });
+    this.fabElements.forEach(fab => fab.setMode(mode));
   }
 
   getMode(): 'default' | 'recording' {
@@ -34,50 +30,43 @@ export class FABManager {
   ) {
     // Update FAB when workspace layout changes
     this.plugin.registerEvent(
-      this.app.workspace.on('active-leaf-change', leaf => this.ensureAllFABs()),
+      this.app.workspace.on('active-leaf-change', this.ensureAllFABs),
+    );
+    this.plugin.registerEvent(
+      this.app.workspace.on('layout-change', this.ensureAllFABs),
     );
 
     // Initial FAB setup
-    this.app.workspace.onLayoutReady(() => this.ensureAllFABs());
+    this.app.workspace.onLayoutReady(this.ensureAllFABs);
   }
 
-  private ensureAllFABs(): void {
-    if (!this.plugin.settings.showFAB) {
-      return;
-    }
-    this.app.workspace.iterateRootLeaves(leaf => {
-      // Don't create duplicate FABs
-      if (!this.fabElements.has(leaf.view)) {
-        // Create and mount FAB
+  private ensureAllFABs = (): void => {
+    if (!this.plugin.settings.showFAB) return;
+
+    /* Don't create duplicate FABs*/
+    this.app.workspace.iterateRootLeaves(
+      leaf =>
+        !this.fabElements.has(leaf.view) &&
         this.fabElements.set(
           leaf.view,
           new MobileFAB(this.app, this.plugin, leaf.view.containerEl),
-        );
-      }
-    });
-  }
+        ),
+    );
+  };
 
   /**
    * Refreshes FABs based on settings
    */
   refresh(): void {
-    if (!this.plugin.settings.showFAB) {
-      this.destroy();
-    } else {
-      this.ensureAllFABs();
-    }
+    if (!this.plugin.settings.showFAB) this.destroy();
+    else this.ensureAllFABs();
   }
 
   /**
    * Cleans up all FABs
    */
   destroy(): void {
-    this.fabElements.forEach(fab => {
-      if (fab instanceof MobileFAB) {
-        fab.teardown();
-      }
-      fab.buttonEl.remove();
-    });
+    this.fabElements.forEach(fab => fab.teardown());
     this.fabElements.clear();
   }
 }
@@ -111,7 +100,7 @@ class MobileFAB extends ButtonComponent {
       .setClass('mobile-fab')
       .onClick(() => {
         if (this.mode === 'recording') return;
-        this.hapticFeedback(10);
+        this.plugin.hapticFeedback(10);
         plugin.triggerCMDEvent('fab-press');
       })
       .then(btn =>
@@ -121,7 +110,7 @@ class MobileFAB extends ButtonComponent {
             return;
           }
           e.preventDefault();
-          this.hapticFeedback(20);
+          this.plugin.hapticFeedback(20);
           plugin.triggerCMDEvent('fab-longpress');
         }),
       )
@@ -131,16 +120,20 @@ class MobileFAB extends ButtonComponent {
           if (this.mode !== 'recording') return;
           e.preventDefault();
           e.stopPropagation();
-          this.hapticFeedback(10);
+          this.plugin.hapticFeedback(10);
           plugin.triggerCMDEvent('fab-record-start');
           btn.buttonEl.addClass('is-recording');
         };
 
         const stopRecording = (e: Event) => {
-          if (this.mode !== 'recording') return;
+          if (
+            this.mode !== 'recording' ||
+            !btn.buttonEl.hasClass('is-recording')
+          )
+            return;
           e.preventDefault();
           e.stopPropagation();
-          this.hapticFeedback(10);
+          this.plugin.hapticFeedback(10);
           plugin.triggerCMDEvent('fab-record-stop');
           btn.buttonEl.removeClass('is-recording');
         };
@@ -153,14 +146,7 @@ class MobileFAB extends ButtonComponent {
         });
         btn.buttonEl.addEventListener('mousedown', startRecording);
         btn.buttonEl.addEventListener('mouseup', stopRecording);
-        btn.buttonEl.addEventListener('mouseleave', e => {
-          if (
-            this.mode === 'recording' &&
-            btn.buttonEl.hasClass('is-recording')
-          ) {
-            stopRecording(e);
-          }
-        });
+        btn.buttonEl.addEventListener('mouseleave', stopRecording);
 
         this.gestureHandler = new GestureHandler(
           this.app,
@@ -192,12 +178,7 @@ class MobileFAB extends ButtonComponent {
 
   teardown() {
     this.gestureHandler?.destroy();
-  }
-
-  private hapticFeedback(duration = 10): void {
-    if (this.plugin.settings.enableHapticFeedback && navigator.vibrate) {
-      navigator.vibrate(duration);
-    }
+    this.buttonEl.remove();
   }
 }
 

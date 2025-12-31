@@ -46,6 +46,8 @@ export class TabsLeaf extends ItemView {
       cls: 'swipe-past-stack-container',
     });
 
+    /* this.app.workspace.rootSplit.serialize */
+
     this.app.workspace.iterateRootLeaves(leaf => {
       const div = stackContainer.createDiv('swipe-past-option');
       if (leaf === activeLeaf) div.addClass('is-active');

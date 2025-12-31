@@ -16,8 +16,8 @@ import {
   MobileCMDEvent,
   MobilePluginSettings,
   MobileSettingTab,
-  mySettingsLeaf,
-  mySettingsModel,
+  settingsLeaf,
+  settingsModel,
   VIEW_TYPE_SETTINGS,
 } from './settings';
 import { SwipePastSideSplit } from './swipePastSideSplit';
@@ -71,7 +71,7 @@ export default class MobilePlugin extends Plugin {
     // Register wake lock toggle command
     this.registerCommands();
 
-    this.kkep = new keepInTabletMode(this.app, this);
+    this.kkep = new keepInTabletMode(this.app);
 
     // Initialize FAB Manager
     this.fabManager = new FABManager(this.app, this);
@@ -83,18 +83,14 @@ export default class MobilePlugin extends Plugin {
     this.registerView(VIEW_TYPE_TABS, leaf => new TabsLeaf(leaf));
 
     // Register the settings tab
-    this.registerView(
-      VIEW_TYPE_SETTINGS,
-      leaf => new mySettingsLeaf(leaf, this),
-    );
+    this.registerView(VIEW_TYPE_SETTINGS, leaf => new settingsLeaf(leaf, this));
 
     // Register the CodeMirror 6 toolbar extension with multiple context-aware toolbars
     this.registerEditorExtension(createToolbarExtension(this.app, this));
     // add ribbon icon
-    this.addRibbonIcon('plus', 'Create new note', () => this.createNewNote());
-    this.addRibbonIcon('search', 'Open search', () => {
-      this.activateMobileSearchView();
-    });
+    this.addRibbonIcon('plus', 'Create new note', this.createNewNote);
+    this.addRibbonIcon('search', 'Open search', this.activateMobileSearchView);
+    this.addRibbonIcon('tabs', 'Open tabs', this.activateTabsView);
 
     this.app.workspace.onLayoutReady(() => {
       this.registerInterval(
@@ -128,26 +124,20 @@ export default class MobilePlugin extends Plugin {
       id: 'open-tabs',
       name: 'Open tabs',
       icon: 'tabs',
-      callback: () => {
-        void this.activateTabsView();
-      },
+      callback: this.activateTabsView,
     });
 
     this.addCommand({
       id: 'toggle-wake-lock',
       name: 'Toggle wake lock',
-      callback: async () => {
-        await this.toggleWakeLock();
-      },
+      callback: this.toggleWakeLock,
     });
 
     this.addCommand({
       id: 'settings',
       name: 'Settings',
       icon: 'settings',
-      callback: () => {
-        new mySettingsModel(this.app, this).open();
-      },
+      callback: () => new settingsModel(this.app, this).open(),
     });
 
     this.addCommand({
@@ -162,13 +152,10 @@ export default class MobilePlugin extends Plugin {
       id: 'keep-in-tablet-mode',
       name: 'Toggle keep in tablet mode',
       icon: 'tablet-smartphone',
-      callback: () => {
-        if (this.kkep.isloaded) {
-          this.removeChild(this.kkep);
-        } else {
-          this.addChild(this.kkep);
-        }
-      },
+      callback: () =>
+        this.kkep.isloaded
+          ? this.removeChild(this.kkep)
+          : this.addChild(this.kkep),
     });
 
     // Navigation commands
@@ -696,22 +683,18 @@ export default class MobilePlugin extends Plugin {
       id: 'open-search',
       name: 'Open search',
       icon: 'search',
-      callback: () => {
-        this.activateMobileSearchView();
-      },
+      callback: this.activateMobileSearchView,
     });
   }
 
   /**
    * Activates the Mobile Search view in the left sidebar.
    */
-  activateMobileSearchView() {
+  activateMobileSearchView = () =>
     void this.activatearbitraryView(VIEW_TYPE_SEARCH, 'left');
-  }
 
-  activateTabsView(): void {
+  activateTabsView = () =>
     void this.activatearbitraryView(VIEW_TYPE_TABS, 'right');
-  }
 
   async activatearbitraryView(
     viewType: string,
@@ -742,17 +725,15 @@ export default class MobilePlugin extends Plugin {
     }
   }
 
-  createNewNote(): void {
-    // Using the internal commands API to execute file creation
+  // Using the internal commands API to execute file creation
+  createNewNote = (): void => {
     this.app.commands?.executeCommandById('file-explorer:new-file');
-  }
+  };
 
   getBinds(toolbarId: string): string[] {
     const binds: string[] = [];
     for (const binding of this.settings.contextBindings) {
-      if (binding.toolbarId === toolbarId) {
-        binds.push(binding.contextType);
-      }
+      if (binding.toolbarId === toolbarId) binds.push(binding.contextType);
     }
     return binds;
   }
@@ -763,7 +744,7 @@ export default class MobilePlugin extends Plugin {
     this.app.commands?.executeCommandById(cmdId);
   }
 
-  async toggleWakeLock(): Promise<void> {
+  toggleWakeLock = async (): Promise<void> => {
     if (!('wakeLock' in navigator)) {
       // Wake Lock API not supported
       return;
@@ -790,6 +771,14 @@ export default class MobilePlugin extends Plugin {
     } catch (error) {
       console.error('Wake lock error:', error);
     }
+  };
+
+  hapticFeedback(duration = 10): boolean {
+    return (
+      this.settings.enableHapticFeedback &&
+      navigator.vibrate &&
+      navigator.vibrate(duration)
+    );
   }
 
   onUserEnable() {
@@ -810,14 +799,6 @@ export default class MobilePlugin extends Plugin {
       this.fabManager.destroy();
       this.fabManager = null;
     }
-  }
-
-  /**
-   * Registers a DOM element to be removed when the plugin unloads.
-   * Use this instead of pushing to domElementsToClean.
-   */
-  registerDomElement(el: HTMLElement) {
-    this.register(() => el.remove());
   }
 
   async loadSettings() {

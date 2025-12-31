@@ -51,7 +51,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
       decorations: DecorationSet;
       app: App;
       plugin: MobilePlugin;
-      mainToolbar: ToolbarConfig | null = null;
+      activeToolbars: ToolbarConfig[] | null = null;
       currentToolbar: ToolbarConfig | null = null;
       view: EditorView;
 
@@ -63,12 +63,6 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         // Find the editor container to anchor the toolbar
 
         this.updateTooltip(view);
-      }
-
-      hapticFeedback(duration = 10): void {
-        if (this.plugin.settings.enableHapticFeedback && navigator.vibrate) {
-          navigator.vibrate(duration);
-        }
       }
 
       /**
@@ -85,26 +79,27 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
           hasToggled = false;
         });
 
-        toolbar.addEventListener('touchmove', e => {
-          const touchY = e.touches[0].clientY;
-          const deltaY = touchStartY - touchY;
+        toolbar.addEventListener(
+          'touchmove',
+          e => {
+            const touchY = e.touches[0].clientY;
+            const deltaY = touchStartY - touchY;
 
-          // If swiped up more than threshold and haven't toggled yet
-          if (deltaY > SWIPE_THRESHOLD_PX && !hasToggled) {
-            // Prevent default scrolling behavior when expanding toolbar
-            e.preventDefault();
-
-            // Toggle expanded state
-            if (toolbar.classList.contains('is-expanded')) {
-              toolbar.classList.remove('is-expanded');
-            } else {
-              toolbar.classList.add('is-expanded');
-              this.hapticFeedback(15);
+            // If swiped up more than threshold and haven't toggled yet
+            if (deltaY > SWIPE_THRESHOLD_PX && !hasToggled) {
+              // Toggle expanded state
+              if (toolbar.classList.contains('is-expanded')) {
+                toolbar.classList.remove('is-expanded');
+              } else {
+                toolbar.classList.add('is-expanded');
+                this.plugin.hapticFeedback(15);
+              }
+              // Mark that we've toggled to prevent multiple toggles in same gesture
+              hasToggled = true;
             }
-            // Mark that we've toggled to prevent multiple toggles in same gesture
-            hasToggled = true;
-          }
-        });
+          },
+          { passive: true },
+        );
       }
 
       update(update: ViewUpdate) {
@@ -115,9 +110,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         ) {
           this.view = update.view;
           // Defer tooltip update to avoid reading layout during update
-          requestAnimationFrame(() => {
-            this.updateTooltip(update.view);
-          });
+          requestAnimationFrame(() => this.updateTooltip(update.view));
         }
       }
 
@@ -133,51 +126,53 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
       hasContext(view: EditorView, pos: number): boolean {
         const activeContexts = this.getMatchingContexts(view, pos);
         // Check if any binding matches the current context
-        for (const binding of this.plugin.settings.contextBindings) {
-          if (activeContexts.has(binding.contextType)) {
-            return true;
-          }
-        }
-        return false;
+        return this.plugin.settings.contextBindings.some(binding =>
+          activeContexts.has(binding.contextType),
+        );
       }
 
       getActiveToolbar(view: EditorView, pos: number): ToolbarConfig | null {
         const activeContexts = this.getMatchingContexts(view, pos);
         // Collect all matching toolbars and concatenate their commands
-        const matchingToolbars: ToolbarConfig[] = [];
+
         const seenCommands = new Set<string>();
 
-        for (const contextType of activeContexts) {
-          for (const binding of this.plugin.settings.contextBindings) {
-            if (binding.contextType === contextType) {
-              const toolbar = this.plugin.settings.toolbars.find(
-                t => t.id === binding.toolbarId,
-              );
-              if (toolbar) {
-                matchingToolbars.push(toolbar);
-              }
-            }
-          }
-        }
-
-        // If no matches, return null
-        if (matchingToolbars.length === 0) {
-          return null;
-        }
-
         // Concatenate commands from all matching toolbars, removing duplicates
-        const combinedCommands: string[] = [];
-        for (const toolbar of matchingToolbars) {
-          for (const command of toolbar.commands) {
-            if (!seenCommands.has(command)) {
-              seenCommands.add(command);
-              if (this.isCommandAvailable(command, view))
-                combinedCommands.push(command);
+        const combinedCommands: string[] = Array.from(activeContexts.keys())
+          .map(contextType =>
+            this.plugin.settings.contextBindings
+              .filter(binding => binding.contextType === contextType)
+              .map(
+                binding =>
+                  this.plugin.settings.toolbars.find(
+                    t => t.id === binding.toolbarId,
+                  )?.commands,
+              )
+              .filter(t => t !== undefined),
+          )
+          .flat(2)
+          .filter(cmd => {
+            if (seenCommands.has(cmd)) {
+              return false;
+            } else {
+              seenCommands.add(cmd);
+              return true;
             }
-          }
-        }
+          });
 
-        this.mainToolbar = matchingToolbars[0] || null;
+        this.activeToolbars =
+          Array.from(activeContexts.keys())
+            .map(contextType =>
+              this.plugin.settings.contextBindings
+                .filter(binding => binding.contextType === contextType)
+                .map(binding =>
+                  this.plugin.settings.toolbars.find(
+                    t => t.id === binding.toolbarId,
+                  ),
+                )
+                .filter(t => t !== undefined),
+            )
+            .flat() || null;
 
         // Return a virtual toolbar with combined commands
         return {
@@ -368,7 +363,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                 .setTooltip(command?.name || commandId)
                 .onClick(() => {
                   // Haptic feedback on button click
-                  this.hapticFeedback(10);
+                  this.plugin.hapticFeedback(10);
                   // Execute the command
                   this.app.commands?.executeCommandById?.(commandId);
                   // Refocus editor to prevent focus loss
@@ -381,7 +376,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                 .onClick(e => {
                   e.preventDefault();
                   // Haptic feedback on button click
-                  this.hapticFeedback(10);
+                  this.plugin.hapticFeedback(10);
                   // Execute the command
                   this.app.commands?.executeCommandById?.(commandId);
                   // Refocus editor to prevent focus loss
@@ -395,11 +390,11 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
             .setIcon('pencil')
             .setTooltip('Edit toolbar')
             .onClick(() => {
-              if (this.mainToolbar)
+              if (this.activeToolbars)
                 new ToolbarEditor(
                   this.app,
                   this.plugin,
-                  this.mainToolbar,
+                  this.activeToolbars,
                 ).open();
             });
       }
@@ -437,7 +432,8 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
           cls: 'mobile-plugin-toolbar',
         });
 
-        this.plugin.registerDomElement(newToolbar);
+        this.plugin.register(() => newToolbar.remove());
+
         this.plugin.toolbarMap.set(editor, { el: newToolbar, view: this.view });
         return newToolbar;
       }

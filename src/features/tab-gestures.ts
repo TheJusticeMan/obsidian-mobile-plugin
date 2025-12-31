@@ -1,6 +1,6 @@
 import { App, WorkspaceLeaf } from 'obsidian';
-import { Offset } from './gesture-handler';
-import MobilePlugin from './main';
+import { Offset } from '../utils/gesture-handler';
+import MobilePlugin from '../main';
 let mobileTabGestures: MobileTabGestures[] = [];
 
 /**

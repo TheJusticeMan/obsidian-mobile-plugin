@@ -1,7 +1,7 @@
 import { App, ButtonComponent, Command, Modal, Setting, View } from 'obsidian';
-import { GestureHandler, Offset } from './gesture-handler';
-import MobilePlugin from './main';
-import { CommandSuggestModal } from './settings';
+import { GestureHandler, Offset } from '../utils/gesture-handler';
+import MobilePlugin from '../main';
+import { CommandSuggestModal } from '../settings';
 
 /**
  * Manages FAB (Floating Action Button) placement and lifecycle across editor leaves.

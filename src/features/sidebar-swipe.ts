@@ -7,8 +7,8 @@ import {
   WorkspaceMobileDrawer,
   WorkspaceSidedock,
 } from 'obsidian';
-import { Offset } from './gesture-handler';
-import { VIEW_TYPE_TABS } from './TabsLeaf';
+import { Offset } from '../utils/gesture-handler';
+import { VIEW_TYPE_TABS } from '../views/TabsLeaf';
 
 /**
  * The goal is to make it quick to switch between tabs in the side splits by swiping farther than the edge.

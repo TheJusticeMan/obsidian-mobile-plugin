@@ -16,7 +16,7 @@ import {
   TFolder,
   WorkspaceLeaf,
 } from 'obsidian';
-import MobilePlugin from './main';
+import MobilePlugin from '../main';
 
 export const VIEW_TYPE_SEARCH = 'mobile-search-view';
 

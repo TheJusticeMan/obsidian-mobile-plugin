@@ -11,9 +11,9 @@ import {
   TFolder,
   WorkspaceLeaf,
 } from 'obsidian';
-import { GestureCommand } from './gesture-handler';
+import { GestureCommand } from './utils/gesture-handler';
 import MobilePlugin from './main';
-import { SortableList } from './SortableList';
+import { SortableList } from './components/SortableList';
 
 // Type for Obsidian's internal commands API (not in public API)
 

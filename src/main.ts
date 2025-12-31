@@ -7,10 +7,10 @@ import {
   Plugin,
   WorkspaceLeaf,
 } from 'obsidian';
-import { FABManager } from './fab';
-import { keepInTabletMode } from './keepInTabletMode';
-import { SearchLeaf, VIEW_TYPE_SEARCH } from './MobileSearchLeaf';
-import { updateMobileTabGestures } from './MobileTabGestures';
+import { FABManager } from './features/fab';
+import { keepInTabletMode } from './features/tablet-mode';
+import { SearchLeaf, VIEW_TYPE_SEARCH } from './views/SearchLeaf';
+import { updateMobileTabGestures } from './features/tab-gestures';
 import {
   DEFAULT_SETTINGS,
   MobileCMDEvent,
@@ -20,9 +20,9 @@ import {
   settingsModel,
   VIEW_TYPE_SETTINGS,
 } from './settings';
-import { SwipePastSideSplit } from './swipePastSideSplit';
-import { TabsLeaf, VIEW_TYPE_TABS } from './TabsLeaf';
-import { createToolbarExtension } from './toolbar-extension';
+import { SwipePastSideSplit } from './features/sidebar-swipe';
+import { TabsLeaf, VIEW_TYPE_TABS } from './views/TabsLeaf';
+import { createToolbarExtension } from './features/toolbar';
 
 // WakeLock API types (not in standard TS lib)
 interface WakeLockSentinel {

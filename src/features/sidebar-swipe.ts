@@ -7,6 +7,7 @@ import {
   WorkspaceMobileDrawer,
   WorkspaceSidedock,
 } from 'obsidian';
+import { SortableList } from 'src/components/SortableList';
 import { Offset } from '../utils/gesture-handler';
 import { VIEW_TYPE_TABS } from '../views/TabsLeaf';
 
@@ -96,6 +97,10 @@ class SideSplitSwipeElement {
   start: Offset | null = null;
   containerEl: HTMLElement;
   contentEl: HTMLElement;
+  sortedLeaves: { left: WorkspaceLeaf[]; right: WorkspaceLeaf[] } = {
+    left: [],
+    right: [],
+  };
 
   constructor(
     public app: App,
@@ -224,47 +229,57 @@ class SideSplitSwipeElement {
 
     this.contentEl.empty();
 
-    // Create a container for the stack to center it properly
-    const stackContainer = this.contentEl.createDiv({
-      cls: 'swipe-past-stack-container',
+    // Use a Set or simple concat if you are just trying to aggregate them
+    // This avoids the 'overwrite' behavior of some merge functions
+    this.sortedLeaves[this.side] = Array.from(
+      new Set([...this.sortedLeaves[this.side], ...sidebarLeaves]),
+    );
+
+    const sortableLeafList = new SortableList<WorkspaceLeaf>(
+      this.contentEl,
+      this.sortedLeaves[this.side],
+      (parent, leaf) => {
+        const div = parent.createDiv('swipe-past-option');
+        if (leaf.isVisible()) div.addClass('is-active');
+        new ExtraButtonComponent(div).setIcon(leaf.getIcon());
+        div.createSpan({ text: leaf.getDisplayText() });
+        new ExtraButtonComponent(div)
+          .setIcon('cross')
+          .onClick(() =>
+            this.app.workspace.detachLeavesOfType(leaf.view.getViewType()),
+          );
+        div.onclick = async () => {
+          await this.app.workspace.revealLeaf(leaf);
+          this.close();
+        };
+
+        return div;
+      },
+    ).addClass('swipe-past-stack-container');
+    const stackContainer = sortableLeafList.elementContainer;
+    sortableLeafList.onUpdate(arr => {
+      if (this.side === 'left') {
+        const div = stackContainer.createDiv('swipe-past-option');
+        new ExtraButtonComponent(div).setIcon('settings');
+        div.createSpan({ text: 'Settings' });
+
+        div.onclick = () => {
+          this.app.commands.executeCommandById('app:open-settings');
+          this.close();
+        };
+      } else if (
+        !sidebarLeaves.some(leaf => leaf.view.getViewType() === VIEW_TYPE_TABS)
+      ) {
+        const div = stackContainer.createDiv('swipe-past-option');
+        new ExtraButtonComponent(div).setIcon('tabs');
+        div.createSpan({ text: 'Tabs' });
+
+        div.onclick = () => {
+          this.app.commands.executeCommandById('mobile:open-tabs');
+          this.close();
+        };
+      }
     });
-
-    sidebarLeaves.forEach(leaf => {
-      const div = stackContainer.createDiv('swipe-past-option');
-      if (leaf.isVisible()) div.addClass('is-active');
-      new ExtraButtonComponent(div).setIcon(leaf.getIcon());
-      div.createSpan({ text: leaf.getDisplayText() });
-      new ExtraButtonComponent(div)
-        .setIcon('cross')
-        .onClick(() =>
-          this.app.workspace.detachLeavesOfType(leaf.view.getViewType()),
-        );
-      div.onclick = async () => {
-        await this.app.workspace.revealLeaf(leaf);
-        this.close();
-      };
-    });
-    if (this.side === 'left') {
-      const div = stackContainer.createDiv('swipe-past-option');
-      new ExtraButtonComponent(div).setIcon('settings');
-      div.createSpan({ text: 'Settings' });
-
-      div.onclick = () => {
-        this.app.commands.executeCommandById('app:open-settings');
-        this.close();
-      };
-    } else if (
-      !sidebarLeaves.some(leaf => leaf.view.getViewType() === VIEW_TYPE_TABS)
-    ) {
-      const div = stackContainer.createDiv('swipe-past-option');
-      new ExtraButtonComponent(div).setIcon('tabs');
-      div.createSpan({ text: 'Tabs' });
-
-      div.onclick = () => {
-        this.app.commands.executeCommandById('mobile:open-tabs');
-        this.close();
-      };
-    }
   }
 
   close(): void {

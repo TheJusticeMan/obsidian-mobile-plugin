@@ -94,4 +94,9 @@ export class SortableList<T> {
   onUpdate(cb: (arr: T[]) => void): void {
     this.updateCallback = cb;
   }
+
+  addClass(className: string): SortableList<T> {
+    this.elementContainer.addClass(className);
+    return this;
+  }
 }

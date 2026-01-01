@@ -4,6 +4,7 @@ import {
   Editor,
   MarkdownView,
   Notice,
+  Platform,
   Plugin,
   WorkspaceLeaf,
 } from 'obsidian';
@@ -49,6 +50,7 @@ interface WakeLockNavigator {
  * @extends Plugin
  */
 export default class MobilePlugin extends Plugin {
+  elementsToCleanup: Map<HTMLElement, () => void> = new Map();
   settings: MobilePluginSettings;
   fabManager: FABManager | null = null;
   wakeLock: WakeLockSentinel | null = null;
@@ -157,6 +159,16 @@ export default class MobilePlugin extends Plugin {
           ? this.removeChild(this.kkep)
           : this.addChild(this.kkep),
     });
+
+    if (this.app.emulateMobile)
+      this.addCommand({
+        id: 'toggle-emulate-phone-mode',
+        name: 'Toggle emulate phone mode',
+        icon: 'smartphone',
+        callback: () => {
+          this.app.emulateMobile(!Platform.isMobile);
+        },
+      });
 
     // Navigation commands
     this.addCommand({

@@ -74,32 +74,40 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         let touchStartY = 0;
         let hasToggled = false;
 
-        toolbar.addEventListener('touchstart', e => {
+        plugin.elementsToCleanup.get(toolbar)?.();
+
+        const handleTouchStart = (e: TouchEvent): void => {
           touchStartY = e.touches[0].clientY;
           hasToggled = false;
+        };
+        toolbar.addEventListener('touchstart', handleTouchStart);
+
+        const handleTouchMove = (e: TouchEvent): void => {
+          const touchY = e.touches[0].clientY;
+          const deltaY = touchStartY - touchY;
+
+          // If swiped up more than threshold and haven't toggled yet
+          if (deltaY > SWIPE_THRESHOLD_PX && !hasToggled) {
+            // Toggle expanded state
+            if (toolbar.classList.contains('is-expanded')) {
+              toolbar.classList.remove('is-expanded');
+            } else {
+              toolbar.classList.add('is-expanded');
+              this.plugin.hapticFeedback(15);
+            }
+            // Mark that we've toggled to prevent multiple toggles in same gesture
+            hasToggled = true;
+          }
+        };
+
+        toolbar.addEventListener('touchmove', handleTouchMove, {
+          passive: true,
         });
 
-        toolbar.addEventListener(
-          'touchmove',
-          e => {
-            const touchY = e.touches[0].clientY;
-            const deltaY = touchStartY - touchY;
-
-            // If swiped up more than threshold and haven't toggled yet
-            if (deltaY > SWIPE_THRESHOLD_PX && !hasToggled) {
-              // Toggle expanded state
-              if (toolbar.classList.contains('is-expanded')) {
-                toolbar.classList.remove('is-expanded');
-              } else {
-                toolbar.classList.add('is-expanded');
-                this.plugin.hapticFeedback(15);
-              }
-              // Mark that we've toggled to prevent multiple toggles in same gesture
-              hasToggled = true;
-            }
-          },
-          { passive: true },
-        );
+        this.plugin.elementsToCleanup.set(toolbar, () => {
+          toolbar.removeEventListener('touchstart', handleTouchStart);
+          toolbar.removeEventListener('touchmove', handleTouchMove);
+        });
       }
 
       update(update: ViewUpdate) {

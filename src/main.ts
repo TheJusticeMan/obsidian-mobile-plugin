@@ -25,6 +25,7 @@ import { SwipePastSideSplit } from './features/sidebar-swipe';
 import { TabsLeaf, VIEW_TYPE_TABS } from './views/TabsLeaf';
 import { createToolbarExtension } from './features/toolbar';
 import { registerCursorCommands } from './features/cursor-commands';
+import { FilesSel } from './utils/InsertMultipleAttachments';
 
 // WakeLock API types (not in standard TS lib)
 interface WakeLockSentinel {
@@ -170,6 +171,21 @@ export default class MobilePlugin extends Plugin {
           this.app.emulateMobile(!Platform.isMobile);
         },
       });
+
+    this.addCommand({
+      id: 'insert-multiple-attachments',
+      name: 'Insert multiple attachments',
+      icon: 'paperclip',
+      editorCallback: (editor: Editor) => new FilesSel(this.app, editor),
+    });
+
+    this.addCommand({
+      id: 'insert-multiple-images',
+      name: 'Insert multiple images',
+      icon: 'image-file',
+      editorCallback: (editor: Editor) =>
+        new FilesSel(this.app, editor, 'image/*'),
+    });
 
     registerCursorCommands(this);
 

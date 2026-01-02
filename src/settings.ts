@@ -11,9 +11,9 @@ import {
   TFolder,
   WorkspaceLeaf,
 } from 'obsidian';
-import { GestureCommand } from './utils/gesture-handler';
-import MobilePlugin from './main';
 import { SortableList } from './components/SortableList';
+import MobilePlugin from './main';
+import { GestureCommand } from './utils/gesture-handler';
 
 // Type for Obsidian's internal commands API (not in public API)
 
@@ -74,6 +74,7 @@ export const MobileCMDEventsDesc: Record<MobileCMDEvent, [string, string]> = {
 };
 
 export interface MobilePluginSettings {
+  enableCursorCommands: boolean;
   enableTabReordering: boolean;
   showCommandConfirmation: boolean;
   MobileCMDEvents: Record<MobileCMDEvent, string>;
@@ -109,11 +110,14 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
       id: 'formatting',
       name: 'Formatting',
       commands: [
+        'editor:paste',
         'editor:toggle-bold',
         'editor:toggle-italics',
         'editor:toggle-strikethrough',
         'editor:toggle-highlight',
         'editor:insert-link',
+        'mobile:insert-multiple-images',
+        'mobile:insert-multiple-attachments',
         'editor:toggle-checklist-status',
         'mobile:select-more',
         'mobile:quick-audio-notes',
@@ -181,8 +185,9 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
       id: 'selection',
       name: 'Selection',
       commands: [
-        'editor:copy',
         'editor:cut',
+        'editor:copy',
+        'editor:paste',
         'mobile:select-more',
         'editor:toggle-bold',
         'editor:toggle-italics',
@@ -190,6 +195,20 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
         'editor:insert-link',
         'pure-chat-llm:edit-selection',
         'note-composer:split-file',
+      ],
+    },
+    {
+      id: 'caret',
+      name: 'Caret',
+      commands: [
+        'editor:move-caret-up',
+        'editor:move-caret-down',
+        'editor:move-caret-left',
+        'editor:move-caret-right',
+        'mobile:select-all',
+        'mobile:select-word',
+        'mobile:expand-selection',
+        'mobile:shrink-selection',
       ],
     },
   ],
@@ -230,6 +249,10 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
       contextType: 'default',
       toolbarId: 'formatting',
     },
+    {
+      contextType: 'default',
+      toolbarId: 'caret',
+    },
   ],
   useIcons: true,
   commandIcons: {
@@ -246,6 +269,7 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
   showBuiltInToolbar: false,
   showTabsInSearchView: false,
   enableTabReordering: true,
+  enableCursorCommands: false,
 };
 
 /**
@@ -964,7 +988,7 @@ export class ToolbarEditor extends Modal {
           }),
       );
 
-    new SortableList(container, toolbar.commands).addSetting(
+    new SortableList(container, toolbar.commands).useSetting(
       (setting, cmdId, index) => {
         const command = this.app.commands?.findCommand?.(cmdId);
         setting
@@ -1031,7 +1055,6 @@ export class ToolbarEditor extends Modal {
   }
 
   onClose() {
-    const { contentEl } = this;
-    contentEl.empty();
+    this.contentEl.empty();
   }
 }

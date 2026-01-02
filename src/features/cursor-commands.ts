@@ -1,62 +1,52 @@
 import MobilePlugin from '../main';
 
 export function registerCursorCommands(plugin: MobilePlugin) {
-  // Navigation commands
-  plugin.addCommand({
-    id: 'cursor-up',
-    name: 'Up',
-    icon: 'arrow-up',
-    editorCallback: editor => {
-      const cursor = editor.getCursor();
-      editor.setCursor({ line: Math.max(cursor.line - 1, 0), ch: cursor.ch });
-    },
-  });
+  if (plugin.settings.enableCursorCommands) {
+    // Navigation commands
+    plugin.addCommand({
+      id: 'cursor-up',
+      name: 'Up',
+      icon: 'arrow-up',
+      editorCallback: editor => {
+        const cursor = editor.getCursor();
+        editor.setCursor({ line: Math.max(cursor.line - 1, 0), ch: cursor.ch });
+      },
+    });
 
-  plugin.addCommand({
-    id: 'cursor-down',
-    name: 'Down',
-    icon: 'arrow-down',
-    editorCallback: editor => {
-      const cursor = editor.getCursor();
+    plugin.addCommand({
+      id: 'cursor-down',
+      name: 'Down',
+      icon: 'arrow-down',
+      editorCallback: editor => {
+        const cursor = editor.getCursor();
 
-      editor.setCursor({ line: cursor.line + 1, ch: cursor.ch });
-    },
-  });
+        editor.setCursor({ line: cursor.line + 1, ch: cursor.ch });
+      },
+    });
 
-  plugin.registerInterval(
-    window.setInterval(() => {
-      const cursor = plugin.app.workspace.activeEditor?.editor?.getCursor();
-      if (!cursor) return;
-      plugin.app.workspace.activeEditor?.editor?.setCursor({
-        line: cursor.line + 1,
-        ch: cursor.ch,
-      });
-    }, 100),
-  );
+    plugin.addCommand({
+      id: 'cursor-left',
+      name: 'Left',
+      icon: 'arrow-left',
+      editorCallback: editor => {
+        const cursor = editor.getCursor();
+        editor.setCursor({
+          line: cursor.line - Number(cursor.ch === 0),
+          ch: cursor.ch - 1,
+        });
+      },
+    });
 
-  plugin.addCommand({
-    id: 'cursor-left',
-    name: 'Left',
-    icon: 'arrow-left',
-    editorCallback: editor => {
-      const cursor = editor.getCursor();
-      editor.setCursor({
-        line: cursor.line - Number(cursor.ch === 0),
-        ch: cursor.ch - 1,
-      });
-    },
-  });
-
-  plugin.addCommand({
-    id: 'cursor-right',
-    name: 'Right',
-    icon: 'arrow-right',
-    editorCallback: editor => {
-      const cursor = editor.getCursor();
-      editor.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
-    },
-  });
-
+    plugin.addCommand({
+      id: 'cursor-right',
+      name: 'Right',
+      icon: 'arrow-right',
+      editorCallback: editor => {
+        const cursor = editor.getCursor();
+        editor.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
+      },
+    });
+  }
   // Selection expansion commands (Plus)
   plugin.addCommand({
     id: 'select-plus-bottom',

@@ -1,9 +1,4 @@
-import {
-  ExtraButtonComponent,
-  IconName,
-  ItemView,
-  WorkspaceLeaf,
-} from 'obsidian';
+import { IconName, ItemView, WorkspaceLeaf } from 'obsidian';
 import { SortableList } from 'src/components/SortableList';
 
 export const VIEW_TYPE_TABS = 'tabs-leaf';
@@ -62,43 +57,27 @@ export class TabsLeaf extends ItemView {
       new Set([...this.sortedLeaves, ...workspaceLeaves]),
     );
 
-    new SortableList<WorkspaceLeaf>(
-      this.contentEl,
-      this.sortedLeaves,
-      (parent, leaf) => {
-        const div = parent.createDiv('swipe-past-option');
-        if (leaf === activeLeaf) div.addClass('is-active');
-
-        new ExtraButtonComponent(div).setIcon(leaf.getIcon());
-        div.createSpan({ text: leaf.getDisplayText() });
-        new ExtraButtonComponent(div)
-          .setIcon('cross')
-          .onClick(() => leaf.detach());
-
-        div.onclick = async () => {
-          this.app.workspace.setActiveLeaf(leaf, { focus: true });
-          await this.app.workspace.revealLeaf(leaf);
-        };
-
-        return div;
-      },
-    ).addClass('swipe-past-stack-container');
-
-    /*     this.app.workspace.iterateRootLeaves(leaf => {
-      const div = stackContainer.createDiv('swipe-past-option');
-      if (leaf === activeLeaf) div.addClass('is-active');
-
-      new ExtraButtonComponent(div).setIcon(leaf.getIcon());
-      div.createSpan({ text: leaf.getDisplayText() });
-      new ExtraButtonComponent(div)
-        .setIcon('cross')
-        .onClick(() => leaf.detach());
-
-      div.onclick = async () => {
-        this.app.workspace.setActiveLeaf(leaf, { focus: true });
-        await this.app.workspace.revealLeaf(leaf);
-      };
-    });
- */
+    new SortableList<WorkspaceLeaf>(this.contentEl, this.sortedLeaves)
+      .addClass('swipe-past-stack-container')
+      .useBubble((bubble, leaf) => {
+        bubble
+          .setName(leaf.getDisplayText())
+          .setIcon1(leaf.getIcon())
+          .icon2(
+            icon =>
+              void icon
+                .setIcon('cross')
+                .onClick(() =>
+                  this.app.workspace.detachLeavesOfType(
+                    leaf.view.getViewType(),
+                  ),
+                ),
+          )
+          .onClick(() => {
+            void this.app.workspace.revealLeaf(leaf);
+            this.app.workspace.setActiveLeaf(leaf, { focus: true });
+          });
+        if (leaf === activeLeaf) bubble.addClass('is-active');
+      });
   };
 }

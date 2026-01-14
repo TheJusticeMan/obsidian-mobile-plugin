@@ -142,7 +142,7 @@ export class Bubble {
     this.nameEl = this.div.createSpan();
     this._icon2 = new ExtraButtonComponent(this.div).setIcon('square');
 
-    this.div.onclick = async () => this.onClickCallback?.();
+    this.div.onclick = () => this.onClickCallback?.();
   }
 
   onClick(callback: () => void): Bubble {

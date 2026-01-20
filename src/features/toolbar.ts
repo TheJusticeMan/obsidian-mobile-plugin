@@ -361,7 +361,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
           const iconToUse =
             this.plugin.settings.commandIcons[commandId] ||
             command?.icon ||
-            'question-mark-glyph';
+            'circle-question-mark';
 
           // Check if command is available in current context
           if (command && tooltip) {

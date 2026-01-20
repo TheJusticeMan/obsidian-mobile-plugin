@@ -409,6 +409,8 @@ export class CommandSuggestModal extends FuzzySuggestModal<Command> {
  * @extends PluginSettingTab
  */
 export class MobileSettingTab extends PluginSettingTab {
+  icon: string = 'smartphone';
+
   constructor(
     public app: App,
     public plugin: MobilePlugin,
@@ -994,12 +996,12 @@ export class ToolbarEditor extends Modal {
         setting
           .setName(command?.name || cmdId)
           .setDesc(cmdId)
-          .addButton(btn =>
+          .addExtraButton(btn =>
             btn
               .setIcon(
                 this.plugin.settings.commandIcons[cmdId] ||
                   command?.icon ||
-                  'question',
+                  'circle-question-mark',
               )
               .setTooltip('Change icon')
               .onClick(() => {

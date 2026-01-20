@@ -72,9 +72,19 @@ Includes FAB and selection toolbar styles with mobile-friendly design
     max-width 0.3s ease;
 }
 
-.is-phone .mobile-plugin-toolbar {
+/**
+ * Targets the mobile plugin toolbar specifically on phone devices when
+ * the mobile navbar is in a "raised" state (e.g., active or floating).
+ * 
+ * Selector breakdown:
+ * - body:has(.mobile-navbar .mod-raised): Checks if the body contains a navbar with the 'mod-raised' class.
+ * - .is-phone: Ensures styles apply only to phone layouts (not tablets).
+ * - .mobile-plugin-toolbar: The target element to be styled.
+ */
+body:has(.mobile-navbar.mod-raised) .is-phone .mobile-plugin-toolbar {
   padding-bottom: calc(var(--navbar-height) + 34px + 8px);
 }
+
 .is-hidden-nav.is-phone .mobile-plugin-toolbar {
   padding-bottom: 8px;
 }

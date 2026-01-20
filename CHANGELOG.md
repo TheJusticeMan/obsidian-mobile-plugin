@@ -5,6 +5,32 @@ All notable changes to the Mobile UX plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-01-19
+
+### Added
+
+- `SortableList` component: drag-and-drop support for settings and improved tab management.
+- `InsertMultipleAttachments` utility: bulk attachment insertion.
+- New `cursor-commands.ts`: dedicated file for cursor and selection commands.
+- New settings: toolbar visibility toggle and FAB record start/stop options.
+
+### Changed
+
+- Refactor: moved feature modules into `src/features` and utilities into `src/utils` for clearer project structure.
+- Refactor: replaced direct style manipulation with `setCssProps` for more consistent styling.
+- Updated FAB positioning and toolbar styles; changed default command icon to `circle-question-mark` and adjusted minimum app version.
+- Internal: improved `FABManager` and `MobilePlugin` readability and performance; updated `keepInTabletMode` platform handling.
+
+### Fixed
+
+- Adjusted FAB positioning and toolbar padding for improved mobile layout.
+- Fixed toolbar swipe-to-expand reliability (Fixes #29).
+- Fixed bottom positioning and platform/tablet mode handling.
+
+### Docs
+
+- Updated README with new settings, search improvements, Sidebar Navigation documentation, and Tabs view enhancements.
+
 ## [1.6.0] - 2025-12-30
 
 ### Added

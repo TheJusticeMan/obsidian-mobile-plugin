@@ -245,12 +245,23 @@ npm run build
 
 ```
 src/
-├── main.ts               # Plugin entry point
-├── fab.ts                # Floating Action Button manager
-├── toolbar-extension.ts  # Context-aware toolbar ViewPlugin
-├── mobile-search-leaf.ts # Mobile Search view
-├── gesture-handler.ts    # Gesture recognition and handling
-└── settings.ts           # Settings tab and interfaces
+├── main.ts                     # Plugin entry point
+├── settings.ts                 # Settings tab and interfaces
+├── components/
+│   └── SortableList.ts         # Reusable drag-and-drop list component
+├── features/
+│   ├── cursor-commands.ts      # Cursor & selection commands
+│   ├── fab.ts                  # Floating Action Button manager (moved)
+│   ├── sidebar-swipe.ts        # Swipe Past Side Split / sidebar navigation
+│   ├── tab-gestures.ts         # Tab gestures and tab switcher logic
+│   ├── tablet-mode.ts          # Keep-in-tablet-mode helpers
+│   └── toolbar.ts              # Context-aware toolbar logic
+├── utils/
+│   ├── gesture-handler.ts      # Gesture recognition and handling
+│   └── InsertMultipleAttachments.ts # Bulk-attachment helper
+└── views/
+    ├── SearchLeaf.ts           # Mobile search view
+    └── TabsLeaf.ts             # Tabs view and tab management
 ```
 
 ## License

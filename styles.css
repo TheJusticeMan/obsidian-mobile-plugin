@@ -29,10 +29,7 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 --mobile-toolbar-height */
 
 .is-phone .mobile-fab {
-  bottom: calc(
-    var(--navbar-height) + max(var(--safe-area-inset-bottom), var(--size-4-3)) +
-      20px
-  );
+  bottom: calc(var(--navbar-height) + 34px + 20px);
 }
 
 .is-hidden-nav.is-phone .mobile-fab {
@@ -76,10 +73,7 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 }
 
 .is-phone .mobile-plugin-toolbar {
-  padding-bottom: calc(
-    var(--navbar-height) + max(var(--safe-area-inset-bottom), var(--size-4-3)) +
-      8px
-  );
+  padding-bottom: calc(var(--navbar-height) + 34px + 8px);
 }
 .is-hidden-nav.is-phone .mobile-plugin-toolbar {
   padding-bottom: 8px;

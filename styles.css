@@ -6,7 +6,10 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 /* Floating Action Button (FAB) */
 .mobile-fab {
   position: absolute;
-  bottom: calc(20px + env(safe-area-inset-bottom));
+  bottom: calc(
+    var(--navbar-height) + max(var(--safe-area-inset-bottom), var(--size-4-3)) +
+      20px
+  );
   right: 20px;
   width: 56px;
   height: 56px;
@@ -26,10 +29,10 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 }
 
 /* will use this when obsidian updates to fix 
---mobile-toolbar-height
+--mobile-toolbar-height */
 .is-hidden-nav.is-phone .mobile-fab {
-  bottom: calc(20px + env(safe-area-inset-bottom));
-} */
+  bottom: 20px;
+}
 
 .mobile-fab:hover {
   transform: scale(1.05);
@@ -51,6 +54,10 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   flex-wrap: nowrap;
   gap: 8px;
   padding: 8px;
+  padding-bottom: calc(
+    var(--navbar-height) + max(var(--safe-area-inset-bottom), var(--size-4-3)) +
+      8px
+  );
   /* background-color: var(--background-primary); */
   border-top: 1px solid var(--background-modifier-border);
   padding-right: 76px;
@@ -65,6 +72,10 @@ Includes FAB and selection toolbar styles with mobile-friendly design
     flex-wrap 0.3s ease,
     right 0.3s ease,
     max-width 0.3s ease;
+}
+
+.is-hidden-nav.is-phone .mobile-plugin-toolbar {
+  padding-bottom: 8px;
 }
 
 .hidden-mobile-toolbar .mobile-toolbar,

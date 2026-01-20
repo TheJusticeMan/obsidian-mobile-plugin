@@ -34,9 +34,7 @@ interface WakeLockSentinel {
 }
 
 interface WakeLockNavigator {
-  wakeLock?: {
-    request: (type: string) => Promise<WakeLockSentinel>;
-  };
+  wakeLock?: { request: (type: string) => Promise<WakeLockSentinel> };
 }
 
 /**
@@ -195,22 +193,22 @@ export default class MobilePlugin extends Plugin {
       this.app.commands?.commands['audio-recorder:stop'];
     const hasPureChatLLM =
       this.app.commands?.commands['pure-chat-llm:complete-chat-response'];
+    this.addCommand({
+      id: 'quick-audio-notes',
+      name: 'Quick audio notes',
+      icon: 'microphone',
+      callback: () => {
+        // Toggle FAB record mode
+        if (this.fabManager?.getMode() === 'recording') {
+          this.fabManager?.setMode('default');
+          new Notice('Recording mode disabled');
+        } else {
+          this.fabManager?.setMode('recording');
+          new Notice('Recording mode enabled');
+        }
+      },
+    });
     if (hasAudioRecorder && hasPureChatLLM) {
-      this.addCommand({
-        id: 'quick-audio-notes',
-        name: 'Quick audio notes',
-        icon: 'microphone',
-        callback: () => {
-          // Toggle FAB record mode
-          if (this.fabManager?.getMode() === 'recording') {
-            this.fabManager?.setMode('default');
-            new Notice('Recording mode disabled');
-          } else {
-            this.fabManager?.setMode('recording');
-            new Notice('Recording mode enabled');
-          }
-        },
-      });
       this.addCommand({
         id: 'end-recording-and-transcribe',
         name: 'End recording and transcribe',

@@ -6,10 +6,7 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 /* Floating Action Button (FAB) */
 .mobile-fab {
   position: absolute;
-  bottom: calc(
-    var(--navbar-height) + max(var(--safe-area-inset-bottom), var(--size-4-3)) +
-      20px
-  );
+  bottom: 20px;
   right: 20px;
   width: 56px;
   height: 56px;
@@ -30,6 +27,14 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 
 /* will use this when obsidian updates to fix 
 --mobile-toolbar-height */
+
+.is-phone .mobile-fab {
+  bottom: calc(
+    var(--navbar-height) + max(var(--safe-area-inset-bottom), var(--size-4-3)) +
+      20px
+  );
+}
+
 .is-hidden-nav.is-phone .mobile-fab {
   bottom: 20px;
 }
@@ -54,10 +59,6 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   flex-wrap: nowrap;
   gap: 8px;
   padding: 8px;
-  padding-bottom: calc(
-    var(--navbar-height) + max(var(--safe-area-inset-bottom), var(--size-4-3)) +
-      8px
-  );
   /* background-color: var(--background-primary); */
   border-top: 1px solid var(--background-modifier-border);
   padding-right: 76px;
@@ -74,6 +75,12 @@ Includes FAB and selection toolbar styles with mobile-friendly design
     max-width 0.3s ease;
 }
 
+.is-phone .mobile-plugin-toolbar {
+  padding-bottom: calc(
+    var(--navbar-height) + max(var(--safe-area-inset-bottom), var(--size-4-3)) +
+      8px
+  );
+}
 .is-hidden-nav.is-phone .mobile-plugin-toolbar {
   padding-bottom: 8px;
 }
@@ -89,10 +96,18 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 }
 
 /* Expanded toolbar state - allows wrapping to show more rows */
-.mobile-plugin-toolbar.is-expanded {
+body:not(.is-hidden-nav.is-phone) .mobile-plugin-toolbar.is-expanded {
   flex-wrap: wrap;
   flex: none;
   overflow-y: auto;
+}
+
+body.is-hidden-nav.is-phone .mobile-plugin-toolbar.is-expanded {
+  border-top-color: var(--interactive-accent);
+}
+
+body.is-hidden-nav.is-phone .mobile-plugin-toolbar.hide-for-fullscreen {
+  display: none;
 }
 
 .mobile-plugin-toolbar::-webkit-scrollbar {
@@ -412,4 +427,7 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 
 .draggable-container .draggable-item.drag-over-bottom:not(.is-dragging) {
   border-bottom: 2px solid var(--interactive-accent) !important;
+}
+.mobile-plugin-toolbar-editor {
+  margin: var(--size-4-6) 0;
 }

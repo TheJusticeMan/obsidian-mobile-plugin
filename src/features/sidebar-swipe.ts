@@ -245,6 +245,7 @@ class SideSplitSwipeElement {
             bubble
               .setName('Settings')
               .setIcon1('settings')
+              .setIcon2('settings')
               .onClick(() => {
                 this.app.commands.executeCommandById('app:open-settings');
                 this.close();
@@ -259,6 +260,7 @@ class SideSplitSwipeElement {
             bubble
               .setName('Tabs')
               .setIcon1('tabs')
+              .setIcon2('tabs')
               .onClick(() => {
                 this.app.commands.executeCommandById('mobile:open-tabs');
                 this.close();

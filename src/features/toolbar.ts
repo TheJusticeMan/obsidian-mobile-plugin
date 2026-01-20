@@ -402,7 +402,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                 new ToolbarEditor(
                   this.app,
                   this.plugin,
-                  this.activeToolbars,
+                  this.activeToolbars[0],
                 ).open();
             });
       }
@@ -439,6 +439,10 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         const newToolbar = editor.containerEl.createDiv({
           cls: 'mobile-plugin-toolbar',
         });
+        newToolbar.toggleClass(
+          'hide-for-fullscreen',
+          plugin.settings.hideToolbarInFullscreen,
+        );
 
         this.plugin.register(() => newToolbar.remove());
 

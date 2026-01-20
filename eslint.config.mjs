@@ -21,6 +21,14 @@ export default defineConfig([
       },
     },
     rules: {
+      'obsidianmd/ui/sentence-case': [
+        'error',
+        {
+          acronyms: ['OK', 'FAB'],
+          enforceCamelCaseLower: true,
+        },
+      ],
+
       'prefer-const': 'error',
     },
   },

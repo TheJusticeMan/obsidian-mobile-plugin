@@ -28,10 +28,11 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 /* will use this when obsidian updates to fix 
 --mobile-toolbar-height */
 
-.is-phone .mobile-fab {
+body:has(.mobile-navbar.mod-raised).is-phone .mobile-fab {
   bottom: calc(var(--navbar-height) + 34px + 20px);
 }
 
+body:has(.mobile-navbar.mod-raised).is-hidden-nav.is-phone .mobile-fab,
 .is-hidden-nav.is-phone .mobile-fab {
   bottom: 20px;
 }

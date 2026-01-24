@@ -545,7 +545,7 @@ export class MobileSettingsView {
           void setting
             .setName('Show floating action button')
             .setDesc(
-              'Show the floating action button (FAB) in the bottom-right corner',
+              'Show the floating action button in the bottom-right corner',
             )
             .addToggle(toggle =>
               toggle
@@ -921,7 +921,7 @@ export class ToolbarEditor extends Modal {
               )
               .addOption('new', 'Create new toolbar')
               .setValue(toolbar.id)
-              .onChange(async value => {
+              .onChange(value => {
                 if (value === 'new') {
                   const newToolbar: ToolbarConfig = {
                     id: `toolbar-${Date.now()}`,

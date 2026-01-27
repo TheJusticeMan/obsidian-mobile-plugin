@@ -233,6 +233,33 @@ export default class MobilePlugin extends Plugin {
       },
     });
 
+    // this.app.mobileTabSwitcher.show()
+    this.addCommand({
+      id: 'open-tab-switcher',
+      name: 'Open tab switcher',
+      icon: 'tabs',
+      checkCallback: checking => {
+        if (checking) return Boolean(this.app.mobileTabSwitcher);
+        void this.app.mobileTabSwitcher?.show();
+      },
+    });
+
+    //this.app.mobileNavbar.ribbonMenuItemEl.click()
+    this.addCommand({
+      id: 'open-ribbon-menu',
+      name: 'Open ribbon menu',
+      icon: 'menu',
+      checkCallback: checking => {
+        if (checking)
+          return Boolean(
+            (this.app.mobileNavbar as { ribbonMenuItemEl?: HTMLElement })
+              ?.ribbonMenuItemEl,
+          );
+        (
+          this.app.mobileNavbar as { ribbonMenuItemEl?: HTMLElement }
+        )?.ribbonMenuItemEl?.click();
+      },
+    });
     registerCursorCommands(this);
 
     // if there is PureChutLLM plugin, and a recorder command, add a command to trigger it

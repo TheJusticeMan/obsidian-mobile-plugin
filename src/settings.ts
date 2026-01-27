@@ -94,6 +94,8 @@ export interface MobilePluginSettings {
   showBuiltInToolbar: boolean;
   showTabsInSearchView: boolean;
   hideFABWhenKeyboardOpen: boolean;
+  hideNativeBottomNav: boolean;
+  hideNativeTopNav: boolean;
 }
 
 export const DEFAULT_SETTINGS: MobilePluginSettings = {
@@ -275,6 +277,8 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
   enableTabReordering: true,
   enableCursorCommands: false,
   hideFABWhenKeyboardOpen: false,
+  hideNativeBottomNav: false,
+  hideNativeTopNav: false,
 };
 
 /**
@@ -603,7 +607,13 @@ export class MobileSettingsView {
             .addToggle(toggle =>
               toggle
                 .setValue(this.plugin.settings.hideToolbarInFullscreen)
-                .onChange(value => this.sett('hideToolbarInFullscreen', value)),
+                .onChange(value => {
+                  this.sett('hideToolbarInFullscreen', value);
+                  document.body.toggleClass(
+                    'hide-toolbar-for-fullscreen',
+                    value,
+                  );
+                }),
             ),
       )
       .addSetting(
@@ -729,19 +739,53 @@ export class MobileSettingsView {
     });
     this.renderContextBindings();
     this.renderToolbars();
-    new SettingGroup(this.containerEl).addSetting(
-      setting =>
-        void setting.addButton(button =>
-          button
-            .setButtonText('Reset to default settings')
-            .setWarning()
-            .onClick(async () => {
-              this.plugin.settings = { ...DEFAULT_SETTINGS };
-              await this.plugin.saveSettings();
-              this.renderGeneralSettings();
-            }),
-        ),
-    );
+    new SettingGroup(this.containerEl)
+      .setHeading('Danger Zone')
+      .addSetting(
+        setting =>
+          void setting
+            .setName('Hide native top navigation')
+            .setDesc(
+              "Hide Obsidian's built-in top navigation bar on mobile devices",
+            )
+            .addToggle(toggle =>
+              toggle
+                .setValue(this.plugin.settings.hideNativeTopNav)
+                .onChange(value => {
+                  this.sett('hideNativeTopNav', value);
+                  document.body.toggleClass('hide-native-top-nav', value);
+                }),
+            ),
+      )
+      .addSetting(
+        setting =>
+          void setting
+            .setName('Hide native bottom navigation')
+            .setDesc(
+              "Hide Obsidian's built-in bottom navigation bar on mobile devices",
+            )
+            .addToggle(toggle =>
+              toggle
+                .setValue(this.plugin.settings.hideNativeBottomNav)
+                .onChange(value => {
+                  this.sett('hideNativeBottomNav', value);
+                  document.body.toggleClass('hide-native-bottom-nav', value);
+                }),
+            ),
+      )
+      .addSetting(
+        setting =>
+          void setting.addButton(button =>
+            button
+              .setButtonText('Reset to default settings')
+              .setWarning()
+              .onClick(async () => {
+                this.plugin.settings = { ...DEFAULT_SETTINGS };
+                await this.plugin.saveSettings();
+                this.renderGeneralSettings();
+              }),
+          ),
+      );
   }
 
   renderToolbars() {

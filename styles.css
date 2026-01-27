@@ -28,7 +28,8 @@ Includes FAB and selection toolbar styles with mobile-friendly design
 /* will use this when obsidian updates to fix 
 --mobile-toolbar-height */
 
-body:has(.mobile-navbar.mod-raised).is-phone .mobile-fab {
+body:has(.mobile-navbar.mod-raised).is-phone:not(.hide-native-bottom-nav)
+  .mobile-fab {
   bottom: calc(var(--navbar-height) + 34px + 20px);
 }
 
@@ -52,6 +53,12 @@ body:has(.mobile-navbar.mod-raised).is-hidden-nav.is-phone .mobile-fab,
 }
 
 .hideFABWhenKeyboardOpen.mod-toolbar-open .mobile-fab {
+  display: none;
+}
+
+.hide-native-bottom-nav.is-mobile.is-floating-nav .mobile-navbar.mod-raised,
+.hide-native-top-nav.is-mobile.is-floating-nav .view-actions.mod-raised,
+.hide-native-top-nav.is-mobile.is-floating-nav .view-header {
   display: none;
 }
 
@@ -86,7 +93,8 @@ body:has(.mobile-navbar.mod-raised).is-hidden-nav.is-phone .mobile-fab,
  * - .is-phone: Ensures styles apply only to phone layouts (not tablets).
  * - .mobile-plugin-toolbar: The target element to be styled.
  */
-body:has(.mobile-navbar.mod-raised).is-phone .mobile-plugin-toolbar {
+body:has(.mobile-navbar.mod-raised).is-phone:not(.hide-native-bottom-nav)
+  .mobile-plugin-toolbar {
   padding-bottom: calc(var(--navbar-height) + 34px + 8px);
 }
 
@@ -117,7 +125,9 @@ body.is-hidden-nav.is-phone .mobile-plugin-toolbar.is-expanded {
   border-top-color: var(--interactive-accent);
 }
 
-body.is-hidden-nav.is-phone .mobile-plugin-toolbar.hide-for-fullscreen {
+body.is-hidden-nav.is-phone.hide-toolbar-for-fullscreen .mobile-plugin-toolbar,
+body.hide-native-bottom-nav.is-phone.hide-toolbar-for-fullscreen
+  .mobile-plugin-toolbar {
   display: none;
 }
 

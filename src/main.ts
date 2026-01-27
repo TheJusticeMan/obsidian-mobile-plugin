@@ -74,6 +74,14 @@ export default class MobilePlugin extends Plugin {
       'hideFABWhenKeyboardOpen',
       this.settings.hideFABWhenKeyboardOpen,
     );
+    document.body.toggleClass(
+      'hide-native-bottom-nav',
+      this.settings.hideNativeBottomNav,
+    );
+    document.body.toggleClass(
+      'hide-toolbar-for-fullscreen',
+      this.settings.hideToolbarInFullscreen,
+    );
 
     // Register wake lock toggle command
     this.registerCommands();

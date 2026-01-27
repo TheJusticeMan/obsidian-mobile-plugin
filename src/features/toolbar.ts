@@ -439,10 +439,6 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         const newToolbar = editor.containerEl.createDiv({
           cls: 'mobile-plugin-toolbar',
         });
-        newToolbar.toggleClass(
-          'hide-for-fullscreen',
-          plugin.settings.hideToolbarInFullscreen,
-        );
 
         this.plugin.register(() => newToolbar.remove());
 

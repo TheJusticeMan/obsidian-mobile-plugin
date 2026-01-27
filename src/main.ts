@@ -1,6 +1,7 @@
 import { EditorView } from '@codemirror/view';
 import {
   App,
+  Component,
   Editor,
   MarkdownView,
   Menu,
@@ -56,6 +57,7 @@ export default class MobilePlugin extends Plugin {
   fabManager: FABManager | null = null;
   wakeLock: WakeLockSentinel | null = null;
   kkep: keepInTabletMode;
+  navHidden: KeepNavHidden;
   isTabSwitcherOpened: boolean = false;
   leafDragging: WorkspaceLeaf | null = null;
   app: App;
@@ -75,10 +77,6 @@ export default class MobilePlugin extends Plugin {
       this.settings.hideFABWhenKeyboardOpen,
     );
     document.body.toggleClass(
-      'hide-native-bottom-nav',
-      this.settings.hideNativeBottomNav,
-    );
-    document.body.toggleClass(
       'hide-toolbar-for-fullscreen',
       this.settings.hideToolbarInFullscreen,
     );
@@ -87,6 +85,9 @@ export default class MobilePlugin extends Plugin {
     this.registerCommands();
 
     this.kkep = new keepInTabletMode(this.app);
+
+    this.navHidden = new KeepNavHidden(this.app);
+    this.toggleHideNav(this.settings.hideNativeNav);
 
     // Initialize FAB Manager
     this.fabManager = new FABManager(this.app, this);
@@ -382,6 +383,14 @@ export default class MobilePlugin extends Plugin {
     this.app.commands?.executeCommandById(cmdId);
   }
 
+  toggleHideNav = (hide: boolean): void => {
+    if (hide && !this.navHidden.isloaded) {
+      this.addChild(this.navHidden);
+    } else if (!hide && this.navHidden.isloaded) {
+      this.removeChild(this.navHidden);
+    }
+  };
+
   toggleWakeLock = async (): Promise<void> => {
     if (!('wakeLock' in navigator)) {
       // Wake Lock API not supported
@@ -457,5 +466,37 @@ export default class MobilePlugin extends Plugin {
   async saveSettings() {
     await this.saveData(this.settings);
     this.fabManager?.refresh();
+  }
+}
+
+class KeepNavHidden extends Component {
+  isloaded: boolean = false;
+  constructor(public app: App) {
+    super();
+  }
+  onload(): void {
+    this.isloaded = true;
+    document.body.toggleClass('is-hidden-nav', true);
+    document.body.toggleClass('keep-nav-hidden', true);
+    // listen to class changes on body to re-apply the hide-native-nav class
+    const observer = new MutationObserver(mutations => {
+      for (const mutation of mutations) {
+        if (
+          mutation.type === 'attributes' &&
+          mutation.attributeName === 'class'
+        ) {
+          if (!document.body.hasClass('is-hidden-nav')) {
+            document.body.toggleClass('is-hidden-nav', true);
+          }
+        }
+      }
+    });
+    observer.observe(document.body, { attributes: true });
+    this.register(() => observer.disconnect());
+  }
+  onunload(): void {
+    this.isloaded = false;
+    document.body.toggleClass('is-hidden-nav', false);
+    document.body.toggleClass('keep-nav-hidden', false);
   }
 }

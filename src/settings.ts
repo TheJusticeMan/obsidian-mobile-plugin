@@ -94,8 +94,7 @@ export interface MobilePluginSettings {
   showBuiltInToolbar: boolean;
   showTabsInSearchView: boolean;
   hideFABWhenKeyboardOpen: boolean;
-  hideNativeBottomNav: boolean;
-  hideNativeTopNav: boolean;
+  hideNativeNav: boolean;
 }
 
 export const DEFAULT_SETTINGS: MobilePluginSettings = {
@@ -277,8 +276,7 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
   enableTabReordering: true,
   enableCursorCommands: false,
   hideFABWhenKeyboardOpen: false,
-  hideNativeBottomNav: false,
-  hideNativeTopNav: false,
+  hideNativeNav: false,
 };
 
 /**
@@ -744,32 +742,16 @@ export class MobileSettingsView {
       .addSetting(
         setting =>
           void setting
-            .setName('Hide native top navigation')
+            .setName('Hide native navigation')
             .setDesc(
-              "Hide Obsidian's built-in top navigation bar on mobile devices",
+              "Hide Obsidian's built-in navigation bar on mobile devices",
             )
             .addToggle(toggle =>
               toggle
-                .setValue(this.plugin.settings.hideNativeTopNav)
+                .setValue(this.plugin.settings.hideNativeNav)
                 .onChange(value => {
-                  this.sett('hideNativeTopNav', value);
-                  document.body.toggleClass('hide-native-top-nav', value);
-                }),
-            ),
-      )
-      .addSetting(
-        setting =>
-          void setting
-            .setName('Hide native bottom navigation')
-            .setDesc(
-              "Hide Obsidian's built-in bottom navigation bar on mobile devices",
-            )
-            .addToggle(toggle =>
-              toggle
-                .setValue(this.plugin.settings.hideNativeBottomNav)
-                .onChange(value => {
-                  this.sett('hideNativeBottomNav', value);
-                  document.body.toggleClass('hide-native-bottom-nav', value);
+                  this.sett('hideNativeNav', value);
+                  this.plugin.toggleHideNav(value);
                 }),
             ),
       )

@@ -93,6 +93,7 @@ export interface MobilePluginSettings {
   gestureCommands: GestureCommand[];
   showBuiltInToolbar: boolean;
   showTabsInSearchView: boolean;
+  hideFABWhenKeyboardOpen: boolean;
 }
 
 export const DEFAULT_SETTINGS: MobilePluginSettings = {
@@ -273,6 +274,7 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
   showTabsInSearchView: false,
   enableTabReordering: true,
   enableCursorCommands: false,
+  hideFABWhenKeyboardOpen: false,
 };
 
 /**
@@ -551,6 +553,22 @@ export class MobileSettingsView {
               toggle
                 .setValue(this.plugin.settings.showFAB)
                 .onChange(value => this.sett('showFAB', value)),
+            ),
+      )
+      .addSetting(
+        setting =>
+          void setting
+            .setName('Hide FAB when keyboard is open')
+            .setDesc(
+              'Automatically hide the floating action button when the on-screen keyboard is visible',
+            )
+            .addToggle(toggle =>
+              toggle
+                .setValue(this.plugin.settings.hideFABWhenKeyboardOpen)
+                .onChange(value => {
+                  this.sett('hideFABWhenKeyboardOpen', value);
+                  document.body.toggleClass('hideFABWhenKeyboardOpen', value);
+                }),
             ),
       )
       .addSetting(

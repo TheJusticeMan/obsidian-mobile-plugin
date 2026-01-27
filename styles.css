@@ -51,6 +51,10 @@ body:has(.mobile-navbar.mod-raised).is-hidden-nav.is-phone .mobile-fab,
   height: 24px;
 }
 
+.hideFABWhenKeyboardOpen.mod-toolbar-open .mobile-fab {
+  display: none;
+}
+
 /* Selection Toolbar */
 .mobile-plugin-toolbar {
   display: flex;

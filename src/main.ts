@@ -69,6 +69,10 @@ export default class MobilePlugin extends Plugin {
       'hidden-mobile-toolbar',
       !this.settings.showBuiltInToolbar,
     );
+    document.body.toggleClass(
+      'hideFABWhenKeyboardOpen',
+      this.settings.hideFABWhenKeyboardOpen,
+    );
 
     // Register wake lock toggle command
     this.registerCommands();

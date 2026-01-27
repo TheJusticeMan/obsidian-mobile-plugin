@@ -560,7 +560,7 @@ export class MobileSettingsView {
       .addSetting(
         setting =>
           void setting
-            .setName('Hide FAB when keyboard is open')
+            .setName('Hide floating action button when keyboard is open')
             .setDesc(
               'Automatically hide the floating action button when the on-screen keyboard is visible',
             )

@@ -3,15 +3,18 @@ import {
   App,
   Editor,
   MarkdownView,
+  Menu,
   Notice,
   Platform,
   Plugin,
   WorkspaceLeaf,
 } from 'obsidian';
+import { registerCursorCommands } from './features/cursor-commands';
 import { FABManager } from './features/fab';
-import { keepInTabletMode } from './features/tablet-mode';
-import { SearchLeaf, VIEW_TYPE_SEARCH } from './views/SearchLeaf';
+import { SwipePastSideSplit } from './features/sidebar-swipe';
 import { updateMobileTabGestures } from './features/tab-gestures';
+import { keepInTabletMode } from './features/tablet-mode';
+import { createToolbarExtension } from './features/toolbar';
 import {
   DEFAULT_SETTINGS,
   MobileCMDEvent,
@@ -21,11 +24,9 @@ import {
   settingsModel,
   VIEW_TYPE_SETTINGS,
 } from './settings';
-import { SwipePastSideSplit } from './features/sidebar-swipe';
-import { TabsLeaf, VIEW_TYPE_TABS } from './views/TabsLeaf';
-import { createToolbarExtension } from './features/toolbar';
-import { registerCursorCommands } from './features/cursor-commands';
 import { FilesSel } from './utils/InsertMultipleAttachments';
+import { SearchLeaf, VIEW_TYPE_SEARCH } from './views/SearchLeaf';
+import { TabsLeaf, VIEW_TYPE_TABS } from './views/TabsLeaf';
 
 // WakeLock API types (not in standard TS lib)
 interface WakeLockSentinel {
@@ -187,6 +188,41 @@ export default class MobilePlugin extends Plugin {
       icon: 'image-file',
       editorCallback: (editor: Editor) =>
         new FilesSel(this.app, editor, 'image/*'),
+    });
+
+    this.addCommand({
+      id: 'open-file-menu-for-current-note',
+      name: 'Open file menu for current note',
+      icon: 'file-menu',
+      editorCheckCallback: (
+        _checking: boolean,
+        _editor: Editor,
+        view: MarkdownView,
+      ) => {
+        const activeFile = view.file;
+        if (_checking) return !!activeFile;
+        // Inside a plugin command
+        try {
+          view.moreOptionsButtonEl.click();
+        } catch {
+          if (activeFile) {
+            const menu = new Menu();
+            this.app.workspace.trigger(
+              'file-menu',
+              menu,
+              activeFile,
+              'more-options',
+              view.leaf,
+            );
+            this.app.workspace.trigger('leaf-menu', menu, view.leaf);
+
+            menu.showAtPosition({
+              x: window.innerWidth / 2,
+              y: window.innerHeight / 2,
+            });
+          }
+        }
+      },
     });
 
     registerCursorCommands(this);

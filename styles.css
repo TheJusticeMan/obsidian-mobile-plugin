@@ -124,6 +124,10 @@ body.is-hidden-nav.is-phone.hide-toolbar-for-fullscreen:not(.mod-toolbar-open)
   display: none;
 }
 
+body.keep-nav-hidden {
+  --view-header-height: 0px;
+}
+
 .mobile-plugin-toolbar::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }

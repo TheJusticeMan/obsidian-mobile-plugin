@@ -111,6 +111,7 @@ export class GestureHandler {
   };
 
   onDrag = (e: MouseEvent | TouchEvent): void => {
+    e.stopPropagation();
     let client: Offset;
     if (e instanceof MouseEvent) {
       client = new Offset(e.clientX, e.clientY);

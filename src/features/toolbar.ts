@@ -14,7 +14,8 @@ import {
   MarkdownView,
 } from 'obsidian';
 import MobilePlugin from '../main';
-import { ContextType, ToolbarConfig, ToolbarEditor } from '../settings';
+import { ContextType, ToolbarConfig } from '../settings';
+import { ToolbarEditor } from 'src/views/ToolbarEditor';
 
 /**
  * Creates a CodeMirror 6 ViewPlugin that displays a context-aware toolbar at the bottom

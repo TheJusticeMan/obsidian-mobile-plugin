@@ -1,10 +1,12 @@
 import {
   App,
+  ButtonComponent,
   Command,
   FuzzySuggestModal,
   getIconIds,
   ItemView,
   Modal,
+  Notice,
   PluginSettingTab,
   Setting,
   SettingGroup,
@@ -12,9 +14,13 @@ import {
   TFolder,
   WorkspaceLeaf,
 } from 'obsidian';
-import { SortableList } from './components/SortableList';
 import MobilePlugin from './main';
-import { GestureCommand } from './utils/gesture-handler';
+import {
+  GestureCommand,
+  GestureHandler,
+  Offset,
+} from './utils/gesture-handler';
+import { ToolbarEditor } from './views/ToolbarEditor';
 
 // Type for Obsidian's internal commands API (not in public API)
 
@@ -705,38 +711,72 @@ export class MobileSettingsView {
             ),
       );
     }
-    this.plugin.settings.gestureCommands.forEach((gc, gcIndex) => {
-      gestureCommandSettings.addSetting(
-        setting =>
-          void setting
-            .setName(`Gesture command: ${gc.name}`)
-            .setDesc(`ID: ${gc.commandId}`)
-            .addButton(button =>
-              button.setButtonText(gc.name).onClick(() => {
-                new CommandSuggestModal(this.app, command => {
-                  void (async () => {
-                    gc.commandId = command.id;
-                    gc.name = command.name;
-                    await this.plugin.saveSettings();
-                    this.renderGeneralSettings();
-                  })();
-                }).open();
+    this.plugin.settings.gestureCommands.forEach((gc, gcIndex) =>
+      gestureCommandSettings.addSetting(setting => {
+        setting
+          .setName(gc.name)
+          .setDesc(gc.commandId)
+          .addExtraButton(btn =>
+            btn
+              .setIcon(
+                /* Register and add SVG icon as the edit button*/
+                GestureHandler.getGestureIcon(gc),
+              )
+              .setTooltip('Edit gesture drawing')
+              .onClick(() => {
+                new EditGestureDrawingModal(this.app, this.plugin, gc, () =>
+                  this.renderGeneralSettings(),
+                ).open();
               }),
-            )
-            .addExtraButton(btn =>
-              btn
-                .setIcon('trash')
-                .setTooltip('Delete gesture command')
-                .onClick(async () => {
-                  this.plugin.settings.gestureCommands.splice(gcIndex, 1);
+          )
+          .addExtraButton(button =>
+            button.setIcon('pencil').onClick(() => {
+              new CommandSuggestModal(this.app, command => {
+                void (async () => {
+                  gc.commandId = command.id;
+                  gc.name = command.name;
                   await this.plugin.saveSettings();
                   this.renderGeneralSettings();
-                }),
-            ),
-      );
-    });
-    this.renderContextBindings();
+                })();
+              }).open();
+            }),
+          )
+          .addExtraButton(btn =>
+            btn
+              .setIcon('trash')
+              .setTooltip('Delete gesture command')
+              .onClick(async () => {
+                this.plugin.settings.gestureCommands.splice(gcIndex, 1);
+                await this.plugin.saveSettings();
+                this.renderGeneralSettings();
+              }),
+          );
+      }),
+    );
+    gestureCommandSettings.addSetting(
+      setting =>
+        void setting.setName('Add new gesture command').addButton(btn =>
+          btn.setButtonText('Add').onClick(() => {
+            new CommandSuggestModal(this.app, command => {
+              const newCommand: GestureCommand = {
+                name: command.name,
+                commandId: command.id,
+                gesturePath: '',
+              };
+              this.plugin.settings.gestureCommands.push(newCommand);
+              new EditGestureDrawingModal(
+                this.app,
+                this.plugin,
+                newCommand,
+                () => this.renderGeneralSettings(),
+              ).open();
+            }).open();
+          }),
+        ),
+    );
+
     this.renderToolbars();
+    this.renderContextBindings();
     new SettingGroup(this.containerEl)
       .setHeading('Danger Zone')
       .addSetting(
@@ -909,222 +949,62 @@ export class ContextBindingChooser extends FuzzySuggestModal<ToolbarConfig> {
 }
 
 /**
- * Modal editor for managing toolbar configurations.
+ * Modal for editing the drawing of an existing gesture.
  *
- * Provides a full-featured interface for:
- * - Editing toolbar name
- * - Adding/removing commands
- * - Reordering commands via drag-and-drop
- * - Customizing command icons
- * - Managing context bindings
- * - Deleting toolbars
- *
- * Changes are saved automatically as they're made.
- *
- * @extends Modal
+ * Provides a large drawing area where the user can redraw the gesture path.
+ * The new path is automatically normalized and saved to the gesture command.
  */
-export class ToolbarEditor extends Modal {
-  deleteCallback: () => void;
-  onDelete(deleteCallback: () => void) {
-    this.deleteCallback = deleteCallback;
-    return this;
-  }
+export class EditGestureDrawingModal extends Modal {
+  private gestureHandler: GestureHandler;
+
   constructor(
-    public app: App,
+    app: App,
     private plugin: MobilePlugin,
-    private toolbar: ToolbarConfig,
+    private gesture: GestureCommand,
+    private onSave: () => void,
   ) {
     super(app);
   }
 
   onOpen() {
-    // Further implementation for editing the toolbar can be added here
-    this.render();
-  }
-
-  render(contentEl: HTMLElement = this.contentEl) {
-    this.contentEl = contentEl;
+    const { contentEl } = this;
     contentEl.empty();
+    /* contentEl.addClass('edit-gesture-modal'); */
+    this.setTitle(`Edit drawing for: ${this.gesture.name}`);
+    new Setting(contentEl).setDesc(
+      'Draw the new gesture in the area below. It will be saved automatically when you release.',
+    );
 
-    this.renderToolbar(contentEl, this.toolbar);
-    return this;
-  }
+    contentEl.setCssStyles({ paddingBottom: '70vh' });
 
-  private renderToolbar(container: HTMLElement, toolbar: ToolbarConfig) {
-    // Implementation for rendering toolbar editing UI goes here
-    new SettingGroup(container)
-      .setHeading('Toolbar Editor')
-      .addSetting(
-        setting =>
-          void setting.addDropdown(dropdown =>
-            dropdown
-              .addOptions(
-                Object.fromEntries(
-                  this.plugin.settings.toolbars.map(t => [t.id, t.name]),
-                ),
-              )
-              .addOption('new', 'Create new toolbar')
-              .setValue(toolbar.id)
-              .onChange(value => {
-                if (value === 'new') {
-                  const newToolbar: ToolbarConfig = {
-                    id: `toolbar-${Date.now()}`,
-                    name: 'New toolbar',
-                    commands: [],
-                  };
-                  this.plugin.settings.toolbars.push(newToolbar);
-                  this.toolbar = newToolbar;
-                } else {
-                  const newToolbar = this.plugin.settings.toolbars.find(
-                    t => t.id === value,
-                  );
-                  if (newToolbar) this.toolbar = newToolbar;
-                }
-                this.render();
-              }),
-          ),
-      )
-      .addSetting(
-        setting =>
-          void setting
-            .addText(
-              text =>
-                (text
-                  .setPlaceholder('Toolbar name')
-                  .setValue(toolbar.name)
-                  .onChange(async value => {
-                    toolbar.name = value;
-                    await this.plugin.saveSettings();
-                  }).inputEl.onblur = () => this.render()),
-            )
-            .then(setting =>
-              this.plugin.getBinds(toolbar.id).forEach(bind => {
-                setting.addButton(button =>
-                  button.setButtonText(bind).onClick(() => {
-                    this.plugin.settings.contextBindings =
-                      this.plugin.settings.contextBindings.filter(
-                        b =>
-                          !(
-                            b.contextType === bind && b.toolbarId === toolbar.id
-                          ),
-                      );
-                    void this.plugin.saveSettings();
-                    this.render();
-                  }),
-                );
-              }),
-            )
-            .addExtraButton(btn =>
-              btn.setIcon('plus').onClick(() => {
-                new ContextSelectionModal(
-                  this.app,
-                  binding => {
-                    void (async () => {
-                      binding.toolbarId = toolbar.id;
-                      this.plugin.settings.contextBindings.push(binding);
-                      await this.plugin.saveSettings();
-                      this.render();
-                    })();
-                  },
-                  'Create new context binding for this toolbar',
-                ).open();
-              }),
-            )
-            .addExtraButton(btn =>
-              btn
-                .setIcon('trash')
-                .setTooltip('Delete toolbar')
-                .onClick(async () => {
-                  // Remove toolbar and any bindings using it
-                  const toolbarIndex = this.plugin.settings.toolbars.findIndex(
-                    t => t.id === toolbar.id,
-                  );
-                  this.plugin.settings.toolbars.splice(toolbarIndex, 1);
-                  this.plugin.settings.contextBindings =
-                    this.plugin.settings.contextBindings.filter(
-                      b => b.toolbarId !== toolbar.id,
-                    );
-                  await this.plugin.saveSettings();
-                  container.empty();
-                  this.deleteCallback?.();
-                  this.close();
-                }),
-            ),
-      )
-      .addSetting(setting => {
-        const el = setting.settingEl;
-        el.empty();
-        el.className = 'setting-group';
-        new SortableList(el, toolbar.commands).useSetting(
-          (setting, cmdId, index) => {
-            const command = this.app.commands?.findCommand?.(cmdId);
-            setting
-              .setName(command?.name || cmdId)
-              .setDesc(cmdId)
-              .addExtraButton(btn =>
-                btn
-                  .setIcon(
-                    this.plugin.settings.commandIcons[cmdId] ||
-                      command?.icon ||
-                      'circle-question-mark',
-                  )
-                  .setTooltip('Change icon')
-                  .onClick(() => {
-                    new IconSuggestModal(this.app, icon => {
-                      void (async () => {
-                        this.plugin.settings.commandIcons[cmdId] = icon;
-                        await this.plugin.saveSettings();
-                        this.render();
-                      })();
-                    }).open();
-                  }),
-              )
-              .addExtraButton(btn =>
-                btn
-                  .setIcon('pencil')
-                  .setTooltip('Change command')
-                  .onClick(() => {
-                    new CommandSuggestModal(this.app, command => {
-                      void (async () => {
-                        toolbar.commands[index] = command.id;
-                        await this.plugin.saveSettings();
-                        this.render();
-                      })();
-                    }).open();
-                  }),
-              )
-              .addExtraButton(btn =>
-                btn
-                  .setIcon('trash')
-                  .setTooltip('Remove command')
-                  .onClick(async () => {
-                    toolbar.commands.splice(index, 1);
-                    await this.plugin.saveSettings();
-                    this.render();
-                  }),
-              );
-          },
+    this.gestureHandler = new GestureHandler(
+      this.app,
+      new ButtonComponent(contentEl).setIcon('plus').setClass('mobile-fab')
+        .buttonEl,
+      this.plugin.settings.gestureCommands.filter(gc => gc !== this.gesture),
+      (line: Offset[], gestureCommand: GestureCommand | null) => {
+        // Found a matching gesture, do not save
+        if (gestureCommand)
+          return new Notice(
+            `Gesture matches existing command: ${gestureCommand.name}`,
+          );
+
+        this.gesture.gesturePath = JSON.stringify(
+          line.map((p: Offset) => [
+            Number(p.x.toFixed(2)),
+            Number(p.y.toFixed(2)),
+          ]),
         );
-      })
-      .addSetting(
-        setting =>
-          void setting.addButton(button =>
-            button.setButtonText('Add command').onClick(() => {
-              new CommandSuggestModal(this.app, command => {
-                void (async () => {
-                  toolbar.commands.push(command.id);
-                  await this.plugin.saveSettings();
-                  this.render();
-                })();
-              }).open();
-            }),
-          ),
-      );
-    return this;
-    // Additional settings for editing commands can be added here
+        void this.plugin.saveSettings();
+        this.onSave();
+        this.close();
+      },
+      true,
+    );
   }
 
   onClose() {
+    this.gestureHandler?.destroy();
     this.contentEl.empty();
   }
 }

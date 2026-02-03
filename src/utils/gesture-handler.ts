@@ -1,4 +1,4 @@
-import { App } from 'obsidian';
+import { App, addIcon } from 'obsidian';
 
 /**
  * Represents a command that can be triggered by a gesture.
@@ -85,7 +85,11 @@ export class GestureHandler {
     private app: App,
     private element: HTMLElement,
     private gestureCommands: GestureCommand[],
-    private onUnknown: (line: Offset[]) => void,
+    private onUnknown: (
+      line: Offset[],
+      gestureCommand: GestureCommand | null,
+    ) => void,
+    private dryRun: boolean = false,
   ) {
     this.element.addEventListener('touchstart', this.startDrag);
     this.element.addEventListener('mousedown', this.startDrag);
@@ -121,7 +125,7 @@ export class GestureHandler {
       return;
     }
     const d = client.subtract(this.start).applyDampening(0.5);
-    this.drawTempline(this.last, client, 1000);
+    GestureHandler.drawTempline(this.last, client, 1000);
     this.last = client;
     this.line.push(client);
     setCssProps(this.element, { translate: `${d.x}px ${d.y}px` });
@@ -138,7 +142,7 @@ export class GestureHandler {
     this.detectGesture();
   };
 
-  drawTempline(start: Offset, end: Offset, lifeTime = 1000): void {
+  static drawTempline(start: Offset, end: Offset, lifeTime = 1000): void {
     const line = document.body.createDiv({ cls: 'mobile-fab-dragline' });
     const delta = end.subtract(start);
     const length = Math.sqrt(delta.x * delta.x + delta.y * delta.y);
@@ -168,17 +172,17 @@ export class GestureHandler {
         this.element.getBoundingClientRect().height / 2,
     );
     for (let i = 0; i < line.length - 1; i++) {
-      this.drawTempline(line[i].add(start), line[i + 1].add(start), 3000);
+      GestureHandler.drawTempline(
+        line[i].add(start),
+        line[i + 1].add(start),
+        3000,
+      );
     }
   }
 
-  detectGesture(): void {
-    if (this.line.length < 2) return;
-    if (this.getLength(this.line) < 100) return;
-
-    const normalizedInput = this.normalizeLine(this.line);
-
-    let bestMatch = null;
+  findGesture(line: Offset[]): GestureCommand | null {
+    const normalizedInput = GestureHandler.normalizeLine(line);
+    let bestMatch: GestureCommand | null = null;
     let minDiff = Infinity;
 
     for (const gesture of this.gestureCommands) {
@@ -186,7 +190,10 @@ export class GestureHandler {
       const normalizedPreset = parsedPath.map(
         (p: number[]) => new Offset(p[0], p[1]),
       );
-      const diff = this.calculateDifference(normalizedInput, normalizedPreset);
+      const diff = GestureHandler.calculateDifference(
+        normalizedInput,
+        normalizedPreset,
+      );
 
       if (diff < minDiff) {
         minDiff = diff;
@@ -195,6 +202,19 @@ export class GestureHandler {
     }
 
     if (bestMatch && minDiff < 0.5) {
+      return bestMatch;
+    }
+    return null;
+  }
+
+  detectGesture(): void {
+    if (this.line.length < 2) return;
+    if (GestureHandler.getLength(this.line) < 100) return;
+
+    const normalizedInput = GestureHandler.normalizeLine(this.line);
+    const bestMatch = this.findGesture(this.line);
+
+    if (bestMatch) {
       const parsedBestMatch = JSON.parse(bestMatch.gesturePath) as number[][];
       this.drawGesture(
         parsedBestMatch.map((p: number[]) => new Offset(p[0], p[1])),
@@ -208,22 +228,26 @@ export class GestureHandler {
           this.element.removeClass('gesture-success');
         });
       });
-      this.app.commands?.executeCommandById?.(bestMatch.commandId);
+      if (!this.dryRun) {
+        this.app.commands?.executeCommandById?.(bestMatch.commandId);
+      } else {
+        this.onUnknown(normalizedInput, bestMatch);
+      }
     } else {
       // Draw the gesture for user feedback
       this.drawGesture(normalizedInput);
-      this.onUnknown(normalizedInput);
+      this.onUnknown(normalizedInput, null);
     }
   }
 
-  normalizeLine(line: Offset[]): Offset[] {
+  static normalizeLine(line: Offset[]): Offset[] {
     if (line.length === 0) return [];
     const start = line[0];
     const translated = line.map(p => p.subtract(start));
-    return this.resample(translated, 40);
+    return GestureHandler.resample(translated, 40);
   }
 
-  getLength(line: Offset[]): number {
+  static getLength(line: Offset[]): number {
     let length = 0;
     for (let i = 0; i < line.length - 1; i++) {
       length += line[i].distanceTo(line[i + 1]);
@@ -231,13 +255,13 @@ export class GestureHandler {
     return length;
   }
 
-  resample(line: Offset[], n: number): Offset[] {
+  static resample(line: Offset[], n: number): Offset[] {
     if (line.length === 0) return [];
     if (line.length === 1) {
       return Array.from({ length: n }, () => new Offset(line[0].x, line[0].y));
     }
 
-    const totalLength = this.getLength(line);
+    const totalLength = GestureHandler.getLength(line);
 
     if (totalLength === 0) {
       return Array.from({ length: n }, () => new Offset(line[0].x, line[0].y));
@@ -272,7 +296,57 @@ export class GestureHandler {
     return newLine;
   }
 
-  calculateDifference(line1: Offset[], line2: Offset[]): number {
+  /**
+   * Registers a gesture path as an Obsidian icon and returns the icon name.
+   *
+   * @param id - Unique identifier for the gesture (to generate icon name)
+   * @param gesture - GestureCommand object containing the gesture path
+   * @returns The registered icon name (e.g., 'mobile-gesture-...')
+   */
+  static getGestureIcon(gesture: GestureCommand): string {
+    const id = `${gesture.commandId}-${Date.now()}`;
+    const parsedPath = JSON.parse(gesture.gesturePath) as number[][];
+    const iconName = `mobile-gesture-${id}`;
+
+    if (parsedPath.length < 2) return 'lucide-help-circle';
+
+    // Find bounds to center and scale to 100x100 (standard Obsidian icon size)
+    const size = 100;
+    let minX = Infinity,
+      minY = Infinity,
+      maxX = -Infinity,
+      maxY = -Infinity;
+    parsedPath.forEach(([x, y]) => {
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    });
+
+    const width = maxX - minX;
+    const height = maxY - minY;
+    const padding = 15;
+    const availableSize = size - padding * 2;
+    const scale = availableSize / Math.max(width, height, 1);
+
+    const points = parsedPath
+      .map(([x, y]) => {
+        const nx =
+          (x - minX) * scale + padding + (availableSize - width * scale) / 2;
+        const ny =
+          (y - minY) * scale + padding + (availableSize - height * scale) / 2;
+        return `${nx.toFixed(1)},${ny.toFixed(1)}`;
+      })
+      .join(' ');
+
+    const innerSVG = `<polyline points="${points}" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />`;
+
+    addIcon(iconName, innerSVG);
+
+    return iconName;
+  }
+
+  static calculateDifference(line1: Offset[], line2: Offset[]): number {
     let totalDiff = 0;
     const n = Math.min(line1.length, line2.length);
     if (n < 2) return Infinity;

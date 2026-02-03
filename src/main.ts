@@ -113,12 +113,12 @@ export default class MobilePlugin extends Plugin {
         window.setInterval(() => {
           const isopen =
             this.app.mobileTabSwitcher?.containerEl?.parentNode != null;
-          if (!isopen) {
-            this.isTabSwitcherOpened = false;
-            return;
-          }
+
+          if (!isopen) return (this.isTabSwitcherOpened = false);
+
           if (isopen && !this.isTabSwitcherOpened) {
             updateMobileTabGestures(this);
+
             this.isTabSwitcherOpened = true;
           }
         }, 100),
@@ -251,14 +251,8 @@ export default class MobilePlugin extends Plugin {
       name: 'Open ribbon menu',
       icon: 'menu',
       checkCallback: checking => {
-        if (checking)
-          return Boolean(
-            (this.app.mobileNavbar as { ribbonMenuItemEl?: HTMLElement })
-              ?.ribbonMenuItemEl,
-          );
-        (
-          this.app.mobileNavbar as { ribbonMenuItemEl?: HTMLElement }
-        )?.ribbonMenuItemEl?.click();
+        if (checking) return Boolean(this.app.mobileNavbar?.ribbonMenuItemEl);
+        this.app.mobileNavbar?.ribbonMenuItemEl?.click();
       },
     });
     registerCursorCommands(this);
@@ -465,6 +459,7 @@ export default class MobilePlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
+
     this.fabManager?.refresh();
   }
 }
@@ -498,5 +493,11 @@ class KeepNavHidden extends Component {
     this.isloaded = false;
     document.body.toggleClass('is-hidden-nav', false);
     document.body.toggleClass('keep-nav-hidden', false);
+  }
+}
+
+declare module 'obsidian' {
+  interface MobileNavbar {
+    ribbonMenuItemEl?: HTMLElement;
   }
 }

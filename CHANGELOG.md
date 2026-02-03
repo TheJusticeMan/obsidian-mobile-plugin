@@ -5,6 +5,23 @@ All notable changes to the Mobile UX plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] - 2026-02-02
+
+### Added
+
+- **Gestures**: Added ability to edit and redraw gestures for existing commands.
+- **Gestures**: Added "Add new gesture command" button to easily create custom gestures.
+- **Settings**: Added visual preview of gestures in settings.
+
+### Changed
+
+- **Settings**: Renamed "Hide FAB when keyboard is open" setting to "Hide floating action button when keyboard is open" for clarity.
+- **Internal**: Refactored Toolbar Editor into a dedicated view component for better maintainability.
+
+### Fixed
+
+- **Navigation**: Improved reliability of tab switcher state tracking.
+
 ## [1.8.0] - 2026-01-27
 
 ### Added

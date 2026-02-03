@@ -1,6 +1,6 @@
 import { App, WorkspaceLeaf } from 'obsidian';
-import { Offset } from '../utils/gesture-handler';
 import MobilePlugin from '../main';
+import { Offset } from '../utils/gesture-handler';
 let mobileTabGestures: MobileTabGestures[] = [];
 
 /**
@@ -149,10 +149,13 @@ export function updateMobileTabGestures(plugin: MobilePlugin) {
   });
 }
 
-interface leafWithParent {
-  parent: {
-    children: WorkspaceLeaf[];
-  };
+declare module 'obsidian' {
+  interface WorkspaceTabs {
+    children?: WorkspaceLeaf[];
+  }
+  interface WorkspaceMobileDrawer {
+    children?: WorkspaceLeaf[];
+  }
 }
 
 function putLeafOnLeaf(
@@ -165,8 +168,8 @@ function putLeafOnLeaf(
   });
   if (leaf === targetLeaf) return;
 
-  const targetParent = (targetLeaf as unknown as leafWithParent)?.parent;
-  const parent = (leaf as unknown as leafWithParent)?.parent;
+  const targetParent = targetLeaf?.parent;
+  const parent = leaf?.parent;
 
   // Safety check: Ensure parents exist and have children
   if (!parent?.children || !targetParent?.children) return;

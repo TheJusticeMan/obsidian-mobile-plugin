@@ -3,6 +3,7 @@ import {
   App,
   Component,
   Editor,
+  MarkdownFileInfo,
   MarkdownView,
   Menu,
   Notice,
@@ -53,14 +54,13 @@ interface WakeLockNavigator {
  */
 export default class MobilePlugin extends Plugin {
   elementsToCleanup: Map<HTMLElement, () => void> = new Map();
-  settings: MobilePluginSettings;
+  settings: MobilePluginSettings = DEFAULT_SETTINGS;
   fabManager: FABManager | null = null;
   wakeLock: WakeLockSentinel | null = null;
-  kkep: keepInTabletMode;
-  navHidden: KeepNavHidden;
+  kkep = new keepInTabletMode(this.app);
+  navHidden = new KeepNavHidden(this.app);
   isTabSwitcherOpened: boolean = false;
   leafDragging: WorkspaceLeaf | null = null;
-  app: App;
   // Map to track toolbar elements by active editor (Editor)
   toolbarMap: WeakMap<Editor, { el: HTMLElement; view: EditorView }> =
     new WeakMap();
@@ -68,15 +68,15 @@ export default class MobilePlugin extends Plugin {
   async onload() {
     await this.loadSettings();
 
-    document.body.toggleClass(
+    window.activeDocument.body.toggleClass(
       'hidden-mobile-toolbar',
       !this.settings.showBuiltInToolbar,
     );
-    document.body.toggleClass(
+    window.activeDocument.body.toggleClass(
       'hideFABWhenKeyboardOpen',
       this.settings.hideFABWhenKeyboardOpen,
     );
-    document.body.toggleClass(
+    window.activeDocument.body.toggleClass(
       'hide-toolbar-for-fullscreen',
       this.settings.hideToolbarInFullscreen,
     );
@@ -84,9 +84,6 @@ export default class MobilePlugin extends Plugin {
     // Register wake lock toggle command
     this.registerCommands();
 
-    this.kkep = new keepInTabletMode(this.app);
-
-    this.navHidden = new KeepNavHidden(this.app);
     this.toggleHideNav(this.settings.hideNativeNav);
 
     // Initialize FAB Manager
@@ -206,10 +203,11 @@ export default class MobilePlugin extends Plugin {
       editorCheckCallback: (
         _checking: boolean,
         _editor: Editor,
-        view: MarkdownView,
+        view: MarkdownView | MarkdownFileInfo,
       ) => {
         const activeFile = view.file;
         if (_checking) return !!activeFile;
+        if (!(view instanceof MarkdownView)) return;
         // Inside a plugin command
         try {
           view.moreOptionsButtonEl.click();
@@ -293,7 +291,7 @@ export default class MobilePlugin extends Plugin {
             // move the cursor into the new note after a short delay
             const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 
-            setTimeout(() => {
+            window.setTimeout(() => {
               if (view) {
                 view.editor.focus();
                 view.editor.setValue(
@@ -471,8 +469,9 @@ class KeepNavHidden extends Component {
   }
   onload(): void {
     this.isloaded = true;
-    document.body.toggleClass('is-hidden-nav', true);
-    document.body.toggleClass('keep-nav-hidden', true);
+    const body = window.activeDocument.body;
+    body.toggleClass('is-hidden-nav', true);
+    body.toggleClass('keep-nav-hidden', true);
     // listen to class changes on body to re-apply the hide-native-nav class
     const observer = new MutationObserver(mutations => {
       for (const mutation of mutations) {
@@ -480,19 +479,20 @@ class KeepNavHidden extends Component {
           mutation.type === 'attributes' &&
           mutation.attributeName === 'class'
         ) {
-          if (!document.body.hasClass('is-hidden-nav')) {
-            document.body.toggleClass('is-hidden-nav', true);
+          if (!body.hasClass('is-hidden-nav')) {
+            body.toggleClass('is-hidden-nav', true);
           }
         }
       }
     });
-    observer.observe(document.body, { attributes: true });
+    observer.observe(body, { attributes: true });
     this.register(() => observer.disconnect());
   }
   onunload(): void {
     this.isloaded = false;
-    document.body.toggleClass('is-hidden-nav', false);
-    document.body.toggleClass('keep-nav-hidden', false);
+    const body = window.activeDocument.body;
+    body.toggleClass('is-hidden-nav', false);
+    body.toggleClass('keep-nav-hidden', false);
   }
 }
 

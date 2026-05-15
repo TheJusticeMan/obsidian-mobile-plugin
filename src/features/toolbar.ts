@@ -54,7 +54,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
       plugin: MobilePlugin;
       activeToolbars: ToolbarConfig[] | null = null;
       currentToolbar: ToolbarConfig | null = null;
-      view: EditorView;
+      view!: EditorView;
 
       constructor(view: EditorView) {
         this.decorations = Decoration.none;
@@ -119,7 +119,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         ) {
           this.view = update.view;
           // Defer tooltip update to avoid reading layout during update
-          requestAnimationFrame(() => this.updateTooltip(update.view));
+          window.requestAnimationFrame(() => this.updateTooltip(update.view));
         }
       }
 

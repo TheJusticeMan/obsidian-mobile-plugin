@@ -5,6 +5,20 @@ All notable changes to the Mobile UX plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.2] - 2026-05-15
+
+### Changed
+
+- **Internal**: Scoped DOM, timer, and event-listener access to `window.activeDocument` and `window.*` helpers across FAB, gestures, sidebar swipe, tablet mode, toolbar, search, and attachment flows for safer mobile-window behavior.
+- **Internal**: Tightened plugin initialization and type handling for toolbar, search, gesture, and settings code to reduce undefined-state issues and improve TypeScript safety.
+- **Build**: Replaced `builtin-modules` with Node's native `builtinModules` in the esbuild config and refreshed lint/build dependencies.
+- **Build**: Update release workflow to include artifact attestations and improve formatting.
+
+### Fixed
+
+- **Commands**: Hardened the file-menu command so it only runs for markdown views and falls back cleanly when the native button is unavailable.
+- **Gestures**: Cleaned up gesture listener registration and removal so active-document handlers are attached and released consistently.
+
 ## [1.8.1] - 2026-02-02
 
 ### Added

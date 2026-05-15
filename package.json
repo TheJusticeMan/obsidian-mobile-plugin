@@ -1,7 +1,7 @@
 {
   "name": "obsidian-mobile-plugin",
-  "version": "1.8.1",
-  "description": "Mobile-optimized UX enhancements with floating action button, context-aware toolbars, and gestures.",
+  "version": "1.8.2",
+  "description": "UX enhancements with floating action button, context-aware toolbars, and gestures.",
   "main": "main.js",
   "scripts": {
     "init": "npm install && npm run build",
@@ -27,22 +27,21 @@
   "license": "MIT",
   "devDependencies": {
     "@codemirror/language": "^6.11.3",
-    "@codemirror/view": "^6.38.3",
-    "@eslint/js": "^9.39.1",
-    "@eslint/json": "^0.14.0",
-    "@types/node": "^16.11.6",
-    "builtin-modules": "3.3.0",
-    "esbuild": "^0.27.1",
-    "eslint": "^9.39.1",
-    "eslint-plugin-obsidianmd": "^0.1.9",
-    "globals": "^16.5.0",
+    "@codemirror/view": "^6.38.6",
+    "@eslint/js": "^10.0.1",
+    "@eslint/json": "^1.2.0",
+    "@types/node": "^25.8.0",
+    "esbuild": "^0.28.0",
+    "eslint": "^10.4.0",
+    "eslint-plugin-obsidianmd": "^0.3.0",
+    "globals": "^17.6.0",
     "obsidian": "latest",
-    "obsidian-typings": "^3.13.2",
-    "prettier": "^3.7.4",
-    "prettier-plugin-sh": "^0.18.0",
-    "tslib": "2.4.0",
-    "typescript": "^5.0.0",
-    "typescript-eslint": "^8.49.0"
+    "obsidian-typings": "^5.21.0",
+    "prettier": "^3.8.3",
+    "prettier-plugin-sh": "^0.18.1",
+    "tslib": "^2.8.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.3"
   },
   "dependencies": {
     "apocalypse-throttle": "^0.0.0"

@@ -38,13 +38,13 @@ const PREVIEW_LENGTH = 200;
 export class SearchLeaf extends ItemView {
   private filesCache: FilesCache;
 
-  searchInput: SearchBar;
-  resultsCtr: ResultsCtr;
+  searchInput!: SearchBar;
+  resultsCtr!: ResultsCtr;
   app: App;
-  selectionCommandBar: SelectionCommandBar;
-  searchContainer: HTMLDivElement;
+  selectionCommandBar!: SelectionCommandBar;
+  searchContainer!: HTMLDivElement;
   filesInSearch: TFile[] = [];
-  intersectionObserver: IntersectionObserver;
+  intersectionObserver!: IntersectionObserver;
   mode: 'files' | 'folders' = 'files';
 
   constructor(
@@ -247,10 +247,10 @@ export class SearchLeaf extends ItemView {
  */
 class SelectionCommandBar extends Component {
   private selectionCommandBar: HTMLDivElement;
-  selectAllButton: ButtonComponent;
-  countLabel: HTMLSpanElement;
+  selectAllButton!: ButtonComponent;
+  countLabel!: HTMLSpanElement;
   private selectedFiles: Set<TFile> = new Set();
-  selectionMenuButton: ExtraButtonComponent;
+  selectionMenuButton!: ExtraButtonComponent;
   get selected(): boolean {
     return this.selectedFiles.size > 0;
   }
@@ -635,8 +635,8 @@ class FilesCache extends Component {
  * @extends SearchComponent
  */
 class SearchBar extends SearchComponent {
-  public folder: TFolder;
-  public query: string;
+  public folder!: TFolder;
+  public query!: string;
   private onBlurCallback: () => void = () => {};
   private onFocusCallback: () => void = () => {};
 
@@ -680,9 +680,9 @@ class ResultsCtr extends Component {
   private onTouchMoveCallback: () => void = () => {};
   private onScrollCallback: () => void = () => {};
   private onBackAtTopCallback: () => void = () => {};
-  backAtToptimedout: NodeJS.Timeout | null = null;
+  backAtToptimedout: number | null = null;
   results: ResultItem[] = [];
-  tabsEl: HTMLElement;
+  tabsEl!: HTMLElement;
 
   constructor(
     public leaf: SearchLeaf,
@@ -701,10 +701,10 @@ class ResultsCtr extends Component {
     const backAtTopThrottler = apocalypseThrottle(() => {
       if (this.resultsEl.scrollTop > 100) {
         if (this.backAtToptimedout) {
-          clearTimeout(this.backAtToptimedout);
+          window.clearTimeout(this.backAtToptimedout);
           this.backAtToptimedout = null;
         }
-        this.backAtToptimedout = setTimeout(() => {
+        this.backAtToptimedout = window.setTimeout(() => {
           if (this.resultsEl.scrollTop === 0) {
             this.onBackAtTopCallback();
             this.backAtToptimedout = null;
@@ -927,7 +927,7 @@ class ResultItem extends Component {
  * @extends Modal
  */
 class ConfirmModal extends Modal {
-  onConfirmCallback: () => void;
+  onConfirmCallback: () => void = () => {};
 
   constructor(
     app: App,

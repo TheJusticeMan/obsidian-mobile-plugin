@@ -67,8 +67,11 @@ class MobileTabGestures {
       this.drop(end);
     }
     this.mode = 'none';
-    document.body.removeEventListener('touchmove', this.onTouchMove);
-    document.body.removeEventListener('touchend', this.onTouchEnd);
+    window.activeDocument.body.removeEventListener(
+      'touchmove',
+      this.onTouchMove,
+    );
+    window.activeDocument.body.removeEventListener('touchend', this.onTouchEnd);
   };
 
   onTouchMove = (ev: TouchEvent) => {
@@ -116,18 +119,21 @@ class MobileTabGestures {
     }
     this.start = new Offset(touch.clientX, touch.clientY);
     this.plugin.leafDragging = this.leaf;
-    document.body.addEventListener('touchmove', this.onTouchMove, {
+    window.activeDocument.body.addEventListener('touchmove', this.onTouchMove, {
       passive: false,
     });
-    document.body.addEventListener('touchend', this.onTouchEnd, {
+    window.activeDocument.body.addEventListener('touchend', this.onTouchEnd, {
       passive: true,
     });
   };
 
   destroy() {
     this.el.removeEventListener('touchstart', this.onTouchStart);
-    document.body.removeEventListener('touchmove', this.onTouchMove);
-    document.body.removeEventListener('touchend', this.onTouchEnd);
+    window.activeDocument.body.removeEventListener(
+      'touchmove',
+      this.onTouchMove,
+    );
+    window.activeDocument.body.removeEventListener('touchend', this.onTouchEnd);
   }
 }
 

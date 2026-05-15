@@ -546,7 +546,10 @@ export class MobileSettingsView {
                 .setValue(this.plugin.settings.showBuiltInToolbar)
                 .onChange(value => {
                   this.sett('showBuiltInToolbar', value);
-                  document.body.toggleClass('hidden-mobile-toolbar', !value);
+                  window.activeDocument.body.toggleClass(
+                    'hidden-mobile-toolbar',
+                    !value,
+                  );
                 }),
             ),
       )
@@ -575,7 +578,10 @@ export class MobileSettingsView {
                 .setValue(this.plugin.settings.hideFABWhenKeyboardOpen)
                 .onChange(value => {
                   this.sett('hideFABWhenKeyboardOpen', value);
-                  document.body.toggleClass('hideFABWhenKeyboardOpen', value);
+                  window.activeDocument.body.toggleClass(
+                    'hideFABWhenKeyboardOpen',
+                    value,
+                  );
                 }),
             ),
       )
@@ -613,7 +619,7 @@ export class MobileSettingsView {
                 .setValue(this.plugin.settings.hideToolbarInFullscreen)
                 .onChange(value => {
                   this.sett('hideToolbarInFullscreen', value);
-                  document.body.toggleClass(
+                  window.activeDocument.body.toggleClass(
                     'hide-toolbar-for-fullscreen',
                     value,
                   );
@@ -660,43 +666,45 @@ export class MobileSettingsView {
     const fabEventCommandSettings = new SettingGroup(
       this.containerEl,
     ).setHeading('FAB event commands');
-    Object.entries(MobileCMDEventsDesc).forEach(
-      ([event, [name, desc]]: [MobileCMDEvent, [string, string]]) => {
-        fabEventCommandSettings.addSetting(
-          setting =>
-            void setting
-              .setName(name)
-              .setDesc(desc)
-              .addButton(button =>
-                button
-                  .setButtonText(
-                    this.plugin.settings.MobileCMDEvents[event] ||
-                      'Select command',
-                  )
-                  .onClick(() => {
-                    new CommandSuggestModal(this.app, command => {
-                      void (async () => {
-                        this.plugin.settings.MobileCMDEvents[event] =
-                          command.id;
-                        await this.plugin.saveSettings();
-                        this.renderGeneralSettings();
-                      })();
-                    }).open();
-                  }),
-              )
-              .addExtraButton(btn =>
-                btn
-                  .setIcon('trash')
-                  .setTooltip('Clear command')
-                  .onClick(async () => {
-                    this.plugin.settings.MobileCMDEvents[event] = '';
-                    await this.plugin.saveSettings();
-                    this.renderGeneralSettings();
-                  }),
-              ),
-        );
-      },
-    );
+    (
+      Object.entries(MobileCMDEventsDesc) as [
+        MobileCMDEvent,
+        [string, string],
+      ][]
+    ).forEach(([event, [name, desc]]) => {
+      fabEventCommandSettings.addSetting(
+        setting =>
+          void setting
+            .setName(name)
+            .setDesc(desc)
+            .addButton(button =>
+              button
+                .setButtonText(
+                  this.plugin.settings.MobileCMDEvents[event] ||
+                    'Select command',
+                )
+                .onClick(() => {
+                  new CommandSuggestModal(this.app, command => {
+                    void (async () => {
+                      this.plugin.settings.MobileCMDEvents[event] = command.id;
+                      await this.plugin.saveSettings();
+                      this.renderGeneralSettings();
+                    })();
+                  }).open();
+                }),
+            )
+            .addExtraButton(btn =>
+              btn
+                .setIcon('trash')
+                .setTooltip('Clear command')
+                .onClick(async () => {
+                  this.plugin.settings.MobileCMDEvents[event] = '';
+                  await this.plugin.saveSettings();
+                  this.renderGeneralSettings();
+                }),
+            ),
+      );
+    });
 
     const gestureCommandSettings = new SettingGroup(
       this.containerEl,
@@ -955,7 +963,7 @@ export class ContextBindingChooser extends FuzzySuggestModal<ToolbarConfig> {
  * The new path is automatically normalized and saved to the gesture command.
  */
 export class EditGestureDrawingModal extends Modal {
-  private gestureHandler: GestureHandler;
+  private gestureHandler!: GestureHandler;
 
   constructor(
     app: App,

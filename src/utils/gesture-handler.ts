@@ -103,12 +103,12 @@ export class GestureHandler {
   startDrag = (e: MouseEvent | TouchEvent): void => {
     if (e instanceof MouseEvent) {
       this.start = new Offset(e.clientX, e.clientY);
-      document.addEventListener('mousemove', this.onDrag);
-      document.addEventListener('mouseup', this.endDrag);
+      window.activeDocument.addEventListener('mousemove', this.onDrag);
+      window.activeDocument.addEventListener('mouseup', this.endDrag);
     } else if (e.touches && e.touches.length > 0) {
       this.start = new Offset(e.touches[0].clientX, e.touches[0].clientY);
-      document.addEventListener('touchmove', this.onDrag);
-      document.addEventListener('touchend', this.endDrag);
+      window.activeDocument.addEventListener('touchmove', this.onDrag);
+      window.activeDocument.addEventListener('touchend', this.endDrag);
     }
     this.last = this.start;
     this.line = [this.start];
@@ -134,16 +134,18 @@ export class GestureHandler {
   endDrag = (): void => {
     setCssProps(this.element, { translate: '0px 0px' });
 
-    document.removeEventListener('mousemove', this.onDrag);
-    document.removeEventListener('mouseup', this.endDrag);
-    document.removeEventListener('touchmove', this.onDrag);
-    document.removeEventListener('touchend', this.endDrag);
+    window.activeDocument.removeEventListener('mousemove', this.onDrag);
+    window.activeDocument.removeEventListener('mouseup', this.endDrag);
+    window.activeDocument.removeEventListener('touchmove', this.onDrag);
+    window.activeDocument.removeEventListener('touchend', this.endDrag);
 
     this.detectGesture();
   };
 
   static drawTempline(start: Offset, end: Offset, lifeTime = 1000): void {
-    const line = document.body.createDiv({ cls: 'mobile-fab-dragline' });
+    const line = window.activeDocument.body.createDiv({
+      cls: 'mobile-fab-dragline',
+    });
     const delta = end.subtract(start);
     const length = Math.sqrt(delta.x * delta.x + delta.y * delta.y);
     const angle = Math.atan2(delta.y, delta.x) * (180 / Math.PI);
@@ -155,12 +157,12 @@ export class GestureHandler {
       top: `${start.y}px`,
       transition: `opacity ${lifeTime}ms, height ${lifeTime}ms`,
     });
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
         line.addClass('is-fading');
       });
     });
-    setTimeout(() => line.remove(), lifeTime);
+    window.setTimeout(() => line.remove(), lifeTime);
   }
 
   drawGesture(line: Offset[]): void {
@@ -221,9 +223,9 @@ export class GestureHandler {
       );
       // Animate FAB to indicate success
       this.element.removeClass('gesture-animating');
-      requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
         this.element.addClass('gesture-success');
-        requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
           this.element.addClass('gesture-animating');
           this.element.removeClass('gesture-success');
         });

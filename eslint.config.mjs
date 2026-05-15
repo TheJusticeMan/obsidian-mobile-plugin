@@ -21,6 +21,7 @@ export default defineConfig([
       },
     },
     rules: {
+      "arrow-body-style": ["error", "as-needed"],
       'obsidianmd/ui/sentence-case': [
         'error',
         {

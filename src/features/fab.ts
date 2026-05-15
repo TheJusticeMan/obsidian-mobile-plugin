@@ -85,7 +85,7 @@ export class FABManager {
  * @extends ButtonComponent
  */
 class MobileFAB extends ButtonComponent {
-  private gestureHandler: GestureHandler;
+  private gestureHandler!: GestureHandler;
   private mode: 'default' | 'recording' = 'default';
 
   constructor(

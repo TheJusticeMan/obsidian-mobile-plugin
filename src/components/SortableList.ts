@@ -133,7 +133,7 @@ export class Bubble {
   _icon2: ExtraButtonComponent;
   div: HTMLElement;
   nameEl: HTMLSpanElement;
-  onClickCallback: () => void;
+  onClickCallback?: () => void;
   constructor(parent: HTMLElement) {
     this.div = parent.createDiv('swipe-past-option');
     this.div.addClass('swipe-past-option');

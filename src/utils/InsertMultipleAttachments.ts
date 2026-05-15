@@ -8,7 +8,7 @@ export class FilesSel {
     private readonly editor: Editor,
     accept?: string,
   ) {
-    this.fileEl = document.body.createEl('input', {
+    this.fileEl = window.activeDocument.body.createEl('input', {
       attr: { multiple: '' },
       type: 'file',
     });

@@ -36,8 +36,8 @@ export class keepInTabletMode extends Component {
   private toggleTabletMode(isTablet: boolean) {
     Platform.isPhone = !isTablet;
     Platform.isTablet = isTablet;
-    document.body.toggleClass('is-tablet', Platform.isTablet);
-    document.body.toggleClass('is-phone', Platform.isPhone);
+    window.activeDocument.body.toggleClass('is-tablet', Platform.isTablet);
+    window.activeDocument.body.toggleClass('is-phone', Platform.isPhone);
   }
 
   onunload(): void {

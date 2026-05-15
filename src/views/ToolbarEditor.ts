@@ -24,7 +24,7 @@ import {
  * @extends Modal
  */
 export class ToolbarEditor extends Modal {
-  deleteCallback: () => void;
+  deleteCallback: () => void = () => {};
   onDelete(deleteCallback: () => void) {
     this.deleteCallback = deleteCallback;
     return this;

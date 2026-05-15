@@ -106,7 +106,9 @@ class SideSplitSwipeElement {
     public parent: SwipePastSideSplit,
     public side: 'left' | 'right',
   ) {
-    this.containerEl = document.body.createDiv({ cls: 'swipe-past-overlay' });
+    this.containerEl = window.activeDocument.body.createDiv({
+      cls: 'swipe-past-overlay',
+    });
     this.containerEl.detach();
     this.containerEl.createEl('h2', {
       text: `Select ${this.side} sidebar tab`,
@@ -124,7 +126,7 @@ class SideSplitSwipeElement {
     this.containerEl.removeClass(
       `from-${this.side === 'left' ? 'right' : 'left'}`,
     );
-    document.body.appendChild(this.containerEl);
+    window.activeDocument.body.appendChild(this.containerEl);
 
     this.contentEl.empty();
 
@@ -296,7 +298,7 @@ class SideSplitSwipeElement {
 
     this.containerEl.removeClass('is-active');
     this.containerEl.addClass('is-closing');
-    setTimeout(() => {
+    window.setTimeout(() => {
       this.containerEl.removeClass('is-closing');
       this.containerEl.detach();
     }, 300);

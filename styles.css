@@ -3,11 +3,36 @@ Mobile Plugin Styles
 Includes FAB and selection toolbar styles with mobile-friendly design
 */
 
+/* @settings
+
+name: Mobile
+id: mobile
+settings:
+    - 
+        id: mobile-fab-position
+        title: Floating Action Button Position
+        description: Variations on a theme
+        type: class-select
+        allowEmpty: false
+        default: mobile-fab-bottom-right
+        options:
+            - mobile-fab-bottom-right
+            - mobile-fab-bottom-left
+            - mobile-fab-top-right
+            - mobile-fab-top-left
+    - 
+        id: mobile-fab-dragline-hidden
+        title: Hide FAB Dragline
+        description: Hides the FAB dragline when enabled
+        type: class-toggle
+*/
+
 /* Floating Action Button (FAB) */
 .mobile-fab {
   position: absolute;
   bottom: 20px;
   right: 20px;
+  top: auto;
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -23,6 +48,34 @@ Includes FAB and selection toolbar styles with mobile-friendly design
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
+}
+
+.mobile-fab-bottom-right .mobile-fab {
+  top: auto;
+  bottom: 20px;
+  right: 20px;
+  left: auto;
+}
+
+.mobile-fab-bottom-left .mobile-fab {
+  top: auto;
+  bottom: 20px;
+  left: 20px;
+  right: auto;
+}
+
+.mobile-fab-top-right .mobile-fab {
+  top: 20px;
+  bottom: auto;
+  right: 20px;
+  left: auto;
+}
+
+.mobile-fab-top-left .mobile-fab {
+  top: 20px;
+  bottom: auto;
+  left: 20px;
+  right: auto;
 }
 
 /* will use this when obsidian updates to fix 
@@ -142,6 +195,11 @@ body.keep-nav-hidden {
   z-index: 101;
   pointer-events: none;
   transition: opacity 0.5s ease;
+}
+
+.mobile-fab-dragline-hidden .mobile-fab-dragline {
+  opacity: 0;
+  height: 0;
 }
 
 /* State classes for dragline animation */
@@ -440,12 +498,13 @@ body.keep-nav-hidden {
 }
 
 .draggable-container .draggable-item.drag-over-top:not(.is-dragging) {
-  border-top: 2px solid var(--interactive-accent) !important;
+  border-top: 2px solid var(--interactive-accent);
 }
 
 .draggable-container .draggable-item.drag-over-bottom:not(.is-dragging) {
-  border-bottom: 2px solid var(--interactive-accent) !important;
+  border-bottom: 2px solid var(--interactive-accent);
 }
+
 .mobile-plugin-toolbar-editor {
   margin: var(--size-4-6) 0;
 }

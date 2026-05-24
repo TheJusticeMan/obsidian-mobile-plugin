@@ -1,12 +1,11 @@
-import apocalypseThrottle from 'apocalypse-throttle';
 import {
   App,
   Component,
+  setIcon,
   WorkspaceLeaf,
   WorkspaceMobileDrawer,
   WorkspaceSidedock,
 } from 'obsidian';
-import { SortableList } from 'src/components/SortableList';
 import { Offset } from '../utils/gesture-handler';
 import { VIEW_TYPE_TABS } from '../views/TabsLeaf';
 
@@ -14,15 +13,39 @@ import { VIEW_TYPE_TABS } from '../views/TabsLeaf';
  * The goal is to make it quick to switch between tabs in the side splits by swiping farther than the edge.
  */
 export class SwipePastSideSplit extends Component {
-  start: Offset | null = null;
-  swipeEl: SideSplitSwipeElement;
-
   constructor(public app: App) {
     super();
-    this.swipeEl = new SideSplitSwipeElement(this.app, this, 'left');
   }
 
   onload(): void {
+    this.addChild(new SidePullout(this.app));
+  }
+}
+
+class SidePullout extends Component {
+  isOpen: boolean = false;
+  startIndex: number = 0;
+  currentIndex: number | null = null;
+  selectedIndex: number | null = null;
+  contentEl: HTMLDivElement | null = null;
+  itemEls: HTMLElement[] = [];
+  sidebarLeaves: WorkspaceLeaf[] = [];
+  activeSide: 'left' | 'right' | null = null;
+  activeDock: WorkspaceSidedock | WorkspaceMobileDrawer | null = null;
+  gestureSession: Component | null = null;
+  closeTimeoutId: number | null = null;
+
+  constructor(public app: App) {
+    super();
+  }
+
+  onload(): void {
+    this.register(() => {
+      this.endGestureSession();
+      this.clearCloseTimeout();
+      this.destroyContentEl();
+    });
+
     this.app.workspace.onLayoutReady(() => {
       const { leftSplit, rightSplit } = this.app.workspace;
       if (!leftSplit || !rightSplit) {
@@ -38,272 +61,277 @@ export class SwipePastSideSplit extends Component {
   }
 
   touchStartHandler(e: TouchEvent, side: 'left' | 'right') {
-    this.start = new Offset(e.touches[0].clientX, e.touches[0].clientY);
-    const split =
+    const dock =
       side === 'right'
-        ? this.app.workspace.rightSplit.containerEl
-        : this.app.workspace.leftSplit.containerEl;
+        ? this.app.workspace.rightSplit
+        : this.app.workspace.leftSplit;
+    if (!dock) return;
 
-    this.swipeEl.side = side;
-    this.swipeEl.start = this.start;
-    /* this.swipeEl.open(); */
+    this.startGestureSession();
 
-    this.swipeEl.component.registerDomEvent(
-      split,
-      'touchmove',
-      this.touchMoveHandler,
-    );
-    this.swipeEl.component.registerDomEvent(
-      split,
-      'touchend',
-      this.touchEndHandler,
-    );
-  }
+    const start = new Offset(e.touches[0].clientX, e.touches[0].clientY);
+    const split = window.activeDocument.body;
+    let finished = false;
 
-  touchMoveHandler = (e: TouchEvent) => {
-    if (!this.start) return;
-    const current = new Offset(e.touches[0].clientX, e.touches[0].clientY);
-    const delta = current.subtract(this.start);
-    const deltaX = current.x - this.start.x;
-    if (Math.abs(delta.y) > Math.abs(delta.x)) {
-      // Vertical scroll, ignore
-      return;
-    }
+    const finishGesture = () => {
+      if (finished) return;
+      finished = true;
+      this.endGestureSession();
+    };
 
-    this.swipeEl.update(deltaX);
-  };
-
-  touchEndHandler = (e: TouchEvent) => {
-    if (this.start && this.swipeEl.isActive) {
-      this.swipeEl.containerEl.setCssProps({ transform: '' });
-      this.swipeEl.containerEl.addClass('is-active');
-    } else {
-      this.swipeEl.close();
-    }
-
-    this.start = null;
-  };
-
-  onunload(): void {
-    this.swipeEl.close();
-  }
-}
-
-class SideSplitSwipeElement {
-  isActive: boolean = false;
-  isOpen: boolean = false;
-  component: Component = new Component();
-  start: Offset | null = null;
-  containerEl: HTMLElement;
-  contentEl: HTMLElement;
-  sortedLeaves: { left: WorkspaceLeaf[]; right: WorkspaceLeaf[] } = {
-    left: [],
-    right: [],
-  };
-
-  constructor(
-    public app: App,
-    public parent: SwipePastSideSplit,
-    public side: 'left' | 'right',
-  ) {
-    this.containerEl = window.activeDocument.body.createDiv({
-      cls: 'swipe-past-overlay',
-    });
-    this.containerEl.detach();
-    this.containerEl.createEl('h2', {
-      text: `Select ${this.side} sidebar tab`,
-      cls: 'swipe-past-header',
-    });
-    this.contentEl = this.containerEl.createDiv({ cls: 'swipe-past-content' });
-  }
-
-  open(): void {
-    if (this.isOpen) return;
-    this.isOpen = true;
-
-    this.parent.addChild(this.component);
-    this.containerEl.addClass(`from-${this.side}`);
-    this.containerEl.removeClass(
-      `from-${this.side === 'left' ? 'right' : 'left'}`,
-    );
-    window.activeDocument.body.appendChild(this.containerEl);
-
-    this.contentEl.empty();
-
-    this.component.registerDomEvent(this.containerEl, 'touchstart', e =>
-      this.touchStartHandler(e),
-    );
-    this.component.registerDomEvent(this.containerEl, 'touchmove', e =>
-      this.touchMoveHandler(e),
-    );
-    this.component.registerDomEvent(this.containerEl, 'touchend', e =>
-      this.touchEndHandler(e),
-    );
-    this.render(
-      this.side === 'left'
-        ? this.app.workspace.leftSplit
-        : this.app.workspace.rightSplit,
-    );
-  }
-
-  touchStartHandler(e: TouchEvent) {
-    this.start = new Offset(e.touches[0].clientX, e.touches[0].clientY);
-  }
-
-  touchMoveHandler = apocalypseThrottle((e: TouchEvent) => {
-    if (!this.start) return;
-    const current = new Offset(e.touches[0].clientX, e.touches[0].clientY);
-    const deltaX = current.x - this.start.x;
-
-    let translate = '';
-    if (this.side === 'left') {
-      if (deltaX < 0) {
-        translate = `translateX(${deltaX}px)`;
+    const touchMoveHandler = (e: TouchEvent) => {
+      const current = new Offset(e.touches[0].clientX, e.touches[0].clientY);
+      const delta = current.subtract(start);
+      if (!this.isOpen) {
+        if (Math.abs(delta.y) > Math.abs(delta.x)) {
+          // Vertical scroll, ignore
+          return;
+        }
+        if (side === 'left' && delta.x > 50) {
+          // Swiped right on left sidebar
+          this.open('left', dock);
+        } else if (side === 'right' && delta.x < -50) {
+          // Swiped left on right sidebar
+          this.open('right', dock);
+        }
+      } else {
+        // Once open, keep vertical drag active until touchend commits or closes it.
+        const index = this.startIndex + Math.round(delta.y / 50);
+        this.selectIndex(index);
       }
-    } else {
-      if (deltaX > 0) {
-        translate = `translateX(${deltaX}px)`;
+    };
+
+    const touchEndHandler = () => {
+      finishGesture();
+      if (this.isOpen && this.selectedIndex !== null) {
+        this.commitSelection(this.selectedIndex);
+      } else if (this.isOpen) {
+        this.close();
       }
-    }
+    };
 
-    if (translate) {
-      this.containerEl.style.transform = translate;
-    } else {
-      this.containerEl.setCssProps({ transform: '' });
-    }
-  }, 16);
-
-  touchEndHandler(e: TouchEvent) {
-    if (!this.start) return;
-    const current = new Offset(
-      e.changedTouches[0].clientX,
-      e.changedTouches[0].clientY,
-    );
-    const deltaX = current.x - this.start.x;
-
-    const threshold = 25;
-    let shouldClose = false;
-
-    if (this.side === 'left') {
-      shouldClose = deltaX < -threshold;
-    } else {
-      shouldClose = deltaX > threshold;
-    }
-
-    if (shouldClose) {
+    const touchCancelHandler = () => {
+      finishGesture();
       this.close();
-    } else {
-      this.containerEl.setCssProps({ transform: '' });
-    }
-    this.start = null;
+    };
+
+    const session = this.gestureSession;
+    if (!session) return;
+
+    session.registerDomEvent(split, 'touchmove', touchMoveHandler);
+    session.registerDomEvent(split, 'touchend', touchEndHandler);
+    session.registerDomEvent(split, 'touchcancel', touchCancelHandler);
   }
 
-  update(deltaX: number) {
-    let translate = '';
-
-    const threshold = 25;
-    if (this.side === 'left') {
-      // Swiping right
-      const x = Math.max(0, deltaX - threshold);
-      translate = `translateX(calc(-100% + ${x}px))`;
-      this.isActive = x > 0;
-    } else {
-      // Swiping left
-      const x = Math.min(0, deltaX + threshold);
-      translate = `translateX(calc(100% + ${x}px))`;
-      this.isActive = x < 0;
-    }
-
-    if (!this.isActive && this.isOpen) this.close();
-    if (this.isActive && !this.isOpen) this.open();
-
-    this.containerEl.style.transform = translate;
+  private startGestureSession(): void {
+    this.endGestureSession();
+    const session = new Component();
+    this.addChild(session);
+    this.gestureSession = session;
   }
 
-  render(side: WorkspaceSidedock | WorkspaceMobileDrawer) {
+  private endGestureSession(): void {
+    if (!this.gestureSession) return;
+    this.removeChild(this.gestureSession);
+    this.gestureSession = null;
+  }
+
+  private clearCloseTimeout(): void {
+    if (this.closeTimeoutId === null) return;
+    window.clearTimeout(this.closeTimeoutId);
+    this.closeTimeoutId = null;
+  }
+
+  private destroyContentEl(): void {
+    const contentEl = this.contentEl;
+    this.contentEl = null;
+    if (!contentEl) return;
+
+    contentEl.removeClass('side-pullout-open');
+    contentEl.removeClass('side-pullout-closing');
+    contentEl.detach();
+  }
+
+  private open(
+    side: 'left' | 'right',
+    dock: WorkspaceSidedock | WorkspaceMobileDrawer,
+  ) {
+    if (this.isOpen) return;
+
+    this.isOpen = true;
+    this.activeSide = side;
+    this.activeDock = dock;
+    this.sidebarLeaves = this.collectSidebarLeaves(dock);
+    this.startIndex = Math.max(
+      0,
+      this.sidebarLeaves.findIndex(leaf => leaf.isVisible()),
+    );
+    this.currentIndex = this.startIndex;
+    this.selectedIndex = this.startIndex;
+    this.render();
+  }
+
+  private collectSidebarLeaves(
+    dock: WorkspaceSidedock | WorkspaceMobileDrawer,
+  ): WorkspaceLeaf[] {
     const sidebarLeaves: WorkspaceLeaf[] = [];
 
     this.app.workspace.iterateAllLeaves(leaf => {
-      // Check if the leaf's root container is the right sidebar
-      if (leaf.getRoot() === side) sidebarLeaves.push(leaf);
+      if (leaf.getRoot() === dock) sidebarLeaves.push(leaf);
     });
 
-    this.contentEl.empty();
+    return sidebarLeaves;
+  }
 
-    // Use a Set or simple concat if you are just trying to aggregate them
-    // This avoids the 'overwrite' behavior of some merge functions
-    this.sortedLeaves[this.side] = Array.from(
-      new Set([...this.sortedLeaves[this.side], ...sidebarLeaves]),
+  render(): void {
+    if (!this.isOpen || !this.activeSide || !this.activeDock) {
+      return;
+    }
+
+    this.sidebarLeaves = this.collectSidebarLeaves(this.activeDock);
+    const visibleIndex = this.sidebarLeaves.findIndex(leaf => leaf.isVisible());
+    if (visibleIndex !== -1 && this.currentIndex === null) {
+      this.currentIndex = visibleIndex;
+    }
+
+    this.clearCloseTimeout();
+    this.destroyContentEl();
+    this.contentEl = window.activeDocument.body.createDiv({
+      cls: 'side-pullout',
+    });
+
+    const c = this.contentEl;
+
+    c.empty();
+
+    c.addClass(`side-pullout-from-${this.activeSide}`);
+    c.removeClass(
+      `side-pullout-from-${this.activeSide === 'left' ? 'right' : 'left'}`,
+    );
+    c.addClass('side-pullout-open');
+
+    c.createEl('h2', {
+      text: `${this.activeSide} sidebar`,
+      cls: 'side-pullout-header',
+    });
+
+    const actions = c.createDiv({ cls: 'side-pullout-actions' });
+    if (this.activeSide === 'left') {
+      const settingsButton = actions.createEl('button', {
+        cls: 'side-pullout-action',
+        attr: { type: 'button', 'aria-label': 'Open settings' },
+      });
+      setIcon(settingsButton, 'settings');
+      settingsButton.onclick = () => {
+        this.app.commands.executeCommandById('app:open-settings');
+        this.close();
+      };
+    } else if (
+      !this.sidebarLeaves.some(
+        leaf => leaf.view.getViewType() === VIEW_TYPE_TABS,
+      )
+    ) {
+      const tabsButton = actions.createEl('button', {
+        cls: 'side-pullout-action',
+        attr: { type: 'button', 'aria-label': 'Open tabs' },
+      });
+      setIcon(tabsButton, 'tabs');
+      tabsButton.onclick = () => {
+        this.app.commands.executeCommandById('mobile:open-tabs');
+        this.close();
+      };
+    }
+
+    const rail = c.createDiv({ cls: 'side-pullout-rail-list' });
+    this.itemEls = [];
+
+    this.sidebarLeaves.forEach((leaf, index) => {
+      const item = rail.createEl('button', {
+        cls: 'side-pullout-item',
+        attr: { type: 'button', 'aria-label': leaf.getDisplayText() },
+      });
+      this.itemEls[index] = item;
+
+      setIcon(item, leaf.getIcon());
+      item.onclick = () => {
+        void this.app.workspace.revealLeaf(leaf);
+        this.close();
+      };
+
+      if (
+        index === this.selectedIndex ||
+        leaf.isVisible() ||
+        index === visibleIndex
+      ) {
+        item.addClass('is-active');
+      }
+    });
+
+    this.updateActiveOption();
+  }
+
+  private selectIndex(index: number): void {
+    if (!this.sidebarLeaves.length) return;
+
+    const clampedIndex = Math.max(
+      0,
+      Math.min(this.sidebarLeaves.length - 1, index),
     );
 
-    new SortableList<WorkspaceLeaf>(
-      this.contentEl,
-      this.sortedLeaves[this.side],
-    )
-      .addClass('swipe-past-stack-container')
-      .onUpdate(context => {
-        if (this.side === 'left') {
-          context.addBubble(bubble => {
-            bubble
-              .setName('Settings')
-              .setIcon1('settings')
-              .setIcon2('settings')
-              .onClick(() => {
-                this.app.commands.executeCommandById('app:open-settings');
-                this.close();
-              });
-          });
-        } else if (
-          !sidebarLeaves.some(
-            leaf => leaf.view.getViewType() === VIEW_TYPE_TABS,
-          )
-        ) {
-          context.addBubble(bubble => {
-            bubble
-              .setName('Tabs')
-              .setIcon1('tabs')
-              .setIcon2('tabs')
-              .onClick(() => {
-                this.app.commands.executeCommandById('mobile:open-tabs');
-                this.close();
-              });
-          });
-        }
-      })
-      .useBubble((bubble, leaf) => {
-        bubble
-          .setName(leaf.getDisplayText())
-          .setIcon1(leaf.getIcon())
-          .icon2(
-            icon =>
-              void icon
-                .setIcon('cross')
-                .onClick(() =>
-                  this.app.workspace.detachLeavesOfType(
-                    leaf.view.getViewType(),
-                  ),
-                ),
-          )
-          .onClick(() => {
-            void this.app.workspace.revealLeaf(leaf);
-            this.close();
-          });
-        if (leaf.isVisible()) bubble.addClass('is-active');
-      });
+    if (clampedIndex === this.currentIndex) return;
+
+    this.currentIndex = clampedIndex;
+    this.selectedIndex = clampedIndex;
+    this.updateActiveOption();
+  }
+
+  private updateActiveOption(): void {
+    this.itemEls.forEach((el, index) => {
+      if (!el) return;
+      el.toggleClass('is-active', index === this.selectedIndex);
+    });
+  }
+
+  private commitSelection(index: number): void {
+    const leaf = this.sidebarLeaves[index];
+    if (!leaf) {
+      this.close();
+      return;
+    }
+
+    void this.app.workspace.revealLeaf(leaf);
+    this.close();
   }
 
   close(): void {
     if (!this.isOpen) return;
-    this.isOpen = false;
 
-    this.containerEl.removeClass('is-active');
-    this.containerEl.addClass('is-closing');
-    window.setTimeout(() => {
-      this.containerEl.removeClass('is-closing');
-      this.containerEl.detach();
+    this.endGestureSession();
+    this.isOpen = false;
+    this.activeSide = null;
+    this.activeDock = null;
+    this.startIndex = 0;
+    this.currentIndex = null;
+    this.selectedIndex = null;
+    this.sidebarLeaves = [];
+    this.itemEls = [];
+
+    const contentEl = this.contentEl;
+    this.contentEl = null;
+    if (!contentEl) return;
+
+    this.clearCloseTimeout();
+    contentEl.removeClass('side-pullout-open');
+    contentEl.addClass('side-pullout-closing');
+    contentEl.setCssProps({ transform: '' });
+
+    const timeoutId = window.setTimeout(() => {
+      contentEl.removeClass('side-pullout-closing');
+      contentEl.detach();
+      if (this.closeTimeoutId === timeoutId) {
+        this.closeTimeoutId = null;
+      }
     }, 300);
-    this.containerEl.setCssProps({ transform: '' });
-    this.parent.start = null;
-    this.parent.removeChild(this.component);
+    this.closeTimeoutId = timeoutId;
   }
 }

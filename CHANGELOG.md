@@ -5,6 +5,23 @@ All notable changes to the Mobile UX plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-05-24
+
+### Added
+
+- **Navigation**: Added a compact side pullout rail for quickly switching sidebar tabs with swipe gestures.
+- **Sidebar**: Added quick actions in the side pullout for opening Settings from the left sidebar and Tabs from the right sidebar when needed.
+
+### Changed
+
+- **Sidebar**: Replaced the older swipe-past overlay flow with a simpler side pullout interaction that is easier to maintain.
+- **FAB**: Updated floating action button positioning to respect raised and hidden mobile navigation states for both top and bottom placements.
+- **Internal**: Moved sidebar gesture cleanup onto Obsidian `Component` lifecycle hooks so transient listeners, timers, and DOM nodes are released reliably.
+
+### Fixed
+
+- **Gestures**: Prevented sidebar swipe gesture listeners and close-animation timers from lingering across interrupted gestures or plugin unloads.
+
 ## [1.8.3] - 2026-05-16
 
 ### Added

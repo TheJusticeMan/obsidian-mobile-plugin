@@ -25,14 +25,41 @@ settings:
         title: Hide FAB Dragline
         description: Hides the FAB dragline when enabled
         type: class-toggle
+    - 
+        id: mobile-fab-distance-from-edge
+        title: FAB Distance from Edge
+        description: The distance of the FAB from the edge in pixels.
+        type: variable-number-slider
+        format: px
+        default: 20
+        min: 20
+        max: 200
+        step: 5
 */
+
+body:has(.mobile-navbar.mod-raised).is-phone {
+  --fab-bottom: calc(
+    var(--navbar-height) + 34px + var(--mobile-fab-distance-from-edge, 20px)
+  );
+  --fab-top: calc(
+    var(--view-header-top-offset) + var(--view-header-height) +
+      var(--mobile-fab-distance-from-edge, 20px)
+  );
+}
+
+body:has(.mobile-navbar.mod-raised).is-hidden-nav.is-phone,
+.is-hidden-nav.is-phone {
+  --fab-bottom: var(--mobile-fab-distance-from-edge, 20px);
+  --fab-top: calc(
+    var(--view-header-top-offset) + var(--mobile-fab-distance-from-edge, 20px)
+  );
+}
 
 /* Floating Action Button (FAB) */
 .mobile-fab {
   position: absolute;
-  bottom: 20px;
+  bottom: var(--fab-bottom, 20px);
   right: 20px;
-  top: auto;
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -52,42 +79,30 @@ settings:
 
 .mobile-fab-bottom-right .mobile-fab {
   top: auto;
-  bottom: 20px;
+  bottom: var(--fab-bottom, 20px);
   right: 20px;
   left: auto;
 }
 
 .mobile-fab-bottom-left .mobile-fab {
   top: auto;
-  bottom: 20px;
+  bottom: var(--fab-bottom, 20px);
   left: 20px;
   right: auto;
 }
 
 .mobile-fab-top-right .mobile-fab {
-  top: 20px;
+  top: var(--fab-top, 20px);
   bottom: auto;
   right: 20px;
   left: auto;
 }
 
 .mobile-fab-top-left .mobile-fab {
-  top: 20px;
+  top: var(--fab-top, 20px);
   bottom: auto;
   left: 20px;
   right: auto;
-}
-
-/* will use this when obsidian updates to fix 
---mobile-toolbar-height */
-
-body:has(.mobile-navbar.mod-raised).is-phone .mobile-fab {
-  bottom: calc(var(--navbar-height) + 34px + 20px);
-}
-
-body:has(.mobile-navbar.mod-raised).is-hidden-nav.is-phone .mobile-fab,
-.is-hidden-nav.is-phone .mobile-fab {
-  bottom: 20px;
 }
 
 .mobile-fab:hover {
@@ -120,14 +135,27 @@ body:has(.mobile-navbar.mod-raised).is-hidden-nav.is-phone .mobile-fab,
   overflow-x: auto;
   overflow-y: hidden;
   /* Hide scrollbar for cleaner look while still allowing scroll */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  -webkit-overflow-scrolling: touch;
+  /* Smooth scrolling on iOS */
   transition:
     height 0.3s ease,
     flex-wrap 0.3s ease,
     right 0.3s ease,
     max-width 0.3s ease;
+}
+
+.mobile-fab-bottom-left .mobile-plugin-toolbar {
+  padding-right: 8px;
+  padding-left: 76px;
+}
+
+.mobile-fab-top-right .mobile-plugin-toolbar,
+.mobile-fab-top-left .mobile-plugin-toolbar {
+  padding-right: 8px;
 }
 
 /**
@@ -182,7 +210,8 @@ body.keep-nav-hidden {
 }
 
 .mobile-plugin-toolbar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none;
+  /* Chrome, Safari, Opera */
 }
 
 .mobile-fab-dragline {
@@ -397,94 +426,144 @@ body.keep-nav-hidden {
   font-weight: bold;
 }
 
-/* Swipe Past Side Split Overlay */
-.swipe-past-overlay {
+/* Side pullout rail */
+.side-pullout {
   position: fixed;
   top: 0;
-  left: 0;
-  right: 0;
   bottom: 0;
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(0, 0, 0, 0.5);
-  transition: transform 0.1s linear;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 12px;
+  width: min(104px, 28vw);
+  padding: 12px 10px;
+  background: color-mix(in srgb, var(--background-primary) 92%, transparent);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 0 28px rgba(0, 0, 0, 0.24);
+  touch-action: none;
+  overscroll-behavior: contain;
+  transition:
+    transform 0.12s linear,
+    opacity 0.12s linear;
 }
 
-.swipe-past-header {
-  font-size: var(--font-ui-large);
-  font-weight: var(--font-bold);
-  color: var(--text-normal);
-  margin-bottom: 1rem;
-}
-
-.swipe-past-overlay.from-left {
+.side-pullout-from-left {
+  left: 0;
+  right: auto;
+  border-right: 1px solid var(--background-modifier-border);
   transform: translateX(-100%);
 }
 
-.swipe-past-overlay.from-right {
+.side-pullout-from-right {
+  left: auto;
+  right: 0;
+  border-left: 1px solid var(--background-modifier-border);
   transform: translateX(100%);
 }
 
-.swipe-past-overlay.is-active {
+.side-pullout-open {
   transform: translateX(0);
-  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.swipe-past-content {
-  width: 90%;
-  max-width: var(--mobile-sidebar-max-width);
+.side-pullout-closing {
+  opacity: 0;
 }
 
-/* Swipe Past Side Split Cards */
-.swipe-past-stack-container {
+.side-pullout-header {
+  margin: 0;
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.side-pullout-actions {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 16px;
-  padding: 8px 0;
+  gap: 8px;
 }
 
-.swipe-past-option {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-
-  padding: var(--font-ui-medium);
-  background-color: var(--interactive-normal);
-  /* border: 1px solid var(--background-modifier-border); */
-  border-radius: var(--setting-items-radius);
+.side-pullout-action {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--interactive-normal);
+  color: var(--text-normal);
+  display: grid;
+  place-items: center;
+  padding: 0;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  font-size: var(--font-ui-medium);
-  font-weight: 500;
-  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
-.swipe-past-option:hover {
-  background-color: var(--background-modifier-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+.side-pullout-action:hover {
+  background: var(--background-modifier-hover);
 }
 
-.swipe-past-option:active {
-  transform: scale(0.98);
+.side-pullout-rail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
-.swipe-past-option.is-active {
-  background-color: var(--interactive-accent);
+.side-pullout-item {
+  width: 100%;
+  min-height: 50px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 16px;
+  background: var(--interactive-normal);
+  color: var(--text-normal);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transition:
+    transform 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
 }
 
-.swipe-past-option .clickable-icon {
-  margin: 0;
-  color: var(--text-muted);
+.side-pullout-item:hover {
+  transform: translateY(-1px);
+  background: var(--background-modifier-hover);
 }
 
-.swipe-past-option .clickable-icon:nth-of-type(2) {
-  margin-left: auto;
+.side-pullout-item.is-active {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+  box-shadow:
+    0 0 0 1px var(--interactive-accent),
+    0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+.side-pullout-item svg,
+.side-pullout-action svg {
+  width: 22px;
+  height: 22px;
+}
+
+.side-pullout-rail-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.side-pullout-rail-list::-webkit-scrollbar-thumb {
+  background: var(--background-modifier-border);
+  border-radius: 999px;
+}
+
+.side-pullout-rail-list::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 /* Settings Drag and Drop */

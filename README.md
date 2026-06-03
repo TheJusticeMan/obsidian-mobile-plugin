@@ -1,4 +1,4 @@
-# Mobile
+# Mobile UX
 
 A mobile-optimized UX enhancement plugin for [Obsidian](https://obsidian.md) that provides a floating action button (FAB) and context-aware toolbars.
 

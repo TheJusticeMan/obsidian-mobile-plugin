@@ -5,6 +5,12 @@ All notable changes to the Mobile UX plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.1] - 2026-06-02
+
+### Changed
+
+- **Documentation**: Updated plugin name to "Mobile UX" for consistency across documentation and code.
+
 ## [1.9.0] - 2026-05-24
 
 ### Added

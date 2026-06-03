@@ -877,7 +877,7 @@ export class settingsLeaf extends ItemView {
     return VIEW_TYPE_SETTINGS;
   }
   getDisplayText(): string {
-    return 'Mobile plugin settings';
+    return 'Mobile UX plugin settings';
   }
   protected onOpen(): Promise<void> {
     new MobileSettingsView(this.app, this.plugin, this.contentEl);

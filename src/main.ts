@@ -41,7 +41,7 @@ interface WakeLockNavigator {
 }
 
 /**
- * Main plugin class for the Obsidian Mobile Plugin.
+ * Main plugin class for the Obsidian Mobile UX Plugin.
  *
  * Provides mobile-optimized UX enhancements including:
  * - Floating action button (FAB) for quick actions

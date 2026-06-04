@@ -160,6 +160,8 @@ class MobileFAB extends ButtonComponent {
                 : g.openCommandSelection(),
             );
           },
+          false,
+          this.plugin,
         );
       });
     this.setMode(this.plugin.fabManager?.getMode() || 'default');

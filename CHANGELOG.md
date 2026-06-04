@@ -5,6 +5,18 @@ All notable changes to the Mobile UX plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.2] - 2026-06-04
+
+### Added
+
+- **Gestures**: Added an advanced setting to control the minimum drag length required for gesture recognition.
+- **FAB**: Added top-middle and bottom-middle floating action button position options, plus distance-from-edge controls through the Style Settings plugin. (Fixes #37)
+
+### Fixed
+
+- **FAB**: Fixed floating action button gesture recognition to respect the configured minimum gesture length instead of using a hardcoded threshold, making shorter gestures easier to trigger. (Fixes #38)
+- **FAB**: Fixed floating action button positioning variables so Style Settings-based FAB placement works more consistently with raised and hidden navigation states.
+
 ## [1.9.1] - 2026-06-02
 
 ### Changed

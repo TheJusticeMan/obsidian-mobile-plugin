@@ -18,8 +18,10 @@ settings:
         options:
             - mobile-fab-bottom-right
             - mobile-fab-bottom-left
+            - mobile-fab-bottom-middle
             - mobile-fab-top-right
             - mobile-fab-top-left
+            - mobile-fab-top-middle
     - 
         id: mobile-fab-dragline-hidden
         title: Hide FAB Dragline
@@ -37,7 +39,14 @@ settings:
         step: 5
 */
 
-body:has(.mobile-navbar.mod-raised).is-phone {
+body {
+  --fab-bottom: var(--mobile-fab-distance-from-edge, 20px);
+  --fab-top: calc(
+    var(--view-header-top-offset) + var(--mobile-fab-distance-from-edge, 20px)
+  );
+}
+
+body:has(.mobile-navbar.mod-raised) {
   --fab-bottom: calc(
     var(--navbar-height) + 34px + var(--mobile-fab-distance-from-edge, 20px)
   );
@@ -47,8 +56,8 @@ body:has(.mobile-navbar.mod-raised).is-phone {
   );
 }
 
-body:has(.mobile-navbar.mod-raised).is-hidden-nav.is-phone,
-.is-hidden-nav.is-phone {
+body:has(.mobile-navbar.mod-raised).is-hidden-nav,
+.is-hidden-nav {
   --fab-bottom: var(--mobile-fab-distance-from-edge, 20px);
   --fab-top: calc(
     var(--view-header-top-offset) + var(--mobile-fab-distance-from-edge, 20px)
@@ -91,6 +100,14 @@ body:has(.mobile-navbar.mod-raised).is-hidden-nav.is-phone,
   right: auto;
 }
 
+.mobile-fab-bottom-middle .mobile-fab {
+  top: auto;
+  bottom: var(--fab-bottom, 20px);
+  left: 50%;
+  transform: translateX(-50%);
+  right: auto;
+}
+
 .mobile-fab-top-right .mobile-fab {
   top: var(--fab-top, 20px);
   bottom: auto;
@@ -102,6 +119,14 @@ body:has(.mobile-navbar.mod-raised).is-hidden-nav.is-phone,
   top: var(--fab-top, 20px);
   bottom: auto;
   left: 20px;
+  right: auto;
+}
+
+.mobile-fab-top-middle .mobile-fab {
+  top: var(--fab-top, 20px);
+  bottom: auto;
+  left: 50%;
+  transform: translateX(-50%);
   right: auto;
 }
 
@@ -154,7 +179,9 @@ body:has(.mobile-navbar.mod-raised).is-hidden-nav.is-phone,
 }
 
 .mobile-fab-top-right .mobile-plugin-toolbar,
-.mobile-fab-top-left .mobile-plugin-toolbar {
+.mobile-fab-top-left .mobile-plugin-toolbar,
+.mobile-fab-top-middle .mobile-plugin-toolbar,
+.mobile-fab-bottom-middle .mobile-plugin-toolbar {
   padding-right: 8px;
 }
 

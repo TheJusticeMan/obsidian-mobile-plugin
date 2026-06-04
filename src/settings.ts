@@ -101,6 +101,7 @@ export interface MobilePluginSettings {
   showTabsInSearchView: boolean;
   hideFABWhenKeyboardOpen: boolean;
   hideNativeNav: boolean;
+  minGestureLength: number;
 }
 
 export const DEFAULT_SETTINGS: MobilePluginSettings = {
@@ -116,6 +117,7 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
   showToolbars: true,
   showFAB: true,
   gestureCommands: [],
+  minGestureLength: 20,
   toolbars: [
     {
       id: 'formatting',
@@ -785,6 +787,22 @@ export class MobileSettingsView {
 
     this.renderToolbars();
     this.renderContextBindings();
+    new SettingGroup(this.containerEl).setHeading('Advanced').addSetting(
+      setting =>
+        void setting
+          .setName('Minimum gesture length')
+          .setDesc(
+            'Minimum length (in pixels) for a gesture to be recognized; adjust if you find gestures are triggering accidentally or not being recognized',
+          )
+          .addSlider(slider =>
+            slider
+              .setLimits(10, 200, 10)
+              .setValue(this.plugin.settings.minGestureLength)
+              .onChange(value => {
+                this.sett('minGestureLength', value);
+              }),
+          ),
+    );
     new SettingGroup(this.containerEl)
       .setHeading('Danger Zone')
       .addSetting(
@@ -1008,6 +1026,7 @@ export class EditGestureDrawingModal extends Modal {
         this.close();
       },
       true,
+      this.plugin,
     );
   }
 

@@ -21,11 +21,11 @@ export default defineConfig([
       },
     },
     rules: {
-      "arrow-body-style": ["error", "as-needed"],
+      'arrow-body-style': ['error', 'as-needed'],
       'obsidianmd/ui/sentence-case': [
         'error',
         {
-          acronyms: ['OK', 'FAB'],
+          acronyms: ['OK', 'FAB', 'UX'],
           enforceCamelCaseLower: true,
         },
       ],

@@ -1,4 +1,5 @@
 import { App, addIcon } from 'obsidian';
+import MobilePlugin from 'src/main';
 
 /**
  * Represents a command that can be triggered by a gesture.
@@ -90,6 +91,7 @@ export class GestureHandler {
       gestureCommand: GestureCommand | null,
     ) => void,
     private dryRun: boolean = false,
+    private plugin: MobilePlugin,
   ) {
     this.element.addEventListener('touchstart', this.startDrag);
     this.element.addEventListener('mousedown', this.startDrag);
@@ -211,7 +213,11 @@ export class GestureHandler {
 
   detectGesture(): void {
     if (this.line.length < 2) return;
-    if (GestureHandler.getLength(this.line) < 100) return;
+    if (
+      GestureHandler.getLength(this.line) <
+      this.plugin.settings.minGestureLength
+    )
+      return;
 
     const normalizedInput = GestureHandler.normalizeLine(this.line);
     const bestMatch = this.findGesture(this.line);

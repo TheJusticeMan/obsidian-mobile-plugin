@@ -62,15 +62,7 @@ export default class MobilePlugin extends Plugin {
   leafDragging: WorkspaceLeaf | null = null;
   // Map to track toolbar elements by active editor (Editor)
 
-  toolbarMap: WeakMap<
-    Editor,
-    { element: HTMLElement; view: View; eView: EditorView }
-  > = new WeakMap();
-
-  viewMap: WeakMap<
-    View,
-    { element: HTMLElement; view: View; eView: EditorView }
-  > = new WeakMap();
+  toolbarMap: WeakMap<View,  HTMLElement > = new WeakMap();
 
   async onload() {
     await this.loadSettings();

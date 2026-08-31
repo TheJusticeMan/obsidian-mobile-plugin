@@ -9,14 +9,13 @@ import {
 import {
   App,
   ButtonComponent,
-  Editor,
   ExtraButtonComponent,
   MarkdownView,
   View,
 } from 'obsidian';
+import { ToolbarEditor } from 'src/views/ToolbarEditor';
 import MobilePlugin from '../main';
 import { ContextType, ToolbarConfig } from '../settings';
-import { ToolbarEditor } from 'src/views/ToolbarEditor';
 
 /**
  * Creates a CodeMirror 6 ViewPlugin that displays a context-aware toolbar at the bottom
@@ -78,6 +77,13 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         // Find the editor container to anchor the toolbar
 
         this.updateTooltip(view);
+      }
+
+      get activeView(): View | null {
+        return (
+          this.app.workspace.getActiveViewOfType(MarkdownView) ||
+          this.app.workspace.getActiveViewOfType(View)
+        );
       }
 
       /**
@@ -429,45 +435,33 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
       }
 
       private removeTooltipIfExists() {
-        const editor = this.editorOuter;
-        if (!editor) return;
-        if (this.plugin.toolbarMap.get(editor)?.eView !== this.view) return;
-        this.plugin.toolbarMap.get(editor)?.element.remove();
-        this.plugin.toolbarMap.delete(editor);
+        const activeView = this.activeView;
+        if (!activeView) return;
+        this.plugin.toolbarMap.get(activeView)?.remove();
+        this.plugin.toolbarMap.delete(activeView);
       }
 
       emptyElement() {
-        const editor = this.editorOuter;
-        if (!editor) return;
-        this.plugin.toolbarMap.get(editor)?.element.empty();
-      }
-
-      get editorOuter(): Editor | undefined {
-        const mdView = this.app.workspace.activeEditor?.editor;
-        return mdView;
+        const activeView = this.activeView;
+        if (!activeView) return;
+        this.plugin.toolbarMap.get(activeView)?.empty();
       }
 
       get Element(): HTMLElement | null {
-        const editor = this.editorOuter;
-        if (!editor) return null;
+        const activeView = this.activeView;
+        if (!activeView) return null;
 
-        return this.plugin.toolbarMap.get(editor)?.element || this.newElement;
+        return (
+          this.plugin.toolbarMap.get(activeView) || this.createToolbarElement(activeView)
+        );
       }
 
-      get newElement(): HTMLElement | null {
-        // get All views
-
-        const view =
-          this.app.workspace.getActiveViewOfType(MarkdownView) ||
-          this.app.workspace.getActiveViewOfType(View);
-
-        const editor = this.editorOuter;
-        if (!editor || !view) return null;
-        const element = view.containerEl.createDiv({
+      createToolbarElement(activeView: View): HTMLElement | null {
+        const element = activeView.containerEl.createDiv({
           cls: 'mobile-plugin-toolbar',
         });
 
-        this.plugin.toolbarMap.set(editor, { element, view, eView: this.view });
+        this.plugin.toolbarMap.set(activeView, element);
 
         this.plugin.register(() => element.remove());
 

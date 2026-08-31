@@ -5,6 +5,14 @@ All notable changes to the Mobile UX plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.1] - 2026-08-31
+
+### Fixed
+
+- **Toolbar**: Simplified toolbar tracking to key off `View` instead of `Editor`, fixing stale toolbar instances when views are reused or the active editor changes without a view change.
+- **Toolbar**: Removed unused `Editor` import and redundant `editorOuter`/`newElement`/`viewMap` accessors, replacing them with a unified `activeView` getter and `createToolbarElement` method.
+- **Internal**: Simplified `toolbarMap` type from `WeakMap<Editor, { element, view, eView }>` to `WeakMap<View, HTMLElement>`, reducing indirection and potential for stale references.
+
 ## [1.10.0] - 2026-08-31
 
 ### Fixed

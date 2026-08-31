@@ -4,15 +4,15 @@ import {
   Command,
   FuzzySuggestModal,
   getIconIds,
-  ItemView,
   Modal,
   Notice,
   PluginSettingTab,
   Setting,
+  SettingDefinitionItem,
+  SettingGroupItem,
   SettingGroup,
   SuggestModal,
   TFolder,
-  WorkspaceLeaf,
 } from 'obsidian';
 import MobilePlugin from './main';
 import {
@@ -31,16 +31,16 @@ export interface ToolbarConfig {
 }
 
 const allowedContexts = [
+  'default',
   'selection',
-  'list',
   'task',
+  'list',
+  'table',
   'heading',
   'code-block',
-  'table',
   'blockquote',
   'link',
   'keyboard-closed',
-  'default',
 ] as const;
 
 export type ContextType = (typeof allowedContexts)[number];
@@ -228,16 +228,28 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
   ],
   contextBindings: [
     {
+      contextType: 'default',
+      toolbarId: 'caret',
+    },
+    {
+      contextType: 'default',
+      toolbarId: 'formatting',
+    },
+    {
       contextType: 'selection',
       toolbarId: 'selection',
+    },
+    {
+      contextType: 'task',
+      toolbarId: 'list-actions',
     },
     {
       contextType: 'list',
       toolbarId: 'list-actions',
     },
     {
-      contextType: 'task',
-      toolbarId: 'list-actions',
+      contextType: 'table',
+      toolbarId: 'table-actions',
     },
     {
       contextType: 'heading',
@@ -248,24 +260,12 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
       toolbarId: 'code-block-actions',
     },
     {
-      contextType: 'table',
-      toolbarId: 'table-actions',
-    },
-    {
       contextType: 'blockquote',
       toolbarId: 'blockquote-actions',
     },
     {
       contextType: 'link',
       toolbarId: 'link-actions',
-    },
-    {
-      contextType: 'default',
-      toolbarId: 'formatting',
-    },
-    {
-      contextType: 'default',
-      toolbarId: 'caret',
     },
   ],
   useIcons: true,
@@ -287,6 +287,24 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
   hideFABWhenKeyboardOpen: false,
   hideNativeNav: false,
 };
+
+function cloneDefaultSettings(): MobilePluginSettings {
+  return {
+    ...DEFAULT_SETTINGS,
+    MobileCMDEvents: { ...DEFAULT_SETTINGS.MobileCMDEvents },
+    toolbars: DEFAULT_SETTINGS.toolbars.map(toolbar => ({
+      ...toolbar,
+      commands: [...toolbar.commands],
+    })),
+    contextBindings: DEFAULT_SETTINGS.contextBindings.map(binding => ({
+      ...binding,
+    })),
+    commandIcons: { ...DEFAULT_SETTINGS.commandIcons },
+    gestureCommands: DEFAULT_SETTINGS.gestureCommands.map(gesture => ({
+      ...gesture,
+    })),
+  };
+}
 
 /**
  * A modal dialog that provides fuzzy search and selection of folders within the vault.
@@ -436,6 +454,679 @@ export class MobileSettingTab extends PluginSettingTab {
 
   display(): void {
     new MobileSettingsView(this.app, this.plugin, this.containerEl);
+  }
+
+  getControlValue(key: string): unknown {
+    return this.plugin.settings[key as keyof MobilePluginSettings];
+  }
+
+  setControlValue(key: string, value: unknown): void {
+    void this.persistSetting(
+      key as keyof MobilePluginSettings,
+      value as MobilePluginSettings[keyof MobilePluginSettings],
+    );
+  }
+
+  getSettingDefinitions(): SettingDefinitionItem[] {
+    return [
+      {
+        type: 'group',
+        heading: 'General',
+        items: [
+          {
+            name: 'Show toolbars',
+            desc: 'Show context-aware toolbars at the bottom of the screen',
+            control: { type: 'toggle', key: 'showToolbars' },
+          },
+          {
+            name: 'Show built-in toolbar',
+            desc: "Display Obsidian's native mobile toolbar at the bottom of the screen",
+            control: { type: 'toggle', key: 'showBuiltInToolbar' },
+          },
+          {
+            name: 'Show floating action button',
+            desc: 'Show the floating action button in the bottom-right corner',
+            control: { type: 'toggle', key: 'showFAB' },
+          },
+          {
+            name: 'Hide floating action button when keyboard is open',
+            desc: 'Automatically hide the floating action button when the on-screen keyboard is visible',
+            control: { type: 'toggle', key: 'hideFABWhenKeyboardOpen' },
+          },
+          {
+            name: 'Show tabs in search view',
+            desc: 'Display open tabs when using the mobile search view',
+            control: { type: 'toggle', key: 'showTabsInSearchView' },
+          },
+          {
+            name: 'Enable reordering tabs by drag-and-drop',
+            desc: 'Allow dragging tabs to reorder them in the tab view',
+            control: { type: 'toggle', key: 'enableTabReordering' },
+          },
+          {
+            name: 'Hide toolbar in fullscreen mode',
+            desc: 'Automatically hide the mobile toolbar when entering fullscreen mode',
+            control: { type: 'toggle', key: 'hideToolbarInFullscreen' },
+          },
+          {
+            name: 'Use icons in toolbar',
+            desc: 'Show icons instead of text labels for toolbar commands; icons can be customized per command below',
+            control: { type: 'toggle', key: 'useIcons' },
+          },
+          {
+            name: 'Enable haptic feedback',
+            desc: 'Vibrate on button interactions (mobile devices only)',
+            control: { type: 'toggle', key: 'enableHapticFeedback' },
+          },
+          {
+            name: 'Command confirmation',
+            desc: 'Ask for confirmation before opening the command picker when assigning a command to a gesture',
+            control: { type: 'toggle', key: 'showCommandConfirmation' },
+          },
+        ],
+      },
+      {
+        type: 'group',
+        heading: 'FAB event commands',
+        items: this.getFabEventCommandDefinitions(),
+      },
+      {
+        type: 'list',
+        heading: 'Gesture commands',
+        emptyState:
+          'Click and drag the floating action button to create gesture commands.',
+        items: this.getGestureCommandDefinitions(),
+        addItem: {
+          name: 'Add new gesture command',
+          action: () => {
+            new CommandSuggestModal(this.app, command => {
+              const newCommand: GestureCommand = {
+                name: command.name,
+                commandId: command.id,
+                gesturePath: '',
+              };
+              this.plugin.settings.gestureCommands.push(newCommand);
+              new EditGestureDrawingModal(
+                this.app,
+                this.plugin,
+                newCommand,
+                () => this.refreshDefinitions(),
+              ).open();
+              this.refreshDefinitions();
+            }).open();
+          },
+        },
+      },
+      {
+        type: 'group',
+        heading: 'Toolbars',
+        items: this.getToolbarDefinitions(),
+      },
+      {
+        type: 'list',
+        heading: 'Context bindings',
+        emptyState: 'No context bindings configured yet.',
+        items: this.getContextBindingDefinitions(),
+        onReorder: (oldIndex, newIndex) => {
+          const [moved] = this.plugin.settings.contextBindings.splice(
+            oldIndex,
+            1,
+          );
+          this.plugin.settings.contextBindings.splice(newIndex, 0, moved);
+          void this.plugin.saveSettings();
+        },
+        onDelete: index => {
+          this.plugin.settings.contextBindings.splice(index, 1);
+          void this.plugin.saveSettings();
+          this.refreshDefinitions();
+        },
+        addItem: {
+          name: 'Add context binding',
+          action: () => {
+            new ContextSelectionModal(
+              this.app,
+              binding => {
+                new ContextBindingChooser(
+                  this.app,
+                  this.plugin.settings.toolbars,
+                  toolbar => {
+                    void (async () => {
+                      this.plugin.settings.contextBindings.push({
+                        contextType: binding.contextType,
+                        toolbarId: toolbar.id,
+                      });
+                      await this.plugin.saveSettings();
+                      this.refreshDefinitions();
+                    })();
+                  },
+                ).open();
+              },
+              'Create new context binding...',
+            ).open();
+          },
+        },
+      },
+      {
+        type: 'group',
+        heading: 'Advanced',
+        items: [
+          {
+            name: 'Minimum gesture length',
+            desc: 'Minimum length (in pixels) for a gesture to be recognized; adjust if you find gestures are triggering accidentally or not being recognized',
+            control: {
+              type: 'slider',
+              key: 'minGestureLength',
+              min: 10,
+              max: 200,
+              step: 10,
+            },
+          },
+        ],
+      },
+      {
+        type: 'group',
+        heading: 'Danger Zone',
+        items: [
+          {
+            name: 'Hide native navigation',
+            desc: "Hide Obsidian's built-in navigation bar on mobile devices",
+            control: { type: 'toggle', key: 'hideNativeNav' },
+          },
+          {
+            name: 'Reset to default settings',
+            render: setting => {
+              setting.addButton(button =>
+                button
+                  .setButtonText('Reset to default settings')
+                  .setWarning()
+                  .onClick(async () => {
+                    this.plugin.settings = cloneDefaultSettings();
+                    this.applySettingsSideEffects();
+                    await this.plugin.saveSettings();
+                    this.refreshDefinitions();
+                  }),
+              );
+            },
+          },
+        ],
+      },
+    ];
+  }
+
+  private async persistSetting<S extends keyof MobilePluginSettings>(
+    key: S,
+    value: MobilePluginSettings[S],
+  ): Promise<void> {
+    this.plugin.settings[key] = value;
+    this.applySettingSideEffect(key, value);
+    await this.plugin.saveSettings();
+  }
+
+  private applySettingsSideEffects(): void {
+    this.applySettingSideEffect(
+      'showBuiltInToolbar',
+      this.plugin.settings.showBuiltInToolbar,
+    );
+    this.applySettingSideEffect(
+      'hideFABWhenKeyboardOpen',
+      this.plugin.settings.hideFABWhenKeyboardOpen,
+    );
+    this.applySettingSideEffect(
+      'hideToolbarInFullscreen',
+      this.plugin.settings.hideToolbarInFullscreen,
+    );
+    this.applySettingSideEffect(
+      'hideNativeNav',
+      this.plugin.settings.hideNativeNav,
+    );
+  }
+
+  private applySettingSideEffect<S extends keyof MobilePluginSettings>(
+    key: S,
+    value: MobilePluginSettings[S],
+  ): void {
+    switch (key) {
+      case 'showBuiltInToolbar':
+        window.activeDocument.body.toggleClass(
+          'hidden-mobile-toolbar',
+          !(value as boolean),
+        );
+        break;
+      case 'hideFABWhenKeyboardOpen':
+        window.activeDocument.body.toggleClass(
+          'hideFABWhenKeyboardOpen',
+          value as boolean,
+        );
+        break;
+      case 'hideToolbarInFullscreen':
+        window.activeDocument.body.toggleClass(
+          'hide-toolbar-for-fullscreen',
+          value as boolean,
+        );
+        break;
+      case 'hideNativeNav':
+        this.plugin.toggleHideNav(value as boolean);
+        break;
+    }
+  }
+
+  private getFabEventCommandDefinitions(): SettingGroupItem[] {
+    return (
+      Object.entries(MobileCMDEventsDesc) as [
+        MobileCMDEvent,
+        [string, string],
+      ][]
+    ).map(([event, [name, desc]]) => ({
+      name,
+      desc,
+      render: setting => {
+        setting
+          .addButton(button =>
+            button
+              .setButtonText(
+                this.plugin.settings.MobileCMDEvents[event] || 'Select command',
+              )
+              .onClick(() => {
+                new CommandSuggestModal(this.app, command => {
+                  void (async () => {
+                    this.plugin.settings.MobileCMDEvents[event] = command.id;
+                    await this.plugin.saveSettings();
+                    this.refreshDefinitions();
+                  })();
+                }).open();
+              }),
+          )
+          .addExtraButton(btn =>
+            btn
+              .setIcon('trash')
+              .setTooltip('Clear command')
+              .onClick(async () => {
+                this.plugin.settings.MobileCMDEvents[event] = '';
+                await this.plugin.saveSettings();
+                this.refreshDefinitions();
+              }),
+          );
+      },
+    }));
+  }
+
+  private getGestureCommandDefinitions(): SettingGroupItem[] {
+    return this.plugin.settings.gestureCommands.map(
+      (gesture, gestureIndex) => ({
+        name: gesture.name,
+        desc: gesture.commandId,
+        render: setting => {
+          setting
+            .addExtraButton(btn =>
+              btn
+                .setIcon(GestureHandler.getGestureIcon(gesture))
+                .setTooltip('Edit gesture drawing')
+                .onClick(() => {
+                  new EditGestureDrawingModal(
+                    this.app,
+                    this.plugin,
+                    gesture,
+                    () => this.refreshDefinitions(),
+                  ).open();
+                }),
+            )
+            .addExtraButton(button =>
+              button.setIcon('pencil').onClick(() => {
+                new CommandSuggestModal(this.app, command => {
+                  void (async () => {
+                    gesture.commandId = command.id;
+                    gesture.name = command.name;
+                    await this.plugin.saveSettings();
+                    this.refreshDefinitions();
+                  })();
+                }).open();
+              }),
+            )
+            .addExtraButton(btn =>
+              btn
+                .setIcon('trash')
+                .setTooltip('Delete gesture command')
+                .onClick(async () => {
+                  this.plugin.settings.gestureCommands.splice(gestureIndex, 1);
+                  await this.plugin.saveSettings();
+                  this.refreshDefinitions();
+                }),
+            );
+        },
+      }),
+    );
+  }
+
+  private getContextBindingDefinitions(): SettingGroupItem[] {
+    return this.plugin.settings.contextBindings.map((binding, index) => ({
+      name: this.getContextDisplayName(binding.contextType),
+      desc:
+        this.plugin.settings.toolbars.find(
+          toolbar => toolbar.id === binding.toolbarId,
+        )?.name || binding.toolbarId,
+      render: setting => {
+        setting
+          .addExtraButton(button =>
+            button
+              .setIcon('list-filter')
+              .setTooltip('Change context')
+              .onClick(() => {
+                new ContextSelectionModal(
+                  this.app,
+                  selectedBinding => {
+                    void (async () => {
+                      this.plugin.settings.contextBindings[index] = {
+                        ...binding,
+                        contextType: selectedBinding.contextType,
+                      };
+                      await this.plugin.saveSettings();
+                      this.refreshDefinitions();
+                    })();
+                  },
+                  'Select a context',
+                ).open();
+              }),
+          )
+          .addExtraButton(button =>
+            button
+              .setIcon('pencil')
+              .setTooltip('Change toolbar')
+              .onClick(() => {
+                new ContextBindingChooser(
+                  this.app,
+                  this.plugin.settings.toolbars,
+                  toolbar => {
+                    void (async () => {
+                      this.plugin.settings.contextBindings[index] = {
+                        ...binding,
+                        toolbarId: toolbar.id,
+                      };
+                      await this.plugin.saveSettings();
+                      this.refreshDefinitions();
+                    })();
+                  },
+                ).open();
+              }),
+          );
+      },
+    }));
+  }
+
+  private getToolbarDefinitions(): SettingGroupItem[] {
+    return [
+      {
+        name: 'Create new toolbar',
+        desc: 'Add a new toolbar and open its editor page.',
+        render: setting => {
+          setting.addButton(button =>
+            button.setButtonText('Create').onClick(async () => {
+              const newToolbar: ToolbarConfig = {
+                id: `toolbar-${Date.now()}`,
+                name: 'New toolbar',
+                commands: [],
+              };
+              this.plugin.settings.toolbars.push(newToolbar);
+              await this.plugin.saveSettings();
+              this.refreshDefinitions();
+            }),
+          );
+        },
+      },
+      ...this.plugin.settings.toolbars.map(toolbar => ({
+        type: 'page' as const,
+        name: toolbar.name,
+        desc: `Bound to contexts: ${this.plugin.getBinds(toolbar.id).join(', ') || 'None'}`,
+        items: this.getToolbarPageDefinitions(toolbar),
+      })),
+    ];
+  }
+
+  private getToolbarPageDefinitions(
+    toolbar: ToolbarConfig,
+  ): SettingDefinitionItem[] {
+    return [
+      {
+        name: 'Toolbar name',
+        desc: 'Rename this toolbar.',
+        render: (setting: Setting) => {
+          setting.addText(text =>
+            text
+              .setPlaceholder('Toolbar name')
+              .setValue(toolbar.name)
+              .onChange(async value => {
+                toolbar.name = value;
+                await this.plugin.saveSettings();
+                this.refreshDefinitions();
+              }),
+          );
+        },
+      },
+      {
+        name: 'Bindings',
+        desc: 'Contexts currently using this toolbar.',
+        render: (setting: Setting) => {
+          const binds = this.plugin.getBinds(toolbar.id);
+
+          if (binds.length === 0) {
+            setting.setDesc('No contexts are currently bound to this toolbar.');
+          }
+
+          binds.forEach(bind => {
+            setting.addButton(button =>
+              button.setButtonText(bind).onClick(async () => {
+                this.plugin.settings.contextBindings =
+                  this.plugin.settings.contextBindings.filter(
+                    binding =>
+                      !(
+                        binding.contextType === bind &&
+                        binding.toolbarId === toolbar.id
+                      ),
+                  );
+                await this.plugin.saveSettings();
+                this.refreshDefinitions();
+              }),
+            );
+          });
+
+          setting.addExtraButton(btn =>
+            btn
+              .setIcon('plus')
+              .setTooltip('Add binding')
+              .onClick(() => {
+                new ContextSelectionModal(
+                  this.app,
+                  binding => {
+                    void (async () => {
+                      binding.toolbarId = toolbar.id;
+                      this.plugin.settings.contextBindings.push(binding);
+                      await this.plugin.saveSettings();
+                      this.refreshDefinitions();
+                    })();
+                  },
+                  'Create new context binding for this toolbar',
+                ).open();
+              }),
+          );
+        },
+      },
+      {
+        type: 'list',
+        heading: 'Commands',
+        emptyState: 'No commands in this toolbar yet.',
+        items: this.getToolbarCommandDefinitions(toolbar),
+        onReorder: (oldIndex, newIndex) => {
+          const [moved] = toolbar.commands.splice(oldIndex, 1);
+          toolbar.commands.splice(newIndex, 0, moved);
+          void this.plugin.saveSettings();
+        },
+        onDelete: index => {
+          toolbar.commands.splice(index, 1);
+          void this.plugin.saveSettings();
+          this.refreshDefinitions();
+        },
+        addItem: {
+          name: 'Add command',
+          action: () => {
+            new CommandSuggestModal(this.app, command => {
+              void (async () => {
+                toolbar.commands.push(command.id);
+                await this.plugin.saveSettings();
+                this.refreshDefinitions();
+              })();
+            }).open();
+          },
+        },
+      },
+      {
+        name: 'Delete toolbar',
+        desc: 'Remove this toolbar and all of its bindings.',
+        render: (setting: Setting) => {
+          setting.addButton(button =>
+            button
+              .setButtonText('Delete toolbar')
+              .setWarning()
+              .onClick(async () => {
+                const toolbarIndex = this.plugin.settings.toolbars.findIndex(
+                  currentToolbar => currentToolbar.id === toolbar.id,
+                );
+
+                if (toolbarIndex === -1) {
+                  return;
+                }
+
+                this.plugin.settings.toolbars.splice(toolbarIndex, 1);
+                this.plugin.settings.contextBindings =
+                  this.plugin.settings.contextBindings.filter(
+                    binding => binding.toolbarId !== toolbar.id,
+                  );
+                await this.plugin.saveSettings();
+                this.refreshDefinitions();
+              }),
+          );
+        },
+      },
+    ];
+  }
+
+  private getToolbarCommandDefinitions(
+    toolbar: ToolbarConfig,
+  ): SettingGroupItem[] {
+    return toolbar.commands.map((commandId, index) => ({
+      name: this.app.commands?.findCommand?.(commandId)?.name || commandId,
+      desc: commandId,
+      render: (setting: Setting) => {
+        const command = this.app.commands?.findCommand?.(commandId);
+
+        setting
+          .addExtraButton(btn =>
+            btn
+              .setIcon(
+                this.plugin.settings.commandIcons[commandId] ||
+                  command?.icon ||
+                  'circle-question-mark',
+              )
+              .setTooltip('Change icon')
+              .onClick(() => {
+                new IconSuggestModal(this.app, icon => {
+                  void (async () => {
+                    this.plugin.settings.commandIcons[commandId] = icon;
+                    await this.plugin.saveSettings();
+                    this.refreshDefinitions();
+                  })();
+                }).open();
+              }),
+          )
+          .addExtraButton(btn =>
+            btn
+              .setIcon('pencil')
+              .setTooltip('Change command')
+              .onClick(() => {
+                new CommandSuggestModal(this.app, command => {
+                  void (async () => {
+                    toolbar.commands[index] = command.id;
+                    await this.plugin.saveSettings();
+                    this.refreshDefinitions();
+                  })();
+                }).open();
+              }),
+          );
+      },
+    }));
+  }
+
+  private getToolbarBindingDefinitions(
+    toolbar: ToolbarConfig,
+  ): SettingGroupItem[] {
+    return this.getToolbarBindingEntries(toolbar.id).map(({ binding }) => ({
+      name: this.getContextDisplayName(binding.contextType),
+      desc: `Bound to ${toolbar.name}`,
+    }));
+  }
+
+  private getToolbarBindingEntries(
+    toolbarId: string,
+  ): Array<{ binding: ContextBinding; index: number }> {
+    return this.plugin.settings.contextBindings.reduce<
+      Array<{ binding: ContextBinding; index: number }>
+    >((entries, binding, index) => {
+      if (binding.toolbarId === toolbarId) {
+        entries.push({ binding, index });
+      }
+
+      return entries;
+    }, []);
+  }
+
+  private reorderToolbarBindings(
+    toolbarId: string,
+    oldIndex: number,
+    newIndex: number,
+  ): void {
+    const entries = this.getToolbarBindingEntries(toolbarId);
+    const reorderedBindings = entries.map(entry => entry.binding);
+    const [moved] = reorderedBindings.splice(oldIndex, 1);
+
+    reorderedBindings.splice(newIndex, 0, moved);
+
+    let reorderedIndex = 0;
+    this.plugin.settings.contextBindings =
+      this.plugin.settings.contextBindings.map(binding => {
+        if (binding.toolbarId !== toolbarId) {
+          return binding;
+        }
+
+        const nextBinding = reorderedBindings[reorderedIndex];
+        reorderedIndex += 1;
+        return nextBinding;
+      });
+  }
+
+  private refreshDefinitions(): void {
+    const maybeUpdate = (this as unknown as Record<string, unknown>)['update'];
+
+    if (typeof maybeUpdate === 'function') {
+      maybeUpdate.call(this);
+      return;
+    }
+
+    this.containerEl.empty();
+    new MobileSettingsView(this.app, this.plugin, this.containerEl);
+  }
+
+  private getContextDisplayName(contextType: ContextType): string {
+    const names: Record<ContextType, string> = {
+      selection: 'Selection',
+      list: 'List',
+      task: 'Task',
+      heading: 'Heading',
+      'code-block': 'Code block',
+      table: 'Table',
+      blockquote: 'Blockquote',
+      link: 'Link',
+      'keyboard-closed': 'Keyboard closed',
+      default: 'Default',
+    };
+    return names[contextType] || contextType;
   }
 }
 
@@ -871,39 +1562,7 @@ export class MobileSettingsView {
  *
  * @extends Modal
  */
-export class settingsModel extends Modal {
-  constructor(
-    app: App,
-    private plugin: MobilePlugin,
-  ) {
-    super(app);
-  }
-
-  onOpen() {
-    new MobileSettingsView(this.app, this.plugin, this.contentEl);
-  }
-}
-
 export const VIEW_TYPE_SETTINGS = 'mobile-plugin-settings';
-
-export class settingsLeaf extends ItemView {
-  constructor(
-    leaf: WorkspaceLeaf,
-    private plugin: MobilePlugin,
-  ) {
-    super(leaf);
-  }
-  getViewType(): string {
-    return VIEW_TYPE_SETTINGS;
-  }
-  getDisplayText(): string {
-    return 'Mobile UX plugin settings';
-  }
-  protected onOpen(): Promise<void> {
-    new MobileSettingsView(this.app, this.plugin, this.contentEl);
-    return Promise.resolve();
-  }
-}
 
 /**
  * Modal for selecting a context type when creating context bindings.

@@ -5,6 +5,14 @@ All notable changes to the Mobile UX plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2026-08-31
+
+### Fixed
+
+- **Toolbar**: Fixed context-aware toolbar command aggregation so the active toolbar commands update correctly when multiple matching contexts are active, including the default and selection states. (Fixes #41)
+- **Toolbar**: Fixed editor focus returning to the content area after toolbar actions so selections and searches keep working without extra taps when the active element is still inside the toolbar. (Fixes #39)
+- **Settings**: Fixed stale settings registration and default toolbar context ordering so the mobile settings UI stays consistent and toolbar configuration loads reliably. (Fixes #43)
+
 ## [1.9.3]
 
 ### Added

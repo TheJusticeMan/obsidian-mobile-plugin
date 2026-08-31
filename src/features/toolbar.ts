@@ -163,21 +163,19 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         // Collect all matching toolbars and concatenate their commands
 
         const seenCommands = new Set<string>();
+        const matchingBindings = this.plugin.settings.contextBindings.filter(
+          binding => activeContexts.has(binding.contextType),
+        );
 
         // Concatenate commands from all matching toolbars, removing duplicates
-        const combinedCommands: string[] = Array.from(activeContexts.keys())
-          .map(contextType =>
-            this.plugin.settings.contextBindings
-              .filter(binding => binding.contextType === contextType)
-              .map(
-                binding =>
-                  this.plugin.settings.toolbars.find(
-                    t => t.id === binding.toolbarId,
-                  )?.commands,
-              )
-              .filter(t => t !== undefined),
-          )
-          .flat(2)
+        const combinedCommands: string[] = matchingBindings
+          .flatMap(binding => {
+            const toolbar = this.plugin.settings.toolbars.find(
+              t => t.id === binding.toolbarId,
+            );
+
+            return toolbar?.commands ?? [];
+          })
           .filter(cmd => {
             if (seenCommands.has(cmd)) {
               return false;
@@ -188,17 +186,13 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
           });
 
         this.activeToolbars =
-          Array.from(activeContexts.keys())
-            .map(contextType =>
-              this.plugin.settings.contextBindings
-                .filter(binding => binding.contextType === contextType)
-                .map(binding =>
-                  this.plugin.settings.toolbars.find(
-                    t => t.id === binding.toolbarId,
-                  ),
-                )
-                .filter(t => t !== undefined),
+          matchingBindings
+            .map(binding =>
+              this.plugin.settings.toolbars.find(
+                t => t.id === binding.toolbarId,
+              ),
             )
+            .filter(t => t !== undefined)
             .flat() || null;
 
         // Return a virtual toolbar with combined commands
@@ -399,7 +393,9 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                   // Execute the command
                   this.app.commands?.executeCommandById?.(commandId);
                   // Refocus editor to prevent focus loss
-                  view.focus();
+                  // log the current focus and whether that's inside the toolbar
+                  if (tooltip.contains(activeDocument.activeElement))
+                    view.focus();
                 });
             } else {
               new ButtonComponent(tooltip)
@@ -412,7 +408,8 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                   // Execute the command
                   this.app.commands?.executeCommandById?.(commandId);
                   // Refocus editor to prevent focus loss
-                  view.focus();
+                  if (tooltip.contains(activeDocument.activeElement))
+                    view.focus();
                 });
             }
           }

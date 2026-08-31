@@ -23,8 +23,6 @@ import {
   MobileCMDEvent,
   MobilePluginSettings,
   MobileSettingTab,
-  settingsLeaf,
-  settingsModel,
   VIEW_TYPE_SETTINGS,
 } from './settings';
 import { FilesSel } from './utils/InsertMultipleAttachments';
@@ -104,9 +102,6 @@ export default class MobilePlugin extends Plugin {
     // Register the Tabs view
     this.registerView(VIEW_TYPE_TABS, leaf => new TabsLeaf(leaf));
 
-    // Register the settings tab
-    this.registerView(VIEW_TYPE_SETTINGS, leaf => new settingsLeaf(leaf, this));
-
     // Register the CodeMirror 6 toolbar extension with multiple context-aware toolbars
     this.registerEditorExtension(createToolbarExtension(this.app, this));
     // add ribbon icon
@@ -153,13 +148,6 @@ export default class MobilePlugin extends Plugin {
       id: 'toggle-wake-lock',
       name: 'Toggle wake lock',
       callback: this.toggleWakeLock,
-    });
-
-    this.addCommand({
-      id: 'settings',
-      name: 'Settings',
-      icon: 'settings',
-      callback: () => new settingsModel(this.app, this).open(),
     });
 
     this.addCommand({

@@ -39,6 +39,7 @@ const allowedContexts = [
   'table',
   'blockquote',
   'link',
+  'keyboard-closed',
   'default',
 ] as const;
 
@@ -854,6 +855,7 @@ export class MobileSettingsView {
       table: 'Table',
       blockquote: 'Blockquote',
       link: 'Link',
+      'keyboard-closed': 'Keyboard closed',
       default: 'Default',
     };
     return names[contextType] || contextType;

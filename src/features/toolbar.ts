@@ -12,6 +12,7 @@ import {
   Editor,
   ExtraButtonComponent,
   MarkdownView,
+  View,
 } from 'obsidian';
 import MobilePlugin from '../main';
 import { ContextType, ToolbarConfig } from '../settings';
@@ -55,11 +56,24 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
       activeToolbars: ToolbarConfig[] | null = null;
       currentToolbar: ToolbarConfig | null = null;
       view!: EditorView;
+      private readonly refreshToolbar = (): void => {
+        if (!this.view) {
+          return;
+        }
+
+        window.requestAnimationFrame(() => this.updateTooltip(this.view));
+      };
 
       constructor(view: EditorView) {
         this.decorations = Decoration.none;
         this.app = app;
         this.plugin = plugin;
+        this.view = view;
+
+        window.visualViewport?.addEventListener('resize', this.refreshToolbar);
+        window.addEventListener('resize', this.refreshToolbar);
+        window.activeDocument.addEventListener('focusin', this.refreshToolbar);
+        window.activeDocument.addEventListener('focusout', this.refreshToolbar);
 
         // Find the editor container to anchor the toolbar
 
@@ -129,7 +143,11 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         // Show toolbar if there's a selection or cursor is in specific context
         if (!selection.empty || this.hasContext(view, selection.from)) {
           this.renderToolbar(view);
+          return;
         }
+
+        this.currentToolbar = null;
+        this.emptyElement();
       }
 
       hasContext(view: EditorView, pos: number): boolean {
@@ -242,6 +260,11 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         const contexts = new Set<ContextType>();
         if (!view.state.selection.main.empty) {
           contexts.add('selection');
+        }
+        if (
+          !window.activeDocument.body.classList.contains('mod-toolbar-open')
+        ) {
+          contexts.add('keyboard-closed');
         }
         contexts.add('default');
 
@@ -411,15 +434,15 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
       private removeTooltipIfExists() {
         const editor = this.editorOuter;
         if (!editor) return;
-        if (this.plugin.toolbarMap.get(editor)?.view !== this.view) return;
-        this.plugin.toolbarMap.get(editor)?.el.remove();
+        if (this.plugin.toolbarMap.get(editor)?.eView !== this.view) return;
+        this.plugin.toolbarMap.get(editor)?.element.remove();
         this.plugin.toolbarMap.delete(editor);
       }
 
       emptyElement() {
         const editor = this.editorOuter;
         if (!editor) return;
-        this.plugin.toolbarMap.get(editor)?.el.empty();
+        this.plugin.toolbarMap.get(editor)?.element.empty();
       }
 
       get editorOuter(): Editor | undefined {
@@ -431,23 +454,43 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         const editor = this.editorOuter;
         if (!editor) return null;
 
-        return this.plugin.toolbarMap.get(editor)?.el || this.newElement;
+        return this.plugin.toolbarMap.get(editor)?.element || this.newElement;
       }
 
       get newElement(): HTMLElement | null {
+        // get All views
+
+        const view =
+          this.app.workspace.getActiveViewOfType(MarkdownView) ||
+          this.app.workspace.getActiveViewOfType(View);
+
         const editor = this.editorOuter;
-        if (!editor) return null;
-        const newToolbar = editor.containerEl.createDiv({
+        if (!editor || !view) return null;
+        const element = view.containerEl.createDiv({
           cls: 'mobile-plugin-toolbar',
         });
 
-        this.plugin.register(() => newToolbar.remove());
+        this.plugin.toolbarMap.set(editor, { element, view, eView: this.view });
 
-        this.plugin.toolbarMap.set(editor, { el: newToolbar, view: this.view });
-        return newToolbar;
+        this.plugin.register(() => element.remove());
+
+        return element;
       }
 
       destroy() {
+        window.visualViewport?.removeEventListener(
+          'resize',
+          this.refreshToolbar,
+        );
+        window.removeEventListener('resize', this.refreshToolbar);
+        window.activeDocument.removeEventListener(
+          'focusin',
+          this.refreshToolbar,
+        );
+        window.activeDocument.removeEventListener(
+          'focusout',
+          this.refreshToolbar,
+        );
         this.removeTooltipIfExists();
       }
     },

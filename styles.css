@@ -194,8 +194,16 @@ body:has(.mobile-navbar.mod-raised).is-hidden-nav,
  * - .is-phone: Ensures styles apply only to phone layouts (not tablets).
  * - .mobile-plugin-toolbar: The target element to be styled.
  */
-body:has(.mobile-navbar.mod-raised).is-phone .mobile-plugin-toolbar {
-  padding-bottom: calc(var(--navbar-height) + 34px + 8px);
+body:has(.mobile-navbar.mod-raised).is-phone.auto-full-screen
+  .mobile-plugin-toolbar {
+  padding-bottom: calc(var(--navbar-height) + 8px);
+}
+
+body:has(.mobile-navbar.mod-raised).is-phone.is-floating-nav
+  .mobile-plugin-toolbar {
+  padding-bottom: calc(
+    var(--navbar-height) + var(--navbar-bottom-offset) + 8px
+  );
 }
 
 body:has(.mobile-navbar.mod-raised).is-hidden-nav.is-phone

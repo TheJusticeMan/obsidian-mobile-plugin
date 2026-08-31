@@ -5,6 +5,18 @@ All notable changes to the Mobile UX plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Toolbar**: Added a new `Keyboard closed` context so toolbars can be configured to appear only when the mobile keyboard is dismissed. (Fixes #40)
+
+### Fixed
+
+- **Toolbar**: Fixed toolbar refresh behavior so context toolbars update more reliably when the viewport resizes or editor focus changes.
+- **Toolbar**: Fixed toolbar mounting and cleanup so context toolbars attach more reliably inside canvas cards and avoid stale instances. (Fixes #46)
+- **Styles**: Fixed context toolbar spacing for fullscreen-disabled and floating navigation layouts. (Fixes #45)
+
 ## [1.9.2] - 2026-06-04
 
 ### Added

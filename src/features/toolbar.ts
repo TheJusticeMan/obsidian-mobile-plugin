@@ -10,6 +10,7 @@ import {
   App,
   ButtonComponent,
   ExtraButtonComponent,
+  FileView,
   MarkdownView,
   View,
 } from 'obsidian';
@@ -82,7 +83,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
       get activeView(): View | null {
         return (
           this.app.workspace.getActiveViewOfType(MarkdownView) ||
-          this.app.workspace.getActiveViewOfType(View)
+          this.app.workspace.getActiveViewOfType(FileView)
         );
       }
 
@@ -452,7 +453,8 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         if (!activeView) return null;
 
         return (
-          this.plugin.toolbarMap.get(activeView) || this.createToolbarElement(activeView)
+          this.plugin.toolbarMap.get(activeView) ||
+          this.createToolbarElement(activeView)
         );
       }
 

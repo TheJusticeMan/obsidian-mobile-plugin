@@ -4,6 +4,14 @@ A mobile-optimized UX enhancement plugin for [Obsidian](https://obsidian.md) tha
 
 [Ask me for mobile friendly features](https://github.com/TheJusticeMan/obsidian-mobile-plugin/issues/new)
 
+## Removal notice
+
+The dedicated search pane and tabs view are being phased out and should be considered deprecated.
+
+- The mobile search pane may be removed in a future release.
+- The tabs view and older mobile tab-switcher integrations are also slated for removal now that native tab-switcher support covers that workflow.
+- New work should focus on the FAB, gestures, toolbars, and sidebar navigation features.
+
 ## Gestures
 
 **Gestures are the heart of this plugin.** You can create completely custom gestures to trigger any command in Obsidian.
@@ -60,7 +68,9 @@ Dynamic toolbars that adapt based on your cursor position and selection:
 
 ### Mobile Search
 
-A dedicated search view optimized for mobile devices:
+A dedicated search view optimized for mobile devices.
+
+Removal status: deprecated and planned for removal in a future release.
 
 - **Sticky search input**: Always visible at the top of the results.
 - **Infinite scrolling**: Efficiently loads results as you scroll (10 initial, 50 per batch).
@@ -85,7 +95,9 @@ A dedicated search view optimized for mobile devices:
 
 ### Tabs View
 
-A dedicated view to manage your open tabs:
+A dedicated view to manage your open tabs.
+
+Removal status: deprecated and planned for removal in a future release.
 
 - **List view**: Displays a list of all open tabs for quick navigation.
 - **Enhanced UI**: Tabs display icons matching their content and include a close button (X) for quick closing.
@@ -96,14 +108,9 @@ A dedicated view to manage your open tabs:
 - **Swipe Past Side Split**: Switch between sidebar tabs (e.g., File Explorer, Search, Backlinks) by swiping from the edge of the screen when the sidebar is open.
 - **Visual Feedback**: Shows an overlay with icons and titles for available sidebar tabs.
 
-### Tab gestures
+### Tab switcher
 
-Enhance your tab management in the mobile tab switcher:
-
-- **Swipe right**: Close a tab instantly.  
-  Note: Start the swipe from the middle of the tab for reliable detection.
-- **Drag and drop**: Reorder tabs by dragging one tab onto another.  
-  Note: Start dragging from the middle of the tab (not the edges) to avoid missed drags.
+The older mobile tab-switcher gesture integration has been removed because Obsidian now provides native support for that workflow, and the remaining tab-switcher-related UI is planned for removal.
 
 ## Installation
 
@@ -124,8 +131,8 @@ Enhance your tab management in the mobile tab switcher:
 | **Show toolbars**          | Show context-aware toolbars at the bottom of the screen             |
 | **Show built-in toolbar**  | Show Obsidian's built-in mobile toolbar at the bottom of the screen |
 | **Show FAB**               | Show the FAB button at the bottom right of the screen               |
-| **Show tabs in search**    | Display open tabs when using the mobile search view                 |
-| **Tab reordering**         | Enable drag and drop to reorder tabs in the tab bar                 |
+| **Show tabs in search**    | Deprecated. Displays open tabs in the mobile search view while that pane remains available |
+| **Tab reordering**         | Deprecated. Native tab-switcher support now covers this workflow    |
 | **Command confirmation**   | Show confirmation before selecting a new command for a gesture      |
 | **Use Icons**              | Toggle between icon and text display in toolbars                    |
 | **FAB long press**         | Select command to execute when the FAB is long-pressed              |
@@ -166,7 +173,7 @@ Bind toolbars to editing contexts:
 | `Plus long press`             | Executes the command configured for FAB long press |
 | `Open mobile plugin settings` | Opens the settings modal for this plugin           |
 | `Open settings editor view`   | Opens the settings as a dedicated editor view      |
-| `Open Mobile Search`          | Opens the mobile-optimized search view             |
+| `Open Mobile Search`          | Deprecated. Opens the mobile-optimized search view while it remains available |
 
 ### Editor Navigation Commands
 
@@ -253,15 +260,14 @@ src/
 │   ├── cursor-commands.ts      # Cursor & selection commands
 │   ├── fab.ts                  # Floating Action Button manager (moved)
 │   ├── sidebar-swipe.ts        # Swipe Past Side Split / sidebar navigation
-│   ├── tab-gestures.ts         # Tab gestures and tab switcher logic
 │   ├── tablet-mode.ts          # Keep-in-tablet-mode helpers
 │   └── toolbar.ts              # Context-aware toolbar logic
 ├── utils/
 │   ├── gesture-handler.ts      # Gesture recognition and handling
 │   └── InsertMultipleAttachments.ts # Bulk-attachment helper
 └── views/
-    ├── SearchLeaf.ts           # Mobile search view
-    └── TabsLeaf.ts             # Tabs view and tab management
+    ├── SearchLeaf.ts           # Mobile search view slated for removal
+    └── TabsLeaf.ts             # Tabs view slated for removal
 ```
 
 ## License

@@ -1,4 +1,3 @@
-import { EditorView } from '@codemirror/view';
 import {
   App,
   Component,
@@ -15,7 +14,6 @@ import {
 import { registerCursorCommands } from './features/cursor-commands';
 import { FABManager } from './features/fab';
 import { SwipePastSideSplit } from './features/sidebar-swipe';
-import { updateMobileTabGestures } from './features/tab-gestures';
 import { keepInTabletMode } from './features/tablet-mode';
 import { createToolbarExtension } from './features/toolbar';
 import {
@@ -62,7 +60,7 @@ export default class MobilePlugin extends Plugin {
   leafDragging: WorkspaceLeaf | null = null;
   // Map to track toolbar elements by active editor (Editor)
 
-  toolbarMap: WeakMap<View,  HTMLElement > = new WeakMap();
+  toolbarMap: WeakMap<View, HTMLElement> = new WeakMap();
 
   async onload() {
     await this.loadSettings();
@@ -101,28 +99,7 @@ export default class MobilePlugin extends Plugin {
     this.addRibbonIcon('search', 'Open search', this.activateMobileSearchView);
     this.addRibbonIcon('tabs', 'Open tabs', this.activateTabsView);
 
-    this.app.workspace.onLayoutReady(() => {
-      this.registerInterval(
-        window.setInterval(() => {
-          const isopen =
-            this.app.mobileTabSwitcher?.containerEl?.parentNode != null;
-
-          if (!isopen) return (this.isTabSwitcherOpened = false);
-
-          if (isopen && !this.isTabSwitcherOpened) {
-            updateMobileTabGestures(this);
-
-            this.isTabSwitcherOpened = true;
-          }
-        }, 100),
-      );
-    });
-
     this.addChild(new SwipePastSideSplit(this.app));
-
-    this.app.workspace.on('layout-change', () => {
-      updateMobileTabGestures(this);
-    });
 
     // Add settings tab
     this.addSettingTab(new MobileSettingTab(this.app, this));

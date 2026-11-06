@@ -7,7 +7,6 @@ import {
   WorkspaceSidedock,
 } from 'obsidian';
 import { Offset } from '../utils/gesture-handler';
-import { VIEW_TYPE_TABS } from '../views/TabsLeaf';
 
 /**
  * The goal is to make it quick to switch between tabs in the side splits by swiping farther than the edge.
@@ -224,20 +223,6 @@ class SidePullout extends Component {
       setIcon(settingsButton, 'settings');
       settingsButton.onclick = () => {
         this.app.commands.executeCommandById('app:open-settings');
-        this.close();
-      };
-    } else if (
-      !this.sidebarLeaves.some(
-        leaf => leaf.view.getViewType() === VIEW_TYPE_TABS,
-      )
-    ) {
-      const tabsButton = actions.createEl('button', {
-        cls: 'side-pullout-action',
-        attr: { type: 'button', 'aria-label': 'Open tabs' },
-      });
-      setIcon(tabsButton, 'tabs');
-      tabsButton.onclick = () => {
-        this.app.commands.executeCommandById('mobile:open-tabs');
         this.close();
       };
     }

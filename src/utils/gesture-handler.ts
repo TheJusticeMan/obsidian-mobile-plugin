@@ -59,6 +59,38 @@ function setCssProps(el: HTMLElement, props: Record<string, string>): void {
   Object.assign(el.style, props);
 }
 
+function parseGesturePath(path: string): Offset[] | null {
+  if (!path || !path.trim()) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(path) as unknown;
+    if (!Array.isArray(parsed) || parsed.length < 2) {
+      return null;
+    }
+
+    const points: Offset[] = [];
+    for (const point of parsed) {
+      if (!Array.isArray(point) || point.length < 2) {
+        return null;
+      }
+
+      const x = Number(point[0]);
+      const y = Number(point[1]);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        return null;
+      }
+
+      points.push(new Offset(x, y));
+    }
+
+    return points;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Handles gesture recognition and command execution for drawn gestures.
  *
@@ -108,6 +140,7 @@ export class GestureHandler {
       window.activeDocument.addEventListener('mousemove', this.onDrag);
       window.activeDocument.addEventListener('mouseup', this.endDrag);
     } else if (e.touches && e.touches.length > 0) {
+      e.preventDefault();
       this.start = new Offset(e.touches[0].clientX, e.touches[0].clientY);
       window.activeDocument.addEventListener('touchmove', this.onDrag);
       window.activeDocument.addEventListener('touchend', this.endDrag);
@@ -122,6 +155,7 @@ export class GestureHandler {
     if (e instanceof MouseEvent) {
       client = new Offset(e.clientX, e.clientY);
     } else if (e.touches && e.touches.length > 0) {
+      e.preventDefault();
       client = new Offset(e.touches[0].clientX, e.touches[0].clientY);
     } else {
       return;
@@ -190,10 +224,11 @@ export class GestureHandler {
     let minDiff = Infinity;
 
     for (const gesture of this.gestureCommands) {
-      const parsedPath = JSON.parse(gesture.gesturePath) as number[][];
-      const normalizedPreset = parsedPath.map(
-        (p: number[]) => new Offset(p[0], p[1]),
-      );
+      const normalizedPreset = parseGesturePath(gesture.gesturePath);
+      if (!normalizedPreset) {
+        continue;
+      }
+
       const diff = GestureHandler.calculateDifference(
         normalizedInput,
         normalizedPreset,
@@ -313,10 +348,12 @@ export class GestureHandler {
    */
   static getGestureIcon(gesture: GestureCommand): string {
     const id = `${gesture.commandId}-${Date.now()}`;
-    const parsedPath = JSON.parse(gesture.gesturePath) as number[][];
+    const normalizedPath = parseGesturePath(gesture.gesturePath);
     const iconName = `mobile-gesture-${id}`;
 
-    if (parsedPath.length < 2) return 'lucide-help-circle';
+    if (!normalizedPath) return 'lucide-help-circle';
+
+    const parsedPath = normalizedPath.map(point => [point.x, point.y]);
 
     // Find bounds to center and scale to 100x100 (standard Obsidian icon size)
     const size = 100;

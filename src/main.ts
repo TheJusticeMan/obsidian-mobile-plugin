@@ -2,6 +2,7 @@ import {
   App,
   Component,
   Editor,
+  FuzzySuggestModal,
   MarkdownFileInfo,
   MarkdownView,
   Menu,
@@ -13,7 +14,9 @@ import {
 } from 'obsidian';
 import { registerCursorCommands } from './features/cursor-commands';
 import { FABManager } from './features/fab';
+import { MobileNavbarSwipeTabs } from './features/mobile-navbar-swipe-tabs';
 import { SwipePastSideSplit } from './features/sidebar-swipe';
+import { SwipeActions } from './features/swipe-actions';
 import { keepInTabletMode } from './features/tablet-mode';
 import { createToolbarExtension } from './features/toolbar';
 import {
@@ -24,8 +27,6 @@ import {
   VIEW_TYPE_SETTINGS,
 } from './settings';
 import { FilesSel } from './utils/InsertMultipleAttachments';
-import { SearchLeaf, VIEW_TYPE_SEARCH } from './views/SearchLeaf';
-import { TabsLeaf, VIEW_TYPE_TABS } from './views/TabsLeaf';
 
 // WakeLock API types (not in standard TS lib)
 interface WakeLockSentinel {
@@ -83,21 +84,16 @@ export default class MobilePlugin extends Plugin {
 
     this.toggleHideNav(this.settings.hideNativeNav);
 
+    this.addChild(new MobileNavbarSwipeTabs(this.app));
+    this.addChild(new SwipeActions(this.app, this));
+
     // Initialize FAB Manager
     this.fabManager = new FABManager(this.app, this);
-
-    // Register the Mobile Search view
-    this.registerView(VIEW_TYPE_SEARCH, leaf => new SearchLeaf(leaf, this));
-
-    // Register the Tabs view
-    this.registerView(VIEW_TYPE_TABS, leaf => new TabsLeaf(leaf));
 
     // Register the CodeMirror 6 toolbar extension with multiple context-aware toolbars
     this.registerEditorExtension(createToolbarExtension(this.app, this));
     // add ribbon icon
     this.addRibbonIcon('plus', 'Create new note', this.createNewNote);
-    this.addRibbonIcon('search', 'Open search', this.activateMobileSearchView);
-    this.addRibbonIcon('tabs', 'Open tabs', this.activateTabsView);
 
     this.addChild(new SwipePastSideSplit(this.app));
 
@@ -106,13 +102,6 @@ export default class MobilePlugin extends Plugin {
   }
 
   private registerCommands() {
-    this.addCommand({
-      id: 'open-tabs',
-      name: 'Open tabs',
-      icon: 'tabs',
-      callback: this.activateTabsView,
-    });
-
     this.addCommand({
       id: 'toggle-wake-lock',
       name: 'Toggle wake lock',
@@ -209,7 +198,13 @@ export default class MobilePlugin extends Plugin {
       },
     });
 
-    //this.app.mobileNavbar.ribbonMenuItemEl.click()
+    this.addCommand({
+      id: 'quick-tab-navigation',
+      name: 'Quick tab navigation',
+      icon: 'layers',
+      callback: () => new TabNav(this.app).open(),
+    });
+
     this.addCommand({
       id: 'open-ribbon-menu',
       name: 'Open ribbon menu',
@@ -219,6 +214,7 @@ export default class MobilePlugin extends Plugin {
         this.app.mobileNavbar?.ribbonMenuItemEl?.click();
       },
     });
+
     registerCursorCommands(this);
 
     // if there is PureChutLLM plugin, and a recorder command, add a command to trigger it
@@ -274,24 +270,11 @@ export default class MobilePlugin extends Plugin {
         },
       });
     }
-
-    // Add command to open Mobile Search
-    this.addCommand({
-      id: 'open-search',
-      name: 'Open search',
-      icon: 'search',
-      callback: this.activateMobileSearchView,
-    });
   }
 
   /**
    * Activates the Mobile Search view in the left sidebar.
    */
-  activateMobileSearchView = () =>
-    void this.activatearbitraryView(VIEW_TYPE_SEARCH, 'left');
-
-  activateTabsView = () =>
-    void this.activatearbitraryView(VIEW_TYPE_TABS, 'right');
 
   async activatearbitraryView(
     viewType: string,
@@ -386,11 +369,6 @@ export default class MobilePlugin extends Plugin {
     );
   }
 
-  onUserEnable() {
-    this.activateMobileSearchView();
-    this.activateTabsView();
-  }
-
   onunload(): void {
     // Release wake lock if active
     if (this.wakeLock) {
@@ -464,6 +442,32 @@ class KeepNavHidden extends Component {
 
 declare module 'obsidian' {
   interface MobileNavbar {
+    containerEl?: HTMLElement;
     ribbonMenuItemEl?: HTMLElement;
+  }
+}
+
+export class TabNav extends FuzzySuggestModal<WorkspaceLeaf> {
+  getItems(): WorkspaceLeaf[] {
+    const workspaceLeaves: Set<WorkspaceLeaf> = new Set();
+    const otherLeaves: Set<WorkspaceLeaf> = new Set();
+
+    this.app.workspace.iterateRootLeaves(
+      leaf => void workspaceLeaves.add(leaf),
+    );
+    this.app.workspace.iterateAllLeaves(
+      leaf => void (!workspaceLeaves.has(leaf) && otherLeaves.add(leaf)),
+    );
+
+    return [...Array.from(workspaceLeaves), ...Array.from(otherLeaves)];
+  }
+
+  getItemText(item: WorkspaceLeaf): string {
+    return item.view.getDisplayText();
+  }
+
+  onChooseItem(leaf: WorkspaceLeaf, evt: MouseEvent | KeyboardEvent): void {
+    void this.app.workspace.revealLeaf(leaf);
+    this.app.workspace.setActiveLeaf(leaf, { focus: true });
   }
 }

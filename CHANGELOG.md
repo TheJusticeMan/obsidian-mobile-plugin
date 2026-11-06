@@ -5,6 +5,17 @@ All notable changes to the Mobile UX plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.3] - 2026-09-04
+
+### Fixed
+
+- **Gestures**: Hardened gesture-path parsing to safely ignore empty or invalid paths instead of throwing, preventing gesture detection and settings-view crashes.
+- **Settings**: Updated new-gesture creation flow to only persist gestures after a drawing is saved, preventing empty placeholder entries that could appear as missing settings after restart.
+
+### Docs
+
+- **README**: Clarified tab-switcher deprecation status and quick-tab navigation behavior to reduce confusion around "phantom tabs" when non-note leaves are listed.
+
 ## [1.10.2] - 2026-09-01
 
 ### Removed

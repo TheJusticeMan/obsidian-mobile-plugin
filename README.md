@@ -4,14 +4,6 @@ A mobile-optimized UX enhancement plugin for [Obsidian](https://obsidian.md) tha
 
 [Ask me for mobile friendly features](https://github.com/TheJusticeMan/obsidian-mobile-plugin/issues/new)
 
-## Removal notice
-
-The dedicated search pane and tabs view are being phased out and should be considered deprecated.
-
-- The mobile search pane may be removed in a future release.
-- The tabs view and older mobile tab-switcher integrations are also slated for removal now that native tab-switcher support covers that workflow.
-- New work should focus on the FAB, gestures, toolbars, and sidebar navigation features.
-
 ## Gestures
 
 **Gestures are the heart of this plugin.** You can create completely custom gestures to trigger any command in Obsidian.
@@ -21,6 +13,11 @@ The dedicated search pane and tabs view are being phased out and should be consi
 3.  **Execute**: Next time you draw the same shape, the assigned command will be executed.
 
 Gestures are matched based on the shape, so you can draw them at any size or speed.
+
+Reliability note:
+
+- New gesture commands are only saved after you complete a drawing.
+- If a gesture matches an existing one, the plugin shows a notice and does not overwrite the existing mapping.
 
 ## Features
 
@@ -66,51 +63,10 @@ Dynamic toolbars that adapt based on your cursor position and selection:
 - **Force Tablet UI**: Toggle to force the tablet interface on mobile phones.
 - **Keep in tablet mode**: Command to toggle this mode.
 
-### Mobile Search
-
-A dedicated search view optimized for mobile devices.
-
-Removal status: deprecated and planned for removal in a future release.
-
-- **Sticky search input**: Always visible at the top of the results.
-- **Infinite scrolling**: Efficiently loads results as you scroll (10 initial, 50 per batch).
-- **File previews**: Shows a preview of the file content with caching for performance.
-- **Date display**: Shows file modification date at the bottom corner of each preview (relative time for recent files).
-- **File context menu**: Long-press/right-click on a result card for quick actions (open in new tab, open to the right, delete, copy file path).
-- **Smart keyboard handling**: Automatically dismisses the keyboard when scrolling results.
-- **Auto-focus**: Automatically focuses the search input when the sidebar opens.
-- **Smart focus**: Automatically regains focus when scrolling back to the top of the results list.
-- **Performance optimizations**: File list updates only when drawer is open or focused, with smart file system event listeners (create, delete, rename, modify) to reduce battery usage.
-- **Reliable results**: Race condition fixed to prevent empty search results on initial open or when reopening with text.
-- **Selection mode**: Long-press/right-click on any result card to enter selection mode for bulk operations
-  - **Selection command bar**: Cancel button, dynamic Select All/Deselect All toggle, selection counter, and three-dot menu for bulk actions
-  - **Visual indicators**: Selected cards show accent-colored border, checkmark badge, and highlighted background
-  - **Plugin extensibility**: Triggers `files-menu` event for multiple files and `file-menu` for single file, allowing plugins to add custom actions
-  - **Smart interactions**: Tap cards to toggle selection, long-press shows menu with appropriate actions based on selection count
-  - **Dynamic Select All button**: Button text changes to "Deselect all" when all files are selected, providing clear feedback
-  - **Auto-exit**: Selection mode automatically exits when no files are selected
-  - **Lazy-load support**: Selected files show proper UI even when rendered later during scrolling
-- **Open Tabs**: Option to display your currently open tabs for quick navigation.
-- **Folder selection mode**: Press Backspace on an empty search input to toggle between file and folder selection modes. Exiting folder mode with backspace clears the current folder filter.
-
-### Tabs View
-
-A dedicated view to manage your open tabs.
-
-Removal status: deprecated and planned for removal in a future release.
-
-- **List view**: Displays a list of all open tabs for quick navigation.
-- **Enhanced UI**: Tabs display icons matching their content and include a close button (X) for quick closing.
-- **Quick access**: Use the "Open tabs" command to instantly open the view.
-
 ### Sidebar Navigation
 
 - **Swipe Past Side Split**: Switch between sidebar tabs (e.g., File Explorer, Search, Backlinks) by swiping from the edge of the screen when the sidebar is open.
 - **Visual Feedback**: Shows an overlay with icons and titles for available sidebar tabs.
-
-### Tab switcher
-
-The older mobile tab-switcher gesture integration has been removed because Obsidian now provides native support for that workflow, and the remaining tab-switcher-related UI is planned for removal.
 
 ## Installation
 
@@ -131,8 +87,6 @@ The older mobile tab-switcher gesture integration has been removed because Obsid
 | **Show toolbars**          | Show context-aware toolbars at the bottom of the screen             |
 | **Show built-in toolbar**  | Show Obsidian's built-in mobile toolbar at the bottom of the screen |
 | **Show FAB**               | Show the FAB button at the bottom right of the screen               |
-| **Show tabs in search**    | Deprecated. Displays open tabs in the mobile search view while that pane remains available |
-| **Tab reordering**         | Deprecated. Native tab-switcher support now covers this workflow    |
 | **Command confirmation**   | Show confirmation before selecting a new command for a gesture      |
 | **Use Icons**              | Toggle between icon and text display in toolbars                    |
 | **FAB long press**         | Select command to execute when the FAB is long-pressed              |
@@ -173,7 +127,6 @@ Bind toolbars to editing contexts:
 | `Plus long press`             | Executes the command configured for FAB long press |
 | `Open mobile plugin settings` | Opens the settings modal for this plugin           |
 | `Open settings editor view`   | Opens the settings as a dedicated editor view      |
-| `Open Mobile Search`          | Deprecated. Opens the mobile-optimized search view while it remains available |
 
 ### Editor Navigation Commands
 
@@ -266,8 +219,7 @@ src/
 │   ├── gesture-handler.ts      # Gesture recognition and handling
 │   └── InsertMultipleAttachments.ts # Bulk-attachment helper
 └── views/
-    ├── SearchLeaf.ts           # Mobile search view slated for removal
-    └── TabsLeaf.ts             # Tabs view slated for removal
+  └── ToolbarEditor.ts        # Toolbar editing modal
 ```
 
 ## License

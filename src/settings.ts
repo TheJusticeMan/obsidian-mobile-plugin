@@ -56,6 +56,24 @@ export interface ContextBinding {
   toolbarId: string;
 }
 
+export type SwipeActionEvent = 'twoFingerSwipeDown' | 'noteBottomSwipeUp';
+
+export const SwipeActionEventsDesc: Record<SwipeActionEvent, [string, string]> = {
+  twoFingerSwipeDown: [
+    'Two-finger swipe down',
+    'Run a command when you swipe down with two fingers in the mobile note area',
+  ],
+  noteBottomSwipeUp: [
+    'Swipe up at bottom of note',
+    'Run a command when you swipe up from the bottom of a note',
+  ],
+};
+
+export interface SwipeActionConfig {
+  twoFingerSwipeDown: string;
+  noteBottomSwipeUp: string;
+}
+
 export type MobileCMDEvent =
   | 'fab-longpress'
   | 'fab-press'
@@ -103,6 +121,7 @@ export interface MobilePluginSettings {
   hideFABWhenKeyboardOpen: boolean;
   hideNativeNav: boolean;
   minGestureLength: number;
+  swipeActions: SwipeActionConfig;
 }
 
 export const DEFAULT_SETTINGS: MobilePluginSettings = {
@@ -286,25 +305,11 @@ export const DEFAULT_SETTINGS: MobilePluginSettings = {
   enableCursorCommands: false,
   hideFABWhenKeyboardOpen: false,
   hideNativeNav: false,
+  swipeActions: {
+    twoFingerSwipeDown: 'command-palette:open',
+    noteBottomSwipeUp: 'markdown:toggle-preview',
+  },
 };
-
-function cloneDefaultSettings(): MobilePluginSettings {
-  return {
-    ...DEFAULT_SETTINGS,
-    MobileCMDEvents: { ...DEFAULT_SETTINGS.MobileCMDEvents },
-    toolbars: DEFAULT_SETTINGS.toolbars.map(toolbar => ({
-      ...toolbar,
-      commands: [...toolbar.commands],
-    })),
-    contextBindings: DEFAULT_SETTINGS.contextBindings.map(binding => ({
-      ...binding,
-    })),
-    commandIcons: { ...DEFAULT_SETTINGS.commandIcons },
-    gestureCommands: DEFAULT_SETTINGS.gestureCommands.map(gesture => ({
-      ...gesture,
-    })),
-  };
-}
 
 /**
  * A modal dialog that provides fuzzy search and selection of folders within the vault.
@@ -494,16 +499,6 @@ export class MobileSettingTab extends PluginSettingTab {
             control: { type: 'toggle', key: 'hideFABWhenKeyboardOpen' },
           },
           {
-            name: 'Show tabs in search view',
-            desc: 'Display open tabs when using the mobile search view',
-            control: { type: 'toggle', key: 'showTabsInSearchView' },
-          },
-          {
-            name: 'Enable reordering tabs by drag-and-drop',
-            desc: 'Allow dragging tabs to reorder them in the tab view',
-            control: { type: 'toggle', key: 'enableTabReordering' },
-          },
-          {
             name: 'Hide toolbar in fullscreen mode',
             desc: 'Automatically hide the mobile toolbar when entering fullscreen mode',
             control: { type: 'toggle', key: 'hideToolbarInFullscreen' },
@@ -531,6 +526,11 @@ export class MobileSettingTab extends PluginSettingTab {
         items: this.getFabEventCommandDefinitions(),
       },
       {
+        type: 'group',
+        heading: 'Swipe actions',
+        items: this.getSwipeActionCommandDefinitions(),
+      },
+      {
         type: 'list',
         heading: 'Gesture commands',
         emptyState:
@@ -545,14 +545,20 @@ export class MobileSettingTab extends PluginSettingTab {
                 commandId: command.id,
                 gesturePath: '',
               };
-              this.plugin.settings.gestureCommands.push(newCommand);
               new EditGestureDrawingModal(
                 this.app,
                 this.plugin,
                 newCommand,
+                () => {
+                  void (async () => {
+                    this.plugin.settings.gestureCommands.push(newCommand);
+                    await this.plugin.saveSettings();
+                    this.refreshDefinitions();
+                  })();
+                },
                 () => this.refreshDefinitions(),
+                false,
               ).open();
-              this.refreshDefinitions();
             }).open();
           },
         },
@@ -631,22 +637,6 @@ export class MobileSettingTab extends PluginSettingTab {
             name: 'Hide native navigation',
             desc: "Hide Obsidian's built-in navigation bar on mobile devices",
             control: { type: 'toggle', key: 'hideNativeNav' },
-          },
-          {
-            name: 'Reset to default settings',
-            render: setting => {
-              setting.addButton(button =>
-                button
-                  .setButtonText('Reset to default settings')
-                  .setWarning()
-                  .onClick(async () => {
-                    this.plugin.settings = cloneDefaultSettings();
-                    this.applySettingsSideEffects();
-                    await this.plugin.saveSettings();
-                    this.refreshDefinitions();
-                  }),
-              );
-            },
           },
         ],
       },
@@ -795,6 +785,46 @@ export class MobileSettingTab extends PluginSettingTab {
         },
       }),
     );
+  }
+
+  private getSwipeActionCommandDefinitions(): SettingGroupItem[] {
+    return (
+      Object.entries(SwipeActionEventsDesc) as [
+        SwipeActionEvent,
+        [string, string],
+      ][]
+    ).map(([event, [name, desc]]) => ({
+      name,
+      desc,
+      render: setting => {
+        setting
+          .addButton(button =>
+            button
+              .setButtonText(
+                this.plugin.settings.swipeActions[event] || 'Select command',
+              )
+              .onClick(() => {
+                new CommandSuggestModal(this.app, command => {
+                  void (async () => {
+                    this.plugin.settings.swipeActions[event] = command.id;
+                    await this.plugin.saveSettings();
+                    this.refreshDefinitions();
+                  })();
+                }).open();
+              }),
+          )
+          .addExtraButton(btn =>
+            btn
+              .setIcon('trash')
+              .setTooltip('Clear command')
+              .onClick(async () => {
+                this.plugin.settings.swipeActions[event] = '';
+                await this.plugin.saveSettings();
+                this.refreshDefinitions();
+              }),
+          );
+      },
+    }));
   }
 
   private getContextBindingDefinitions(): SettingGroupItem[] {
@@ -1465,12 +1495,19 @@ export class MobileSettingsView {
                 commandId: command.id,
                 gesturePath: '',
               };
-              this.plugin.settings.gestureCommands.push(newCommand);
               new EditGestureDrawingModal(
                 this.app,
                 this.plugin,
                 newCommand,
+                () => {
+                  void (async () => {
+                    this.plugin.settings.gestureCommands.push(newCommand);
+                    await this.plugin.saveSettings();
+                    this.renderGeneralSettings();
+                  })();
+                },
                 () => this.renderGeneralSettings(),
+                false,
               ).open();
             }).open();
           }),
@@ -1643,12 +1680,15 @@ export class ContextBindingChooser extends FuzzySuggestModal<ToolbarConfig> {
  */
 export class EditGestureDrawingModal extends Modal {
   private gestureHandler!: GestureHandler;
+  private didSaveGesture = false;
 
   constructor(
     app: App,
     private plugin: MobilePlugin,
     private gesture: GestureCommand,
     private onSave: () => void,
+    private onCancel: () => void = () => {},
+    private persistOnSave: boolean = true,
   ) {
     super(app);
   }
@@ -1682,7 +1722,10 @@ export class EditGestureDrawingModal extends Modal {
             Number(p.y.toFixed(2)),
           ]),
         );
-        void this.plugin.saveSettings();
+        this.didSaveGesture = true;
+        if (this.persistOnSave) {
+          void this.plugin.saveSettings();
+        }
         this.onSave();
         this.close();
       },
@@ -1693,6 +1736,9 @@ export class EditGestureDrawingModal extends Modal {
 
   onClose() {
     this.gestureHandler?.destroy();
+    if (!this.didSaveGesture) {
+      this.onCancel();
+    }
     this.contentEl.empty();
   }
 }

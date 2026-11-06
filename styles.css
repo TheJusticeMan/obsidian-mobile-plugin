@@ -1,6 +1,8 @@
 /*
 Mobile UX Plugin Styles
 Includes FAB and selection toolbar styles with mobile-friendly design
+
+And settings used in the style settings plugin.
 */
 
 /* @settings
@@ -81,6 +83,9 @@ body:has(.mobile-navbar.mod-raised).is-hidden-nav,
   align-items: center;
   justify-content: center;
   z-index: 100;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;

@@ -5,6 +5,13 @@ All notable changes to the Mobile UX plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Toolbar**: Prevented pointer taps from focusing toolbar buttons and removed post-command editor refocusing, preserving the expected keyboard and caret behavior for context-toolbar actions. (Fixes #48, #51)
+- **Toolbar**: Preserved editor context and editing state for toolbar actions in embedded editors. (Fixes #53)
+
 ## [1.10.3] - 2026-09-04
 
 ### Fixed

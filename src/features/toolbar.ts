@@ -10,6 +10,7 @@ import {
   App,
   ButtonComponent,
   ExtraButtonComponent,
+  editorInfoField,
   FileView,
   MarkdownView,
   View,
@@ -17,6 +18,11 @@ import {
 import { ToolbarEditor } from 'src/views/ToolbarEditor';
 import MobilePlugin from '../main';
 import { ContextType, ToolbarConfig } from '../settings';
+import { executeToolbarCommand } from '../utils/toolbar-command';
+import {
+  MOBILE_TOOLBAR_CLASSES,
+  preventToolbarFocusLoss,
+} from '../utils/toolbar-dom';
 
 /**
  * Creates a CodeMirror 6 ViewPlugin that displays a context-aware toolbar at the bottom
@@ -257,6 +263,18 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         return true;
       }
 
+      executeCommand(commandId: string, view: EditorView): void {
+        const command = this.app.commands?.findCommand?.(commandId);
+        const editorInfo = view.state.field(editorInfoField, false);
+        const editor = editorInfo?.editor;
+        const activeEditor = this.app.workspace.activeEditor?.editor;
+        const context = editor !== activeEditor ? editorInfo : undefined;
+
+        executeToolbarCommand(command, context, () => {
+          this.app.commands?.executeCommandById?.(commandId);
+        });
+      }
+
       getMatchingContexts(view: EditorView, pos: number): Set<ContextType> {
         const contexts = new Set<ContextType>();
         if (!view.state.selection.main.empty) {
@@ -398,11 +416,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                   // Haptic feedback on button click
                   this.plugin.hapticFeedback(10);
                   // Execute the command
-                  this.app.commands?.executeCommandById?.(commandId);
-                  // Refocus editor to prevent focus loss
-                  // log the current focus and whether that's inside the toolbar
-                  if (tooltip.contains(activeDocument.activeElement))
-                    view.focus();
+                  this.executeCommand(commandId, view);
                 });
             } else {
               new ButtonComponent(tooltip)
@@ -413,10 +427,7 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                   // Haptic feedback on button click
                   this.plugin.hapticFeedback(10);
                   // Execute the command
-                  this.app.commands?.executeCommandById?.(commandId);
-                  // Refocus editor to prevent focus loss
-                  if (tooltip.contains(activeDocument.activeElement))
-                    view.focus();
+                  this.executeCommand(commandId, view);
                 });
             }
           }
@@ -460,8 +471,9 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
 
       createToolbarElement(activeView: View): HTMLElement | null {
         const element = activeView.containerEl.createDiv({
-          cls: 'mobile-plugin-toolbar',
+          cls: MOBILE_TOOLBAR_CLASSES,
         });
+        preventToolbarFocusLoss(element);
 
         this.plugin.toolbarMap.set(activeView, element);
 

@@ -52,6 +52,15 @@ test('toolbar prevents mousedown from stealing editor focus', () => {
   assert.equal(prevented, true);
 });
 
+test('toolbar handlers never refocus the editor after a command', () => {
+  const toolbarSource = fs.readFileSync(
+    path.join(__dirname, '..', 'src/features/toolbar.ts'),
+    'utf8',
+  );
+  assert.doesNotMatch(toolbarSource, /tooltip\.contains\(activeDocument\.activeElement\)/);
+  assert.doesNotMatch(toolbarSource, /view\.focus\(\)/);
+});
+
 test('editor check callback runs against the toolbar editor context', () => {
   const editor = {};
   const context = { editor };

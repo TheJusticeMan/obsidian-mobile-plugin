@@ -417,10 +417,6 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                   this.plugin.hapticFeedback(10);
                   // Execute the command
                   this.executeCommand(commandId, view);
-                  // Refocus editor to prevent focus loss
-                  // log the current focus and whether that's inside the toolbar
-                  if (tooltip.contains(activeDocument.activeElement))
-                    view.focus();
                 });
             } else {
               new ButtonComponent(tooltip)
@@ -432,9 +428,6 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
                   this.plugin.hapticFeedback(10);
                   // Execute the command
                   this.executeCommand(commandId, view);
-                  // Refocus editor to prevent focus loss
-                  if (tooltip.contains(activeDocument.activeElement))
-                    view.focus();
                 });
             }
           }

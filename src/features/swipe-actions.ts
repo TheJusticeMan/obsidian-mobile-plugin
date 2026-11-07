@@ -1,4 +1,5 @@
-import { App, Component } from 'obsidian';
+import { Component } from 'obsidian';
+import type { App, EventRef } from 'obsidian';
 import MobilePlugin from '../main';
 import { SwipeActionEvent } from '../settings';
 
@@ -10,17 +11,17 @@ type SwipeEventData = {
   targetEl?: HTMLElement;
 };
 
-type WorkspaceWithTrigger = {
-  trigger: (eventName: string, data?: SwipeEventData) => unknown;
+type WorkspaceWithSwipe = {
+  on: (
+    eventName: string,
+    callback: (data?: SwipeEventData) => void,
+  ) => EventRef;
   rootSplit?: {
     containerEl?: HTMLElement;
   };
 };
 
 export class SwipeActions extends Component {
-  private originalTrigger: WorkspaceWithTrigger['trigger'] | null = null;
-  private patchedWorkspace: WorkspaceWithTrigger | null = null;
-
   constructor(
     private readonly app: App,
     private readonly plugin: MobilePlugin,
@@ -29,37 +30,8 @@ export class SwipeActions extends Component {
   }
 
   onload(): void {
-    const workspace = this.app.workspace as WorkspaceWithTrigger;
-    if (typeof workspace.trigger !== 'function' || this.originalTrigger) {
-      return;
-    }
-
-    this.originalTrigger = workspace.trigger.bind(workspace);
-    this.patchedWorkspace = workspace;
-
-    workspace.trigger = (eventName: string, data?: SwipeEventData) => {
-      if (eventName === 'swipe') {
-        this.handleSwipe(data);
-      }
-
-      return this.originalTrigger?.(eventName, data);
-    };
-
-    this.register(() => this.restoreTrigger());
-  }
-
-  onunload(): void {
-    this.restoreTrigger();
-  }
-
-  private restoreTrigger(): void {
-    if (!this.patchedWorkspace || !this.originalTrigger) {
-      return;
-    }
-
-    this.patchedWorkspace.trigger = this.originalTrigger;
-    this.patchedWorkspace = null;
-    this.originalTrigger = null;
+    const workspace = this.app.workspace as WorkspaceWithSwipe;
+    this.registerEvent(workspace.on('swipe', data => this.handleSwipe(data)));
   }
 
   private handleSwipe(data?: SwipeEventData): void {

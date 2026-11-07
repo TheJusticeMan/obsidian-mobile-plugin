@@ -24,13 +24,50 @@ function loadTypeScriptModule(relativePath, runtimeModules = {}) {
   return module.exports;
 }
 
-const {
-  executeToolbarCommand,
-} = loadTypeScriptModule('src/utils/toolbar-command.ts');
-const {
-  MOBILE_TOOLBAR_CLASSES,
-  preventToolbarFocusLoss,
-} = loadTypeScriptModule('src/utils/toolbar-dom.ts');
+const { executeToolbarCommand } = loadTypeScriptModule(
+  'src/utils/toolbar-command.ts',
+);
+const { MOBILE_TOOLBAR_CLASSES, preventToolbarFocusLoss } =
+  loadTypeScriptModule('src/utils/toolbar-dom.ts');
+const { openPluginSettings } = loadTypeScriptModule(
+  'src/utils/settings-navigation.ts',
+);
+
+test('toolbar edit action opens the plugin settings tab', () => {
+  const calls = [];
+  const app = {
+    setting: {
+      open: () => calls.push('open'),
+      openTabById: id => calls.push(id),
+    },
+  };
+
+  openPluginSettings(app, 'mobile');
+  assert.deepEqual(calls, ['open', 'mobile']);
+});
+
+test('toolbar edit action falls back to opening general settings', () => {
+  let opened = false;
+  const app = {
+    commands: {
+      executeCommandById: commandId => {
+        assert.equal(commandId, 'app:open-settings');
+        opened = true;
+      },
+    },
+  };
+
+  openPluginSettings(app, 'mobile');
+  assert.equal(opened, true);
+});
+
+test('toolbar edit action does not construct a standalone toolbar editor', () => {
+  const toolbarSource = fs.readFileSync(
+    path.join(__dirname, '..', 'src/features/toolbar.ts'),
+    'utf8',
+  );
+  assert.doesNotMatch(toolbarSource, /ToolbarEditor/);
+});
 
 class TestComponent {
   registerEvent(eventRef) {
@@ -122,7 +159,10 @@ test('toolbar handlers never refocus the editor after a command', () => {
     path.join(__dirname, '..', 'src/features/toolbar.ts'),
     'utf8',
   );
-  assert.doesNotMatch(toolbarSource, /tooltip\.contains\(activeDocument\.activeElement\)/);
+  assert.doesNotMatch(
+    toolbarSource,
+    /tooltip\.contains\(activeDocument\.activeElement\)/,
+  );
   assert.doesNotMatch(toolbarSource, /view\.focus\(\)/);
 });
 

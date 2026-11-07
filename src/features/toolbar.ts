@@ -15,10 +15,10 @@ import {
   MarkdownView,
   View,
 } from 'obsidian';
-import { ToolbarEditor } from 'src/views/ToolbarEditor';
 import MobilePlugin from '../main';
 import { ContextType, ToolbarConfig } from '../settings';
 import { executeToolbarCommand } from '../utils/toolbar-command';
+import { openPluginSettings } from '../utils/settings-navigation';
 import {
   MOBILE_TOOLBAR_CLASSES,
   preventToolbarFocusLoss,
@@ -435,15 +435,10 @@ export function createToolbarExtension(app: App, plugin: MobilePlugin) {
         if (tooltip)
           new ExtraButtonComponent(tooltip)
             .setIcon('pencil')
-            .setTooltip('Edit toolbar')
-            .onClick(() => {
-              if (this.activeToolbars)
-                new ToolbarEditor(
-                  this.app,
-                  this.plugin,
-                  this.activeToolbars[0],
-                ).open();
-            });
+            .setTooltip('Edit toolbar in settings')
+            .onClick(() =>
+              openPluginSettings(this.app, this.plugin.manifest.id),
+            );
       }
 
       private removeTooltipIfExists() {

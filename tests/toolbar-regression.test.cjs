@@ -4,7 +4,7 @@ const path = require('node:path');
 const test = require('node:test');
 const ts = require('typescript');
 
-function loadTypeScriptModule(relativePath) {
+function loadTypeScriptModule(relativePath, runtimeModules = {}) {
   const filePath = path.join(__dirname, '..', relativePath);
   const source = fs.readFileSync(filePath, 'utf8');
   const { outputText } = ts.transpileModule(source, {
@@ -14,9 +14,11 @@ function loadTypeScriptModule(relativePath) {
     },
   });
   const module = { exports: {} };
+  const moduleRequire = id =>
+    Object.hasOwn(runtimeModules, id) ? runtimeModules[id] : require(id);
   new Function('exports', 'require', 'module', outputText)(
     module.exports,
-    require,
+    moduleRequire,
     module,
   );
   return module.exports;
@@ -65,6 +67,69 @@ test('toolbar edit action does not construct a standalone toolbar editor', () =>
     'utf8',
   );
   assert.doesNotMatch(toolbarSource, /ToolbarEditor/);
+});
+
+class TestComponent {
+  registerEvent(eventRef) {
+    this.registeredEvent = eventRef;
+  }
+
+  register(cleanup) {
+    this.registeredCleanup = cleanup;
+  }
+}
+
+const { SwipeActions } = loadTypeScriptModule('src/features/swipe-actions.ts', {
+  obsidian: { Component: TestComponent },
+});
+
+test('SwipeActions listens to swipe without wrapping workspace.trigger', () => {
+  let swipeListener;
+  const triggerCalls = [];
+  const executedCommands = [];
+  const originalTrigger = (...args) => triggerCalls.push(args);
+  const workspace = {
+    trigger: originalTrigger,
+    on(eventName, callback) {
+      assert.equal(eventName, 'swipe');
+      swipeListener = callback;
+      return { eventName };
+    },
+    rootSplit: { containerEl: { contains: target => target === 'editor' } },
+  };
+  const app = {
+    workspace,
+    commands: { executeCommandById: id => executedCommands.push(id) },
+  };
+  const plugin = {
+    settings: {
+      swipeActions: {
+        twoFingerSwipeDown: 'test:swipe-down',
+        noteBottomSwipeUp: 'test:swipe-up',
+      },
+    },
+  };
+
+  const swipeActions = new SwipeActions(app, plugin);
+  swipeActions.onload();
+
+  assert.strictEqual(workspace.trigger, originalTrigger);
+  assert.equal(typeof swipeListener, 'function');
+  const event = {};
+  const editor = {};
+  const info = {};
+  workspace.trigger('editor-paste', event, editor, info);
+  assert.deepEqual(triggerCalls, [['editor-paste', event, editor, info]]);
+
+  swipeListener({
+    direction: 'y',
+    points: 1,
+    startY: 20,
+    y: 10,
+    targetEl: 'editor',
+  });
+  assert.deepEqual(executedCommands, ['test:swipe-up']);
+  assert.equal(swipeActions.registeredEvent.eventName, 'swipe');
 });
 
 test('toolbar carries click-outside ignore markers', () => {

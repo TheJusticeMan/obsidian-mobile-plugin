@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Toolbar**: The edit button now opens Mobile UX settings instead of a separate toolbar editor, keeping reordering in the settings menu. (Refs #52)
 
+### Fixed
+
+- **Swipe actions**: Subscribe to the workspace swipe event instead of wrapping `workspace.trigger`, preserving arguments for multi-argument events such as paste. (Fixes #58)
+
 ## [1.10.4] - 2026-11-06
 
 ### Fixed

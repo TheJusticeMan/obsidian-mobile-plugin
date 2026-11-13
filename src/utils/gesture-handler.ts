@@ -113,6 +113,7 @@ export class GestureHandler {
   private start: Offset = new Offset(0, 0);
   private last: Offset = new Offset(0, 0);
   private line: Offset[] = [];
+  private dragDistance = 0;
 
   constructor(
     private app: App,
@@ -140,13 +141,15 @@ export class GestureHandler {
       window.activeDocument.addEventListener('mousemove', this.onDrag);
       window.activeDocument.addEventListener('mouseup', this.endDrag);
     } else if (e.touches && e.touches.length > 0) {
-      e.preventDefault();
       this.start = new Offset(e.touches[0].clientX, e.touches[0].clientY);
-      window.activeDocument.addEventListener('touchmove', this.onDrag);
+      window.activeDocument.addEventListener('touchmove', this.onDrag, {
+        passive: false,
+      });
       window.activeDocument.addEventListener('touchend', this.endDrag);
     }
     this.last = this.start;
     this.line = [this.start];
+    this.dragDistance = 0;
   };
 
   onDrag = (e: MouseEvent | TouchEvent): void => {
@@ -155,8 +158,11 @@ export class GestureHandler {
     if (e instanceof MouseEvent) {
       client = new Offset(e.clientX, e.clientY);
     } else if (e.touches && e.touches.length > 0) {
-      e.preventDefault();
       client = new Offset(e.touches[0].clientX, e.touches[0].clientY);
+      this.dragDistance += client.distanceTo(this.last);
+      if (this.dragDistance >= this.plugin.settings.minGestureLength) {
+        e.preventDefault();
+      }
     } else {
       return;
     }

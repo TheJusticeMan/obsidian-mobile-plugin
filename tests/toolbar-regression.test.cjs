@@ -32,6 +32,71 @@ const { MOBILE_TOOLBAR_CLASSES, preventToolbarFocusLoss } =
 const { openPluginSettings } = loadTypeScriptModule(
   'src/utils/settings-navigation.ts',
 );
+const { GestureHandler } = loadTypeScriptModule(
+  'src/utils/gesture-handler.ts',
+  {
+    obsidian: { addIcon() {} },
+  },
+);
+
+test('FAB touch handling preserves tap and long-press defaults while keeping gesture drags', () => {
+  const originalWindow = global.window;
+  const originalMouseEvent = global.MouseEvent;
+  const originalDrawTempline = GestureHandler.drawTempline;
+  const documentListeners = new Map();
+  global.MouseEvent = class MouseEvent {};
+  global.window = {
+    activeDocument: {
+      addEventListener: (type, listener, options) =>
+        documentListeners.set(type, { listener, options }),
+      removeEventListener() {},
+    },
+  };
+  GestureHandler.drawTempline = () => {};
+
+  try {
+    const element = {
+      style: {},
+      addEventListener() {},
+      removeEventListener() {},
+    };
+    const handler = new GestureHandler({}, element, [], () => {}, false, {
+      settings: { minGestureLength: 20 },
+    });
+    let startPrevented = false;
+    handler.startDrag({
+      touches: [{ clientX: 10, clientY: 20 }],
+      preventDefault: () => (startPrevented = true),
+    });
+
+    assert.equal(startPrevented, false);
+    assert.ok(documentListeners.has('touchmove'));
+    assert.equal(documentListeners.get('touchmove').options.passive, false);
+
+    let movePrevented = false;
+    const touchMove = documentListeners.get('touchmove').listener;
+    touchMove({
+      touches: [{ clientX: 20, clientY: 20 }],
+      preventDefault: () => (movePrevented = true),
+      stopPropagation() {},
+    });
+    assert.equal(movePrevented, false);
+
+    touchMove({
+      touches: [{ clientX: 35, clientY: 20 }],
+      preventDefault: () => (movePrevented = true),
+      stopPropagation() {},
+    });
+    assert.equal(movePrevented, true);
+    handler.destroy();
+  } finally {
+    GestureHandler.drawTempline = originalDrawTempline;
+    if (originalWindow === undefined) delete global.window;
+    else global.window = originalWindow;
+    if (originalMouseEvent === undefined) delete global.MouseEvent;
+    else global.MouseEvent = originalMouseEvent;
+  }
+});
 
 test('toolbar edit action opens the plugin settings tab', () => {
   const calls = [];
